@@ -27,11 +27,11 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity animate-in fade-in-0 duration-200"
+        className="backdrop-blur-xs animate-in fade-in-0 fixed inset-0 bg-slate-950/60 transition-opacity duration-200"
         onClick={() => onOpenChange(false)}
       />
       {/* Content wrapper */}
-      <div className="relative z-50 w-full max-w-lg animate-in zoom-in-95 fade-in-0 duration-200">
+      <div className="animate-in zoom-in-95 fade-in-0 relative z-50 w-full max-w-lg duration-200">
         {children}
       </div>
     </div>
@@ -74,7 +74,7 @@ export function DialogHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("flex flex-col space-y-1.5 text-left pb-4", className)}
+      className={cn("flex flex-col space-y-1.5 pb-4 text-left", className)}
       {...props}
     />
   );
@@ -114,7 +114,7 @@ export function DialogFooter({
   return (
     <div
       className={cn(
-        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4 border-t border-slate-100 dark:border-slate-800 mt-6",
+        "mt-6 flex flex-col-reverse border-t border-slate-100 pt-4 sm:flex-row sm:justify-end sm:space-x-2 dark:border-slate-800",
         className
       )}
       {...props}

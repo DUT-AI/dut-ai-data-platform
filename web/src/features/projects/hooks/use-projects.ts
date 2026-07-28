@@ -30,7 +30,8 @@ export function useCreateProjectMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: ProjectCreatePayload) => projectApi.createProject(payload),
+    mutationFn: (payload: ProjectCreatePayload) =>
+      projectApi.createProject(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.all });
     },

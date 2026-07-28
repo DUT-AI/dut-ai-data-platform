@@ -48,7 +48,10 @@ export function ProjectCard({ project }: ProjectCardProps) {
             </div>
             <Badge
               variant="outline"
-              className={typeOption?.badgeColor ?? "border-slate-200 bg-slate-100 text-slate-700"}
+              className={
+                typeOption?.badgeColor ??
+                "border-slate-200 bg-slate-100 text-slate-700"
+              }
             >
               {typeOption?.label ?? project.project_type}
             </Badge>
@@ -67,13 +70,15 @@ export function ProjectCard({ project }: ProjectCardProps) {
             </div>
             <div className="flex items-center gap-1.5">
               <User className="h-3.5 w-3.5 text-slate-400" />
-              <span>{project.status === "active" ? "Hoạt động" : "Lưu trữ"}</span>
+              <span>
+                {project.status === "active" ? "Hoạt động" : "Lưu trữ"}
+              </span>
             </div>
           </div>
         </CardContent>
       </div>
 
-      <CardFooter className="pt-4 border-t border-slate-100 dark:border-slate-800/80">
+      <CardFooter className="border-t border-slate-100 pt-4 dark:border-slate-800/80">
         <Link href={`/projects/${project.id}`} className="w-full">
           <Button
             variant="outline"

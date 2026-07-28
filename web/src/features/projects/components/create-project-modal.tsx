@@ -62,14 +62,18 @@ export function CreateProjectModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent onClose={() => onOpenChange(false)} className="sm:max-w-xl">
+      <DialogContent
+        onClose={() => onOpenChange(false)}
+        className="sm:max-w-xl"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <Plus className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             Tạo dự án AI mới
           </DialogTitle>
           <DialogDescription>
-            Khởi tạo không gian gán nhãn và xử lý dữ liệu AI cho đội ngũ của bạn.
+            Khởi tạo không gian gán nhãn và xử lý dữ liệu AI cho đội ngũ của
+            bạn.
           </DialogDescription>
         </DialogHeader>
 
@@ -114,7 +118,7 @@ export function CreateProjectModal({
                         : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
                     }`}
                   >
-                    <div className="flex items-center justify-between w-full mb-1">
+                    <div className="mb-1 flex w-full items-center justify-between">
                       <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
                         {opt.label}
                       </span>
@@ -124,7 +128,7 @@ export function CreateProjectModal({
                         </div>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
+                    <p className="line-clamp-2 text-[11px] text-slate-500 dark:text-slate-400">
                       {opt.description}
                     </p>
                   </button>

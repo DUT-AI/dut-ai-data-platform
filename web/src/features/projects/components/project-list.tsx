@@ -13,7 +13,12 @@ export function ProjectList() {
   const [selectedType, setSelectedType] = useState<string>("all");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const { data: projects = [], isLoading, isError, refetch } = useProjectsQuery();
+  const {
+    data: projects = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useProjectsQuery();
 
   // Filter projects by search query and AI type
   const filteredProjects = useMemo(() => {
@@ -21,7 +26,9 @@ export function ProjectList() {
       const matchesSearch =
         project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (project.description &&
-          project.description.toLowerCase().includes(searchQuery.toLowerCase()));
+          project.description
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()));
 
       const matchesType =
         selectedType === "all" || project.project_type === selectedType;
@@ -40,7 +47,8 @@ export function ProjectList() {
             Quản lý Dự án AI
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Quản lý không gian gán nhãn, tập dữ liệu và các tác vụ huấn luyện AI của bạn.
+            Quản lý không gian gán nhãn, tập dữ liệu và các tác vụ huấn luyện AI
+            của bạn.
           </p>
         </div>
 
@@ -54,19 +62,19 @@ export function ProjectList() {
       </div>
 
       {/* Toolbar & Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div className="relative flex-1 max-w-md">
+      <div className="shadow-xs flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3.5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900">
+        <div className="relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input
             placeholder="Tìm kiếm dự án theo tên hoặc mô tả..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-slate-50 dark:bg-slate-800/50"
+            className="bg-slate-50 pl-9 dark:bg-slate-800/50"
           />
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-          <Filter className="h-4 w-4 text-slate-400 shrink-0" />
+          <Filter className="h-4 w-4 shrink-0 text-slate-400" />
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
@@ -94,7 +102,7 @@ export function ProjectList() {
 
       {/* Main Grid View */}
       {isLoading ? (
-        <div className="grid gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
@@ -128,7 +136,7 @@ export function ProjectList() {
               ? "Không tìm thấy dự án phù hợp"
               : "Chưa có dự án nào"}
           </h3>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm">
+          <p className="mt-1 max-w-sm text-xs text-slate-500 dark:text-slate-400">
             {searchQuery || selectedType !== "all"
               ? "Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc loại tác vụ AI."
               : "Bắt đầu tạo dự án AI đầu tiên của bạn để gán nhãn dữ liệu."}
@@ -144,7 +152,7 @@ export function ProjectList() {
           )}
         </div>
       ) : (
-        <div className="grid gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project) => (
             <ProjectCard key={project.id} project={project} />
           ))}

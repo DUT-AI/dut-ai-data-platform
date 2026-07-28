@@ -1,6 +1,8 @@
 import asyncio
 import os
 from logging.config import fileConfig
+from pathlib import Path
+from dotenv import load_dotenv
 
 # Import all models here so Alembic registers them on metadata
 import database.models  # noqa
@@ -9,6 +11,9 @@ from database.base import Base
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
+
+# Load environment variables strictly from packages/database/.env
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 config = context.config
 
@@ -19,10 +24,10 @@ target_metadata = Base.metadata
 
 
 def get_url() -> str:
-    return os.getenv(
-        "DATABASE_URL",
-        "postgresql+asyncpg://platform:platform_dev@localhost:5432/ai_data_platform",
-    )
+    url = os.getenv("DATABASE_URL")
+    if not url:
+        raise ValueError("DATABASE_URL environment variable is not set in packages/database/.env")
+    return url
 
 
 def run_migrations_offline() -> None:

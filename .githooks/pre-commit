@@ -1,0 +1,115 @@
+#!/bin/bash
+
+# Color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
+# Create logs directory
+LOG_DIR=".git/hooks_logs"
+mkdir -p "$LOG_DIR"
+BACKEND_LOG="$LOG_DIR/backend.log"
+WEB_LOG="$LOG_DIR/web.log"
+
+# Load NVM if it exists
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+    export NVM_DIR="$HOME/.nvm"
+    . "$NVM_DIR/nvm.sh"
+    nvm use --silent default || nvm use --silent
+fi
+
+echo "=== Running Pre-Commit Hooks (Parallel Mode) ==="
+
+# ----------------- SERVER (BACKEND) CHECKS (Background) -----------------
+run_backend() {
+    if [ -d "backend" ]; then
+        cd backend
+        echo "Running backend ruff format..."
+        uv run ruff format . || return 1
+        
+        echo "Running backend ruff check..."
+        uv run ruff check --fix . || return 1
+        
+        echo "Running backend pytest..."
+        uv run pytest || return 1
+        return 0
+    else
+        echo "No backend directory found."
+        return 0
+    fi
+}
+
+# ----------------- WEB CHECKS (Background) -----------------
+run_web() {
+    if [ -d "web" ]; then
+        cd web
+        echo "Running pnpm install..."
+        pnpm install --ignore-scripts || return 1
+        
+        echo "Running web lint..."
+        pnpm run lint || return 1
+        
+        echo "Running web format..."
+        pnpm run format || return 1
+        
+        echo "Running web typecheck..."
+        pnpm run typecheck || return 1
+        return 0
+    else
+        echo "No web directory found."
+        return 0
+    fi
+}
+
+# Start checks in parallel
+echo "Starting Backend checks..."
+run_backend > "$BACKEND_LOG" 2>&1 &
+BACKEND_PID=$!
+
+echo "Starting Web (Frontend) checks..."
+run_web > "$WEB_LOG" 2>&1 &
+WEB_PID=$!
+
+# Wait for both processes to complete
+wait $BACKEND_PID
+BACKEND_STATUS=$?
+
+wait $WEB_PID
+WEB_STATUS=$?
+
+# Print results
+echo "=== Pre-Commit Results ==="
+
+FAILED=0
+
+if [ $BACKEND_STATUS -eq 0 ]; then
+    echo -e "Backend Checks: ${GREEN}PASSED${NC}"
+else
+    echo -e "Backend Checks: ${RED}FAILED${NC}"
+    echo -e "${YELLOW}--- Backend Output Log ---${NC}"
+    cat "$BACKEND_LOG"
+    echo -e "${YELLOW}--------------------------${NC}"
+    FAILED=1
+fi
+
+if [ $WEB_STATUS -eq 0 ]; then
+    echo -e "Web Checks:     ${GREEN}PASSED${NC}"
+else
+    echo -e "Web Checks:     ${RED}FAILED${NC}"
+    echo -e "${YELLOW}--- Web Output Log ---${NC}"
+    cat "$WEB_LOG"
+    echo -e "${YELLOW}----------------------${NC}"
+    FAILED=1
+fi
+
+# Clean up logs
+rm -rf "$LOG_DIR"
+
+if [ $FAILED -eq 1 ]; then
+    echo -e "${RED}=== Pre-commit checks failed! Commit aborted. ===${NC}"
+    exit 1
+else
+    echo -e "${GREEN}=== All checks passed! Proceeding with commit. ===${NC}"
+    exit 0
+fi

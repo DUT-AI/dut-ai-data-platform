@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: application
+Version: 0.1.0
+Summary: Shared Application Layer, Services and Use Cases
+Requires-Python: >=3.11
+Requires-Dist: domain
+Requires-Dist: pydantic>=2.9.0

@@ -1,0 +1,9 @@
+pyproject.toml
+clients/__init__.py
+clients/s3_client.py
+infrastructure/__init__.py
+infrastructure.egg-info/PKG-INFO
+infrastructure.egg-info/SOURCES.txt
+infrastructure.egg-info/dependency_links.txt
+infrastructure.egg-info/requires.txt
+infrastructure.egg-info/top_level.txt

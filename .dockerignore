@@ -1,0 +1,38 @@
+# Docker build context ignore rules for monorepo
+
+# Ignore frontend app (built separately in web/Dockerfile)
+web/
+
+# Ignore virtual environments & caches
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Ignore git & IDE metadata
+.git/
+.githooks/
+.vscode/
+.idea/
+
+# Ignore documentation & design assets
+docs/
+assets/
+*.md
+
+# Ignore local env files & logs
+.env
+.env.local
+*.log
+.git/hooks_logs/
+
+# Ignore Docker volumes data
+postgres_data/
+redis_data/
+minio_data/

@@ -3,6 +3,7 @@ from dishka.integrations.fastapi import setup_dishka
 
 from app.auth.infrastructure.di import AuthProvider
 from app.common.database import DatabaseProvider
+from app.ontology.infrastructure.di import OntologyProvider
 from app.project.infrastructure.di import ProjectProvider
 
 
@@ -12,6 +13,7 @@ def setup_di(app):
         DatabaseProvider(),
         AuthProvider(),
         ProjectProvider(),
+        OntologyProvider(),
     )
 
     app.state.dishka_container = container

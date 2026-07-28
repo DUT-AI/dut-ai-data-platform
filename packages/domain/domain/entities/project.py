@@ -6,12 +6,12 @@ from shared.utils.id_generator import generate_ulid
 
 @dataclass
 class ProjectMemberEntity:
-    id: str
     project_id: str
     user_id: str
     role: str
-    status: str
-    joined_at: datetime
+    id: str = field(default_factory=generate_ulid)
+    status: str = "active"
+    joined_at: datetime | None = None
 
 
 @dataclass

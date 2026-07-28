@@ -8,6 +8,8 @@ export type ProjectType =
 
 export type ProjectStatus = "active" | "archived";
 
+export type ProjectMemberRole = "owner" | "admin" | "annotator" | "reviewer";
+
 export interface Project {
   id: string;
   name: string;
@@ -23,6 +25,31 @@ export interface ProjectCreatePayload {
   name: string;
   description?: string;
   project_type: ProjectType;
+}
+
+export interface ProjectUpdatePayload {
+  name?: string;
+  description?: string;
+  status?: ProjectStatus;
+}
+
+export interface ProjectMember {
+  id: string;
+  project_id: string;
+  user_id: string;
+  role: ProjectMemberRole;
+  status: string;
+  joined_at: string | null;
+}
+
+export interface ProjectMemberAddPayload {
+  user_id: string;
+  role: Exclude<ProjectMemberRole, "owner">;
+}
+
+export interface ProjectConfig {
+  project_id: string;
+  settings: Record<string, unknown>;
 }
 
 export interface ProjectTypeOption {

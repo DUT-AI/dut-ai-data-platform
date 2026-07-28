@@ -2,12 +2,12 @@ import asyncio
 import os
 from logging.config import fileConfig
 from pathlib import Path
-from dotenv import load_dotenv
 
 # Import all models here so Alembic registers them on metadata
 import database.models  # noqa
 from alembic import context
 from database.base import Base
+from dotenv import load_dotenv
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -26,7 +26,9 @@ target_metadata = Base.metadata
 def get_url() -> str:
     url = os.getenv("DATABASE_URL")
     if not url:
-        raise ValueError("DATABASE_URL environment variable is not set in packages/database/.env")
+        raise ValueError(
+            "DATABASE_URL environment variable is not set in packages/database/.env"
+        )
     return url
 
 

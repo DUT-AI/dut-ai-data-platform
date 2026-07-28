@@ -28,3 +28,23 @@ class IProjectRepository(ABC):
         self, project_id: str, user_id: str
     ) -> ProjectMemberEntity | None:
         pass
+
+    @abstractmethod
+    async def list_members(self, project_id: str) -> Sequence[ProjectMemberEntity]:
+        pass
+
+    @abstractmethod
+    async def update_member(self, member: ProjectMemberEntity) -> ProjectMemberEntity:
+        pass
+
+    @abstractmethod
+    async def remove_member(self, project_id: str, member_id: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def get_configuration(self, project_id: str) -> dict | None:
+        pass
+
+    @abstractmethod
+    async def save_configuration(self, project_id: str, settings: dict) -> dict:
+        pass

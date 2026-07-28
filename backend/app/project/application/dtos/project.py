@@ -34,3 +34,24 @@ class ProjectResponseDTO(BaseModel):
 class ProjectMemberAddDTO(BaseModel):
     user_id: str
     role: Literal["admin", "annotator", "reviewer"]
+
+
+class ProjectMemberUpdateDTO(BaseModel):
+    role: Literal["owner", "admin", "annotator", "reviewer"] | None = None
+    status: Literal["active", "inactive"] | None = None
+
+
+class ProjectMemberResponseDTO(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    project_id: str
+    user_id: str
+    role: str
+    status: str
+    joined_at: datetime | None = None
+
+
+class ProjectConfigDTO(BaseModel):
+    project_id: str
+    settings: dict = Field(default_factory=dict)

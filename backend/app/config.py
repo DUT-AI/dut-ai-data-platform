@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     )
     db_echo: bool = False
 
+    # Redis Cache & Broker
+    redis_url: str = "redis://localhost:6379/0"
+
     # Security & JWT
     jwt_secret_key: str = "change-this-to-a-very-secure-secret-key-in-production"
     jwt_algorithm: str = "HS256"

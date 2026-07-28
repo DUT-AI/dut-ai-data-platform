@@ -4,18 +4,20 @@ services:
   # ---------------------------------------------------------------------------
   db:
     image: postgres:16-alpine
-    container_name: dut-db
+    container_name: data-platform-db
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-platform}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-platform_dev}
-      POSTGRES_DB: ${POSTGRES_DB:-ai_data_platform}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - platform-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-platform} -d ${POSTGRES_DB:-ai_data_platform}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -25,12 +27,14 @@ services:
   # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
-    container_name: dut-redis
+    container_name: data-platform-redis
     restart: always
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - platform-net
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -41,20 +45,22 @@ services:
   # MinIO Object Storage (S3-compatible)
   # ---------------------------------------------------------------------------
   minio:
-    image: minio/minio:RELEASE.2024-03-07T00-13-43Z
-    container_name: dut-minio
+    image: minio/minio:latest
+    container_name: data-platform-minio
     restart: always
     ports:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
+    networks:
+      - platform-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "mc", "ready", "local"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -63,16 +69,22 @@ services:
   # MinIO One-Shot Bucket Initialization Job
   # ---------------------------------------------------------------------------
   createbuckets:
-    image: minio/mc:RELEASE.2024-03-03T17-50-39Z
-    container_name: dut-minio-init
+    image: minio/mc:latest
+    container_name: data-platform-minio-init
     depends_on:
       minio:
         condition: service_healthy
+    networks:
+      - platform-net
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      DEFAULT_BUCKET: ${DEFAULT_BUCKET}
     entrypoint: >
       /bin/sh -c "
-      /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin};
-      /usr/bin/mc mb --ignore-existing myminio/${DEFAULT_BUCKET:-ai-data-platform};
-      /usr/bin/mc anonymous set download myminio/${DEFAULT_BUCKET:-ai-data-platform};
+      /usr/bin/mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
+      /usr/bin/mc mb --ignore-existing myminio/$${DEFAULT_BUCKET};
+      /usr/bin/mc anonymous set download myminio/$${DEFAULT_BUCKET};
       exit 0;
       "
 
@@ -84,20 +96,14 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: dut-api
+    container_name: data-platform-api
     restart: always
     ports:
       - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-platform}:${POSTGRES_PASSWORD:-platform_dev}@db:5432/${POSTGRES_DB:-ai_data_platform}
-      - REDIS_URL=redis://redis:6379/0
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-this-to-a-very-secure-secret-key-in-production}
-      - MINIO_ENDPOINT=http://minio:9000
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
-      - DEFAULT_BUCKET=${DEFAULT_BUCKET:-ai-data-platform}
-      - MINIO_SECURE=false
-      - AUTH_SERVER_URL=${AUTH_SERVER_URL:-http://localhost:8080}
+    env_file:
+      - ./backend/.env
+    networks:
+      - platform-net
     depends_on:
       db:
         condition: service_healthy
@@ -112,19 +118,16 @@ services:
   # Celery Worker Service (Multi-stage Build)
   # Context: Root monorepo directory (.)
   # ---------------------------------------------------------------------------
-  celery:
+  worker:
     build:
       context: .
-      dockerfile: backend/Dockerfile.worker
-    container_name: dut-celery-worker
+      dockerfile: worker/Dockerfile
+    container_name: data-platform-worker
     restart: always
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-platform}:${POSTGRES_PASSWORD:-platform_dev}@db:5432/${POSTGRES_DB:-ai_data_platform}
-      - REDIS_URL=redis://redis:6379/0
-      - MINIO_ENDPOINT=http://minio:9000
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
-      - DEFAULT_BUCKET=${DEFAULT_BUCKET:-ai-data-platform}
+    env_file:
+      - ./worker/.env
+    networks:
+      - platform-net
     depends_on:
       db:
         condition: service_healthy
@@ -141,14 +144,21 @@ services:
     build:
       context: ./web
       dockerfile: Dockerfile
-    container_name: dut-web
+    container_name: data-platform-web
     restart: always
     ports:
       - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
+    env_file:
+      - ./web/.env
+    networks:
+      - platform-net
+
+networks:
+  platform-net:
+    driver: bridge
 
 volumes:
   postgres_data:
   redis_data:
   minio_data:
+

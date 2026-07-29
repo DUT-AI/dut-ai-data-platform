@@ -153,7 +153,7 @@ function AttributeFormContent({
 
       <form onSubmit={handleSubmit} className="space-y-4 py-2">
         {errorMsg && (
-          <div className="p-3 text-xs rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+          <div className="rounded-md border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-600 dark:text-rose-400">
             {errorMsg}
           </div>
         )}
@@ -189,7 +189,7 @@ function AttributeFormContent({
             <select
               value={type}
               onChange={(e) => setType(e.target.value as AttributeType)}
-              className="w-full px-3 py-2 text-sm rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
             >
               <option value="string">String (Văn bản)</option>
               <option value="number">Number (Số)</option>
@@ -199,13 +199,13 @@ function AttributeFormContent({
             </select>
           </div>
 
-          <div className="space-y-1.5 flex flex-col justify-end">
-            <label className="flex items-center gap-2 cursor-pointer pb-2">
+          <div className="flex flex-col justify-end space-y-1.5">
+            <label className="flex cursor-pointer items-center gap-2 pb-2">
               <input
                 type="checkbox"
                 checked={required}
                 onChange={(e) => setRequired(e.target.checked)}
-                className="w-4 h-4 rounded text-primary-600 focus:ring-primary-500 border-slate-300"
+                className="text-primary-600 focus:ring-primary-500 h-4 w-4 rounded border-slate-300"
               />
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Bắt buộc (Required)
@@ -216,8 +216,8 @@ function AttributeFormContent({
 
         {/* Enum Options Editor */}
         {type === "enum" && (
-          <div className="space-y-2 p-3 rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+          <div className="space-y-2 rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Danh sách lựa chọn Enum (Allowed Values)
             </label>
             <div className="flex gap-2">
@@ -231,7 +231,7 @@ function AttributeFormContent({
                     handleAddEnum();
                   }
                 }}
-                className="text-xs h-8"
+                className="h-8 text-xs"
               />
               <Button
                 type="button"
@@ -248,13 +248,13 @@ function AttributeFormContent({
               {enumOptions.map((opt) => (
                 <span
                   key={opt}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-medium"
+                  className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
                   {opt}
                   <button
                     type="button"
                     onClick={() => handleRemoveEnum(opt)}
-                    className="text-slate-400 hover:text-rose-500 ml-0.5"
+                    className="ml-0.5 text-slate-400 hover:text-rose-500"
                   >
                     ×
                   </button>
@@ -284,7 +284,7 @@ function AttributeFormContent({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            className="w-full px-3 py-2 text-sm rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
           />
         </div>
 

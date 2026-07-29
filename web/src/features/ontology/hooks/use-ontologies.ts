@@ -46,7 +46,10 @@ export function useCreateOntologyMutation(projectId: string) {
   });
 }
 
-export function usePublishVersionMutation(versionId: string, projectId: string) {
+export function usePublishVersionMutation(
+  versionId: string,
+  projectId: string
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -164,7 +167,8 @@ export function useDeleteAttributeMutation(versionId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (attributeId: string) => ontologyApi.deleteAttribute(attributeId),
+    mutationFn: (attributeId: string) =>
+      ontologyApi.deleteAttribute(attributeId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ONTOLOGY_KEYS.versionDetail(versionId),

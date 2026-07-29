@@ -30,13 +30,9 @@ export function OntologyEditorView({
 
   const activeVersionId = selectedVersionId || versions[0]?.id || "";
 
-  const { data: versionDetail, isLoading } = useOntologyVersionQuery(
-    activeVersionId
-  );
-  const publishMutation = usePublishVersionMutation(
-    activeVersionId,
-    projectId
-  );
+  const { data: versionDetail, isLoading } =
+    useOntologyVersionQuery(activeVersionId);
+  const publishMutation = usePublishVersionMutation(activeVersionId, projectId);
   const cloneMutation = useCloneVersionMutation(activeVersionId, projectId);
 
   const selectedCategory: Category | null = useMemo(() => {
@@ -76,18 +72,18 @@ export function OntologyEditorView({
   return (
     <div className="space-y-4">
       {/* Editor Header Bar */}
-      <Card className="p-4 bg-slate-900 text-slate-50 border-slate-800">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <Card className="border-slate-800 bg-slate-900 p-4 text-slate-50">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div className="flex items-center gap-3">
             <div className="flex flex-col">
-              <span className="text-xs text-slate-400 font-medium">
+              <span className="text-xs font-medium text-slate-400">
                 Ontology Schema
               </span>
               <h2 className="text-lg font-bold">{ontology.name}</h2>
             </div>
 
             {/* Version Selector Dropdown */}
-            <div className="flex items-center gap-2 ml-4">
+            <div className="ml-4 flex items-center gap-2">
               <span className="text-xs text-slate-400">Version:</span>
               <select
                 value={activeVersionId}
@@ -95,7 +91,7 @@ export function OntologyEditorView({
                   setSelectedVersionId(e.target.value);
                   setSelectedCategoryId(null);
                 }}
-                className="px-3 py-1.5 text-xs font-semibold rounded bg-slate-800 border border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="focus:ring-primary-500 rounded border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2"
               >
                 {versions.map((v) => (
                   <option key={v.id} value={v.id}>
@@ -111,8 +107,8 @@ export function OntologyEditorView({
                   versionDetail.status === "published"
                     ? "success"
                     : versionDetail.status === "draft"
-                    ? "secondary"
-                    : "outline"
+                      ? "secondary"
+                      : "outline"
                 }
               >
                 {versionDetail.status.toUpperCase()}
@@ -152,7 +148,7 @@ export function OntologyEditorView({
           Đang tải cấu trúc Ontology...
         </div>
       ) : versionDetail ? (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 min-h-[500px]">
+        <div className="grid min-h-[500px] grid-cols-1 gap-6 md:grid-cols-12">
           {/* Left Panel: Category Tree */}
           <div className="md:col-span-5">
             <CategoryTreeView

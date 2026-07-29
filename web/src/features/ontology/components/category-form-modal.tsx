@@ -71,7 +71,9 @@ function CategoryFormContent({
   );
   const [color, setColor] = useState(editingCategory?.color || "#3B82F6");
   const [parentId, setParentId] = useState<string | null>(
-    editingCategory ? editingCategory.parent_category_id : defaultParentId || null
+    editingCategory
+      ? editingCategory.parent_category_id
+      : defaultParentId || null
   );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -132,7 +134,7 @@ function CategoryFormContent({
 
       <form onSubmit={handleSubmit} className="space-y-4 py-2">
         {errorMsg && (
-          <div className="p-3 text-xs rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+          <div className="rounded-md border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-600 dark:text-rose-400">
             {errorMsg}
           </div>
         )}
@@ -165,15 +167,17 @@ function CategoryFormContent({
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Màu đại diện (Color Badge)
           </label>
-          <div className="flex items-center gap-2 flex-wrap pt-1">
+          <div className="flex flex-wrap items-center gap-2 pt-1">
             {PRESET_COLORS.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setColor(c)}
                 style={{ backgroundColor: c }}
-                className={`w-7 h-7 rounded-full transition-transform ${
-                  color === c ? "ring-2 ring-offset-2 ring-primary-500 scale-110" : ""
+                className={`h-7 w-7 rounded-full transition-transform ${
+                  color === c
+                    ? "ring-primary-500 scale-110 ring-2 ring-offset-2"
+                    : ""
                 }`}
               />
             ))}
@@ -181,7 +185,7 @@ function CategoryFormContent({
               type="color"
               value={color}
               onChange={(e) => setColor(e.target.value)}
-              className="w-8 h-8 rounded border-0 cursor-pointer"
+              className="h-8 w-8 cursor-pointer rounded border-0"
             />
           </div>
         </div>
@@ -194,7 +198,7 @@ function CategoryFormContent({
           <select
             value={parentId || ""}
             onChange={(e) => setParentId(e.target.value || null)}
-            className="w-full px-3 py-2 text-sm rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
           >
             <option value="">-- Cấp gốc (Root Category) --</option>
             {allCategories
@@ -216,7 +220,7 @@ function CategoryFormContent({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            className="w-full px-3 py-2 text-sm rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
           />
         </div>
 

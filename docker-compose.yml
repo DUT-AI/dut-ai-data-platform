@@ -66,6 +66,33 @@ services:
       retries: 5
 
   # ---------------------------------------------------------------------------
+  # Label Studio Service (Annotation & Data Labeling Engine)
+  # ---------------------------------------------------------------------------
+  label-studio:
+    image: heartexlabs/label-studio:latest
+    container_name: data-platform-label-studio
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      LABEL_STUDIO_DISABLE_SIGNUP_WITHOUT_LINK: "false"
+      LABEL_STUDIO_HOST: "${LABEL_STUDIO_HOST}"
+      LABEL_STUDIO_PORT: "${LABEL_STUDIO_PORT}"
+      LABEL_STUDIO_USERNAME: "${LABEL_STUDIO_USERNAME}"
+      LABEL_STUDIO_PASSWORD: "${LABEL_STUDIO_PASSWORD}"
+      LABEL_STUDIO_DISABLE_LEGACY_TOKENS: "false"
+      DISABLE_LEGACY_TOKENS: "false"
+    volumes:
+      - label_studio_data:/label-studio/data
+    networks:
+      - platform-net
+    # Cho phép LS container gọi về host machine (Platform API)
+    # macOS / Windows: host.docker.internal tự động có
+    # Linux: cần dòng extra_hosts dưới đây
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ---------------------------------------------------------------------------
   # MinIO One-Shot Bucket Initialization Job
   # ---------------------------------------------------------------------------
   createbuckets:
@@ -161,4 +188,4 @@ volumes:
   postgres_data:
   redis_data:
   minio_data:
-
+  label_studio_data:

@@ -68,10 +68,7 @@ export const projectApi = {
     return response.data;
   },
 
-  removeProjectMember: async (
-    id: string,
-    memberId: string
-  ): Promise<void> => {
+  removeProjectMember: async (id: string, memberId: string): Promise<void> => {
     await api.delete(`/projects/${id}/members/${memberId}`);
   },
 

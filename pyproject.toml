@@ -16,6 +16,8 @@ dependencies = [
     "application",
     "infrastructure",
     "backend",
+    "pillow>=12.3.0",
+    "label-studio-sdk>=2.1.0",
 ]
 
 [dependency-groups]

@@ -24,6 +24,9 @@ dev-web:
 docker-up:
 	docker compose up -d
 
+docker-label-studio:
+	docker compose up -d label-studio
+
 docker-down:
 	docker compose down
 

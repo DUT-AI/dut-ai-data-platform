@@ -3,11 +3,13 @@ import asyncio
 from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.annotation.presentation.router import annotation_router
 from app.auth import auth_router
 from app.common import setup_di, setup_exception_handlers
 from app.common.health import check_database, check_minio, check_redis
 from app.common.telemetry import setup_telemetry
 from app.config import settings
+from app.dataset.presentation.router import dataset_router
 from app.ontology.presentation.router import router as ontology_router
 from app.project import project_router
 
@@ -39,6 +41,8 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(project_router, prefix="/api/v1")
 app.include_router(ontology_router)
+app.include_router(dataset_router)
+app.include_router(annotation_router)
 
 
 @app.get("/health", tags=["health"])

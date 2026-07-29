@@ -44,7 +44,19 @@ export interface ButtonProps
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, isLoading = false, children, disabled, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      isLoading = false,
+      children,
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
     const Comp = asChild ? Slot : "button";
 
     return (
@@ -56,7 +68,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {isLoading ? (
           <div className="flex items-center gap-2">
-            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
             <span>{children}</span>
           </div>
         ) : (

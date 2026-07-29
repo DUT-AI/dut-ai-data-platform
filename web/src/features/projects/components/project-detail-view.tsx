@@ -9,12 +9,13 @@ import { ProjectOverviewTab } from "./project-overview-tab";
 import { ProjectMembersTab } from "./project-members-tab";
 import { ProjectSettingsTab } from "./project-settings-tab";
 import { OntologyListView } from "@/features/ontology";
+import { DatasetListView } from "@/features/dataset";
 
 interface ProjectDetailViewProps {
   projectId: string;
 }
 
-type TabType = "overview" | "ontologies" | "members" | "settings";
+type TabType = "overview" | "datasets" | "ontologies" | "members" | "settings";
 
 export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
   const [activeTab, setActiveTab] = useState<TabType>("overview");
@@ -22,9 +23,9 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto" />
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="space-y-3 text-center">
+          <div className="border-primary-500 mx-auto h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
           <p className="text-sm text-slate-500">Đang tải dữ liệu dự án...</p>
         </div>
       </div>
@@ -33,8 +34,8 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
 
   if (error || !project) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center max-w-md space-y-4">
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="max-w-md space-y-4 text-center">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
             Không tìm thấy dự án
           </h2>
@@ -56,15 +57,15 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
   return (
     <div className="space-y-6">
       {/* Header & Back Nav */}
-      <div className="space-y-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div className="space-y-4 border-b border-slate-200 pb-6 dark:border-slate-800">
         <Link
           href="/projects"
-          className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+          className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 transition-colors hover:text-slate-900 dark:hover:text-slate-100"
         >
           ← Quay lại danh sách projects
         </Link>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -76,14 +77,14 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
                 {project.status.toUpperCase()}
               </Badge>
             </div>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="mt-1 text-sm text-slate-500">
               {project.description || "Chưa có mô tả."}
             </p>
           </div>
 
           {typeOption && (
             <span
-              className={`px-3 py-1 text-xs font-semibold rounded-full border self-start md:self-auto ${typeOption.badgeColor}`}
+              className={`self-start rounded-full border px-3 py-1 text-xs font-semibold md:self-auto ${typeOption.badgeColor}`}
             >
               {typeOption.label}
             </span>
@@ -91,10 +92,10 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 gap-6 pt-4">
+        <div className="flex gap-6 border-b border-slate-200 pt-4 dark:border-slate-800">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
               activeTab === "overview"
                 ? "border-primary-500 text-primary-600 dark:text-primary-400"
                 : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-300"
@@ -103,8 +104,18 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
             Tổng quan (Overview)
           </button>
           <button
+            onClick={() => setActiveTab("datasets")}
+            className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
+              activeTab === "datasets"
+                ? "border-primary-500 text-primary-600 dark:text-primary-400"
+                : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-300"
+            }`}
+          >
+            Datasets (Dữ liệu)
+          </button>
+          <button
             onClick={() => setActiveTab("ontologies")}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
               activeTab === "ontologies"
                 ? "border-primary-500 text-primary-600 dark:text-primary-400"
                 : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-300"
@@ -114,7 +125,7 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
           </button>
           <button
             onClick={() => setActiveTab("members")}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
               activeTab === "members"
                 ? "border-primary-500 text-primary-600 dark:text-primary-400"
                 : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-300"
@@ -124,7 +135,7 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
           </button>
           <button
             onClick={() => setActiveTab("settings")}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
               activeTab === "settings"
                 ? "border-primary-500 text-primary-600 dark:text-primary-400"
                 : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-300"
@@ -137,6 +148,7 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
 
       {/* Tab Contents */}
       {activeTab === "overview" && <ProjectOverviewTab project={project} />}
+      {activeTab === "datasets" && <DatasetListView projectId={projectId} />}
       {activeTab === "ontologies" && <OntologyListView projectId={projectId} />}
       {activeTab === "members" && <ProjectMembersTab projectId={projectId} />}
       {activeTab === "settings" && <ProjectSettingsTab project={project} />}

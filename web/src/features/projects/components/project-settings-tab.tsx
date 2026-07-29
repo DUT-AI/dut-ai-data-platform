@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from "@/components/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+} from "@/components/ui";
 import { Project } from "../types/project";
 import {
   useProjectConfigQuery,
@@ -22,9 +29,8 @@ export function ProjectSettingsTab({ project }: ProjectSettingsTabProps) {
   const [configSuccess, setConfigSuccess] = useState(false);
 
   const updateProjectMutation = useUpdateProjectMutation(project.id);
-  const { data: configData, isLoading: isConfigLoading } = useProjectConfigQuery(
-    project.id
-  );
+  const { data: configData, isLoading: isConfigLoading } =
+    useProjectConfigQuery(project.id);
   const updateConfigMutation = useUpdateConfigMutation(project.id);
 
   const currentJsonText =
@@ -58,7 +64,9 @@ export function ProjectSettingsTab({ project }: ProjectSettingsTabProps) {
         },
       });
     } catch {
-      setJsonError("Định dạng JSON không hợp lệ. Vui lòng kiểm tra lại cấu trúc cú pháp.");
+      setJsonError(
+        "Định dạng JSON không hợp lệ. Vui lòng kiểm tra lại cấu trúc cú pháp."
+      );
     }
   };
 
@@ -72,7 +80,7 @@ export function ProjectSettingsTab({ project }: ProjectSettingsTabProps) {
         <CardContent>
           <form onSubmit={handleInfoSubmit} className="space-y-4">
             {infoSuccess && (
-              <div className="p-3 text-xs rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <div className="rounded-md border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-600 dark:text-emerald-400">
                 Đã lưu thông tin dự án thành công!
               </div>
             )}
@@ -96,7 +104,7 @@ export function ProjectSettingsTab({ project }: ProjectSettingsTabProps) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 text-sm rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
               />
             </div>
 
@@ -122,12 +130,12 @@ export function ProjectSettingsTab({ project }: ProjectSettingsTabProps) {
           ) : (
             <form onSubmit={handleConfigSubmit} className="space-y-4">
               {configSuccess && (
-                <div className="p-3 text-xs rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <div className="rounded-md border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-600 dark:text-emerald-400">
                   Đã cập nhật cấu hình JSON thành công!
                 </div>
               )}
               {jsonError && (
-                <div className="p-3 text-xs rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                <div className="rounded-md border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-600 dark:text-rose-400">
                   {jsonError}
                 </div>
               )}
@@ -140,12 +148,15 @@ export function ProjectSettingsTab({ project }: ProjectSettingsTabProps) {
                   value={currentJsonText}
                   onChange={(e) => setJsonText(e.target.value)}
                   rows={8}
-                  className="w-full font-mono text-xs p-3 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-950 text-emerald-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-slate-950 p-3 font-mono text-xs text-emerald-400 focus:outline-none focus:ring-2 dark:border-slate-800"
                 />
               </div>
 
               <div className="flex justify-end">
-                <Button type="submit" isLoading={updateConfigMutation.isPending}>
+                <Button
+                  type="submit"
+                  isLoading={updateConfigMutation.isPending}
+                >
                   Lưu cấu hình JSON
                 </Button>
               </div>

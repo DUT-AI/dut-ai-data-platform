@@ -1,7 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui";
 import { Category } from "../types/ontology";
 import { useDeleteCategoryMutation } from "../hooks/use-ontologies";
 import { CategoryFormModal } from "./category-form-modal";
@@ -46,13 +52,18 @@ export function CategoryTreeView({
 
   const handleDeleteCategory = (catId: string, catName: string) => {
     if (
-      confirm(`Bạn có chắc chắn muốn xóa nhãn "${catName}" và các thuộc tính liên quan?`)
+      confirm(
+        `Bạn có chắc chắn muốn xóa nhãn "${catName}" và các thuộc tính liên quan?`
+      )
     ) {
       deleteMutation.mutate(catId);
     }
   };
 
-  const renderCategoryNode = (node: Category & { children?: Category[] }, depth = 0) => {
+  const renderCategoryNode = (
+    node: Category & { children?: Category[] },
+    depth = 0
+  ) => {
     const isSelected = selectedCategoryId === node.id;
 
     return (
@@ -60,27 +71,25 @@ export function CategoryTreeView({
         <div
           onClick={() => onSelectCategory(node)}
           style={{ paddingLeft: `${depth * 16 + 12}px` }}
-          className={`flex items-center justify-between py-2 pr-3 rounded-md cursor-pointer text-sm transition-colors border ${
+          className={`flex cursor-pointer items-center justify-between rounded-md border py-2 pr-3 text-sm transition-colors ${
             isSelected
               ? "bg-primary-500/10 border-primary-500/30 text-primary-600 font-semibold"
-              : "hover:bg-slate-100 dark:hover:bg-slate-800/60 border-transparent text-slate-700 dark:text-slate-300"
+              : "border-transparent text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/60"
           }`}
         >
           <div className="flex items-center gap-2 overflow-hidden">
             <span
-              className="w-3.5 h-3.5 rounded-full shrink-0"
+              className="h-3.5 w-3.5 shrink-0 rounded-full"
               style={{ backgroundColor: node.color }}
             />
-            <span className="truncate">
-              {node.display_name || node.name}
-            </span>
-            <span className="text-xs font-mono text-slate-400 shrink-0">
+            <span className="truncate">{node.display_name || node.name}</span>
+            <span className="shrink-0 font-mono text-xs text-slate-400">
               ({node.name})
             </span>
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+          <div className="flex shrink-0 items-center gap-1">
+            <span className="rounded bg-slate-200/60 px-1.5 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-400">
               {node.attributes.length} attrs
             </span>
 
@@ -94,7 +103,7 @@ export function CategoryTreeView({
                     setDefaultParentId(node.id);
                     setIsModalOpen(true);
                   }}
-                  className="p-1 hover:text-primary-600 text-xs"
+                  className="hover:text-primary-600 p-1 text-xs"
                 >
                   + Sub
                 </button>
@@ -105,7 +114,7 @@ export function CategoryTreeView({
                     setEditingCategory(node);
                     setIsModalOpen(true);
                   }}
-                  className="p-1 hover:text-amber-600 text-xs"
+                  className="p-1 text-xs hover:text-amber-600"
                 >
                   Sửa
                 </button>
@@ -115,7 +124,7 @@ export function CategoryTreeView({
                     e.stopPropagation();
                     handleDeleteCategory(node.id, node.name);
                   }}
-                  className="p-1 hover:text-rose-600 text-xs"
+                  className="p-1 text-xs hover:text-rose-600"
                 >
                   Xóa
                 </button>
@@ -128,7 +137,10 @@ export function CategoryTreeView({
         {node.children && node.children.length > 0 && (
           <div className="space-y-1">
             {node.children.map((child) =>
-              renderCategoryNode(child as Category & { children?: Category[] }, depth + 1)
+              renderCategoryNode(
+                child as Category & { children?: Category[] },
+                depth + 1
+              )
             )}
           </div>
         )}
@@ -137,8 +149,8 @@ export function CategoryTreeView({
   };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+    <Card className="flex h-full flex-col">
+      <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
         <CardTitle className="text-base">
           Cấu trúc Nhãn ({categories.length})
         </CardTitle>
@@ -156,10 +168,11 @@ export function CategoryTreeView({
         )}
       </CardHeader>
 
-      <CardContent className="p-3 flex-1 overflow-y-auto space-y-1">
+      <CardContent className="flex-1 space-y-1 overflow-y-auto p-3">
         {categories.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-400">
-            Chưa có nhãn nào. Hãy nhấn nút &quot;+ Thêm Nhãn Root&quot; để khởi tạo.
+            Chưa có nhãn nào. Hãy nhấn nút &quot;+ Thêm Nhãn Root&quot; để khởi
+            tạo.
           </div>
         ) : (
           categoryTree.map((node) => renderCategoryNode(node))

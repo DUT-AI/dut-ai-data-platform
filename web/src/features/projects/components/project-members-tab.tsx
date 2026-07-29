@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui";
 import { ProjectMemberRole } from "../types/project";
 import {
   useProjectMembersQuery,
@@ -31,7 +38,10 @@ export function ProjectMembersTab({ projectId }: ProjectMembersTabProps) {
     }
   };
 
-  const roleBadges: Record<string, { label: string; variant: "default" | "secondary" | "success" | "outline" }> = {
+  const roleBadges: Record<
+    string,
+    { label: string; variant: "default" | "secondary" | "success" | "outline" }
+  > = {
     owner: { label: "OWNER", variant: "default" },
     admin: { label: "ADMIN", variant: "success" },
     annotator: { label: "ANNOTATOR", variant: "secondary" },
@@ -44,8 +54,9 @@ export function ProjectMembersTab({ projectId }: ProjectMembersTabProps) {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Thành viên dự án ({members?.length || 0})</CardTitle>
-            <p className="text-xs text-slate-500 mt-1">
-              Quản lý danh sách người dùng và phân quyền hạn tương ứng trong dự án.
+            <p className="mt-1 text-xs text-slate-500">
+              Quản lý danh sách người dùng và phân quyền hạn tương ứng trong dự
+              án.
             </p>
           </div>
           <Button onClick={() => setIsInviteOpen(true)} size="sm">
@@ -65,7 +76,7 @@ export function ProjectMembersTab({ projectId }: ProjectMembersTabProps) {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500 uppercase">
+                <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase text-slate-500 dark:border-slate-800 dark:bg-slate-900">
                   <tr>
                     <th className="px-6 py-3">Thành viên (User ID)</th>
                     <th className="px-6 py-3">Vai trò (Role)</th>
@@ -78,14 +89,16 @@ export function ProjectMembersTab({ projectId }: ProjectMembersTabProps) {
                   {members.map((m) => (
                     <tr
                       key={m.id}
-                      className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors"
+                      className="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-900/50"
                     >
                       <td className="px-6 py-4 font-mono font-medium text-slate-900 dark:text-slate-100">
                         {m.user_id}
                       </td>
                       <td className="px-6 py-4">
                         {m.role === "owner" ? (
-                          <Badge variant={roleBadges[m.role]?.variant || "secondary"}>
+                          <Badge
+                            variant={roleBadges[m.role]?.variant || "secondary"}
+                          >
                             {roleBadges[m.role]?.label || m.role}
                           </Badge>
                         ) : (
@@ -97,7 +110,7 @@ export function ProjectMembersTab({ projectId }: ProjectMembersTabProps) {
                                 e.target.value as ProjectMemberRole
                               )
                             }
-                            className="px-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium"
+                            className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-medium dark:border-slate-700 dark:bg-slate-800"
                           >
                             <option value="admin">Admin</option>
                             <option value="annotator">Annotator</option>
@@ -106,8 +119,8 @@ export function ProjectMembersTab({ projectId }: ProjectMembersTabProps) {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                           Hoạt động
                         </span>
                       </td>
@@ -122,7 +135,7 @@ export function ProjectMembersTab({ projectId }: ProjectMembersTabProps) {
                             variant="destructive"
                             size="sm"
                             onClick={() => handleRemoveMember(m.id, m.user_id)}
-                            className="h-7 text-xs px-2.5"
+                            className="h-7 px-2.5 text-xs"
                           >
                             Xóa
                           </Button>

@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui";
 import { Attribute, Category } from "../types/ontology";
 import { useDeleteAttributeMutation } from "../hooks/use-ontologies";
 import { AttributeFormModal } from "./attribute-form-modal";
@@ -24,11 +31,12 @@ export function AttributeEditor({
 
   if (!category) {
     return (
-      <Card className="h-full flex items-center justify-center p-8 text-center text-slate-500">
+      <Card className="flex h-full items-center justify-center p-8 text-center text-slate-500">
         <div>
           <p className="text-sm font-medium">Chưa chọn nhãn nào</p>
-          <p className="text-xs text-slate-400 mt-1">
-            Vui lòng chọn một Category ở cây bên trái để xem và biên tập thuộc tính.
+          <p className="mt-1 text-xs text-slate-400">
+            Vui lòng chọn một Category ở cây bên trái để xem và biên tập thuộc
+            tính.
           </p>
         </div>
       </Card>
@@ -50,18 +58,16 @@ export function AttributeEditor({
   };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+    <Card className="flex h-full flex-col">
+      <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
         <div className="flex items-center gap-3">
           <span
-            className="w-4 h-4 rounded-full"
+            className="h-4 w-4 rounded-full"
             style={{ backgroundColor: category.color }}
           />
           <div>
-            <CardTitle>
-              {category.display_name || category.name}
-            </CardTitle>
-            <p className="text-xs font-mono text-slate-500 mt-0.5">
+            <CardTitle>{category.display_name || category.name}</CardTitle>
+            <p className="mt-0.5 font-mono text-xs text-slate-500">
               code: {category.name}
             </p>
           </div>
@@ -80,7 +86,7 @@ export function AttributeEditor({
         )}
       </CardHeader>
 
-      <CardContent className="p-4 flex-1 overflow-y-auto space-y-3">
+      <CardContent className="flex-1 space-y-3 overflow-y-auto p-4">
         {category.attributes.length === 0 ? (
           <div className="p-6 text-center text-xs text-slate-400">
             Chưa có thuộc tính nào cho nhãn này.
@@ -89,7 +95,7 @@ export function AttributeEditor({
           category.attributes.map((attr) => (
             <div
               key={attr.id}
-              className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 space-y-2 hover:border-slate-300 transition-colors"
+              className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/50 p-3 transition-colors hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/50"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -102,14 +108,15 @@ export function AttributeEditor({
                     </span>
                   )}
                   <span
-                    className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border uppercase ${
-                      typeBadgeColors[attr.type] || "bg-slate-100 text-slate-700"
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                      typeBadgeColors[attr.type] ||
+                      "bg-slate-100 text-slate-700"
                     }`}
                   >
                     {attr.type}
                   </span>
                   {attr.required && (
-                    <Badge variant="destructive" className="text-[10px] py-0">
+                    <Badge variant="destructive" className="py-0 text-[10px]">
                       Required
                     </Badge>
                   )}
@@ -122,13 +129,13 @@ export function AttributeEditor({
                         setEditingAttr(attr);
                         setIsModalOpen(true);
                       }}
-                      className="text-xs text-primary-600 hover:underline px-1.5 py-0.5"
+                      className="text-primary-600 px-1.5 py-0.5 text-xs hover:underline"
                     >
                       Sửa
                     </button>
                     <button
                       onClick={() => handleDelete(attr.id, attr.name)}
-                      className="text-xs text-rose-600 hover:underline px-1.5 py-0.5"
+                      className="px-1.5 py-0.5 text-xs text-rose-600 hover:underline"
                     >
                       Xóa
                     </button>
@@ -145,13 +152,13 @@ export function AttributeEditor({
               {/* Enum Allowed Values Display */}
               {attr.type === "enum" && Array.isArray(attr.allowed_values) && (
                 <div className="flex flex-wrap gap-1 pt-1">
-                  <span className="text-[11px] text-slate-500 self-center">
+                  <span className="self-center text-[11px] text-slate-500">
                     Options:
                   </span>
                   {attr.allowed_values.map((v) => (
                     <span
                       key={v}
-                      className="px-1.5 py-0.5 text-[11px] font-mono rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      className="rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] dark:border-slate-700 dark:bg-slate-800"
                     >
                       {v}
                     </span>

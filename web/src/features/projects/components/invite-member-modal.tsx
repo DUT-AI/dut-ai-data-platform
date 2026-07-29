@@ -26,7 +26,8 @@ export function InviteMemberModal({
   onClose,
 }: InviteMemberModalProps) {
   const [userId, setUserId] = useState("");
-  const [role, setRole] = useState<Exclude<ProjectMemberRole, "owner">>("annotator");
+  const [role, setRole] =
+    useState<Exclude<ProjectMemberRole, "owner">>("annotator");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const addMemberMutation = useAddMemberMutation(projectId);
@@ -60,13 +61,14 @@ export function InviteMemberModal({
         <DialogHeader>
           <DialogTitle>Mời thành viên vào dự án</DialogTitle>
           <DialogDescription>
-            Nhập User ID để phân quyền thành viên tham gia gán nhãn hoặc quản lý dự án.
+            Nhập User ID để phân quyền thành viên tham gia gán nhãn hoặc quản lý
+            dự án.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           {errorMsg && (
-            <div className="p-3 text-xs rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+            <div className="rounded-md border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-600 dark:text-rose-400">
               {errorMsg}
             </div>
           )}
@@ -92,11 +94,15 @@ export function InviteMemberModal({
               onChange={(e) =>
                 setRole(e.target.value as Exclude<ProjectMemberRole, "owner">)
               }
-              className="w-full px-3 py-2 text-sm rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
             >
               <option value="admin">Admin — Quản trị dự án & thành viên</option>
-              <option value="annotator">Annotator — Người thực hiện gán nhãn</option>
-              <option value="reviewer">Reviewer — Kiểm định & duyệt nhãn</option>
+              <option value="annotator">
+                Annotator — Người thực hiện gán nhãn
+              </option>
+              <option value="reviewer">
+                Reviewer — Kiểm định & duyệt nhãn
+              </option>
             </select>
           </div>
 

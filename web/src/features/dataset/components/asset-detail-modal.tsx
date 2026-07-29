@@ -214,4 +214,3 @@ function AssetDetailContent({
     </DialogContent>
   );
 }
-

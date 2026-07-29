@@ -28,7 +28,9 @@ export function OntologyEditorView({
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null
   );
-  const [activeSubTab, setActiveSubTab] = useState<"builder" | "setup">("builder");
+  const [activeSubTab, setActiveSubTab] = useState<"builder" | "setup">(
+    "builder"
+  );
 
   const activeVersionId = selectedVersionId || versions[0]?.id || "";
 
@@ -146,7 +148,7 @@ export function OntologyEditorView({
 
       {/* Subtabs for Visual Builder vs Labeling Setup */}
       {versionDetail && (
-        <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+        <div className="flex gap-2 border-b border-slate-200 pb-2 dark:border-slate-800">
           <button
             onClick={() => setActiveSubTab("builder")}
             className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all ${

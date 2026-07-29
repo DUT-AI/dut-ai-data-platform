@@ -37,7 +37,8 @@ const TEMPLATE_CATEGORIES: CategoryTemplates[] = [
       {
         id: "cv_bbox",
         title: "Object Detection with Bounding Boxes",
-        description: "Label objects in images using rectangular bounding boxes.",
+        description:
+          "Label objects in images using rectangular bounding boxes.",
         icon: "🖼️",
         xml: "",
       },
@@ -58,7 +59,8 @@ const TEMPLATE_CATEGORIES: CategoryTemplates[] = [
       {
         id: "cv_ocr",
         title: "Optical Character Recognition (OCR)",
-        description: "Transcribe text blocks and associate them with bounding boxes.",
+        description:
+          "Transcribe text blocks and associate them with bounding boxes.",
         icon: "📝",
         xml: "",
       },
@@ -70,7 +72,8 @@ const TEMPLATE_CATEGORIES: CategoryTemplates[] = [
       {
         id: "nlp_ner",
         title: "Named Entity Recognition (NER)",
-        description: "Extract named entities (People, Orgs, Locations) from text.",
+        description:
+          "Extract named entities (People, Orgs, Locations) from text.",
         icon: "🔤",
         xml: "",
       },
@@ -97,7 +100,10 @@ const TEMPLATE_CATEGORIES: CategoryTemplates[] = [
   },
 ];
 
-const DEFAULT_LABELS_FOR_TEMPLATES: Record<string, { value: string; color: string }[]> = {
+const DEFAULT_LABELS_FOR_TEMPLATES: Record<
+  string,
+  { value: string; color: string }[]
+> = {
   cv_bbox: [
     { value: "Person", color: "#EF4444" },
     { value: "Car", color: "#3B82F6" },
@@ -130,7 +136,10 @@ const DEFAULT_LABELS_FOR_TEMPLATES: Record<string, { value: string; color: strin
   audio_transcribe: [],
 };
 
-function generateXmlFromTemplate(templateId: string, labels: { value: string; color: string }[]): string {
+function generateXmlFromTemplate(
+  templateId: string,
+  labels: { value: string; color: string }[]
+): string {
   switch (templateId) {
     case "cv_bbox":
       return `<View>
@@ -226,11 +235,16 @@ export function LabelingSetupView({
   initialXml,
   isEditable,
 }: LabelingSetupViewProps) {
-  const [activeCategory, setActiveCategory] = useState<string>("Computer Vision");
+  const [activeCategory, setActiveCategory] =
+    useState<string>("Computer Vision");
   const [customXml, setCustomXml] = useState<string>(initialXml || "");
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
+    null
+  );
   const [labels, setLabels] = useState<{ value: string; color: string }[]>([]);
-  const [activeColorPickerIdx, setActiveColorPickerIdx] = useState<number | null>(null);
+  const [activeColorPickerIdx, setActiveColorPickerIdx] = useState<
+    number | null
+  >(null);
 
   const updateMutation = useUpdateOntologyVersionMutation(versionId);
 
@@ -241,13 +255,17 @@ export function LabelingSetupView({
     setCustomXml(initialXml || "");
     if (initialXml) {
       if (initialXml.includes("RectangleLabels")) {
-        const tpl = TEMPLATE_CATEGORIES[0].templates.find((t) => t.id === "cv_bbox");
+        const tpl = TEMPLATE_CATEGORIES[0].templates.find(
+          (t) => t.id === "cv_bbox"
+        );
         if (tpl) {
           setSelectedTemplate(tpl);
           setLabels(parseLabelsFromXml(initialXml));
         }
       } else if (initialXml.includes("PolygonLabels")) {
-        const tpl = TEMPLATE_CATEGORIES[0].templates.find((t) => t.id === "cv_polygon");
+        const tpl = TEMPLATE_CATEGORIES[0].templates.find(
+          (t) => t.id === "cv_polygon"
+        );
         if (tpl) {
           setSelectedTemplate(tpl);
           setLabels(parseLabelsFromXml(initialXml));
@@ -257,9 +275,12 @@ export function LabelingSetupView({
   }
 
   // Derive XML config dynamically on render
-  const currentXml = activeCategory === "Custom XML Template"
-    ? customXml
-    : (selectedTemplate ? generateXmlFromTemplate(selectedTemplate.id, labels) : "");
+  const currentXml =
+    activeCategory === "Custom XML Template"
+      ? customXml
+      : selectedTemplate
+        ? generateXmlFromTemplate(selectedTemplate.id, labels)
+        : "";
 
   const categoriesList = [
     ...TEMPLATE_CATEGORIES.map((c) => c.category),
@@ -297,7 +318,10 @@ export function LabelingSetupView({
   // Label List Handlers
   const handleAddLabel = () => {
     const defaultColor = PRESET_COLORS[labels.length % PRESET_COLORS.length];
-    setLabels([...labels, { value: `New Label ${labels.length + 1}`, color: defaultColor }]);
+    setLabels([
+      ...labels,
+      { value: `New Label ${labels.length + 1}`, color: defaultColor },
+    ]);
   };
 
   const handleRemoveLabel = (idx: number) => {
@@ -328,7 +352,8 @@ export function LabelingSetupView({
             Labeling Setup (Cấu hình bộ nhãn Label Studio)
           </h3>
           <p className="text-xs text-slate-500">
-            Chọn mẫu cấu hình dựng sẵn, chỉnh sửa nhãn trực quan hoặc dán cấu hình XML của riêng bạn.
+            Chọn mẫu cấu hình dựng sẵn, chỉnh sửa nhãn trực quan hoặc dán cấu
+            hình XML của riêng bạn.
           </p>
         </div>
         <Button
@@ -341,9 +366,9 @@ export function LabelingSetupView({
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 p-4">
+      <div className="grid grid-cols-1 gap-6 p-4 md:grid-cols-12">
         {/* Left Category Sidebar */}
-        <div className="md:col-span-3 space-y-1">
+        <div className="space-y-1 md:col-span-3">
           {categoriesList.map((cat) => (
             <button
               key={cat}
@@ -364,7 +389,7 @@ export function LabelingSetupView({
         </div>
 
         {/* Right Content Panel */}
-        <div className="md:col-span-9 space-y-6">
+        <div className="space-y-6 md:col-span-9">
           {activeCategory === "Custom XML Template" ? (
             <div className="space-y-4">
               <div className="flex flex-col space-y-1">
@@ -372,7 +397,8 @@ export function LabelingSetupView({
                   Nhập cấu hình XML tùy chỉnh
                 </span>
                 <span className="text-[11px] text-slate-500">
-                  Bạn có thể copy trực tiếp mã XML từ giao diện của Label Studio và dán vào đây.
+                  Bạn có thể copy trực tiếp mã XML từ giao diện của Label Studio
+                  và dán vào đây.
                 </span>
               </div>
               <textarea
@@ -392,7 +418,7 @@ export function LabelingSetupView({
                   <Card
                     key={tpl.id}
                     onClick={() => handleSelectTemplate(tpl)}
-                    className={`flex flex-col justify-between overflow-hidden border p-4 transition-all hover:shadow-md cursor-pointer ${
+                    className={`flex cursor-pointer flex-col justify-between overflow-hidden border p-4 transition-all hover:shadow-md ${
                       selectedTemplate?.id === tpl.id
                         ? "border-blue-500 bg-blue-50/20 dark:border-blue-400 dark:bg-blue-950/20"
                         : "border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950"
@@ -414,97 +440,108 @@ export function LabelingSetupView({
               </div>
 
               {/* Visual Labels Editor (Only show if a template is selected and it supports labels/choices) */}
-              {selectedTemplate && selectedTemplate.id !== "audio_transcribe" && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-850 dark:bg-slate-900/60 space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-2 dark:border-slate-800">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                        Chỉnh sửa danh sách nhãn (Labels Editor)
-                      </h4>
-                      <p className="text-[10px] text-slate-500">
-                        Đổi tên nhãn hoặc thêm/xóa các nhãn gán bên dưới.
-                      </p>
+              {selectedTemplate &&
+                selectedTemplate.id !== "audio_transcribe" && (
+                  <div className="dark:border-slate-850 space-y-4 rounded-lg border border-slate-200 bg-slate-50/50 p-4 dark:bg-slate-900/60">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-2 dark:border-slate-800">
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                          Chỉnh sửa danh sách nhãn (Labels Editor)
+                        </h4>
+                        <p className="text-[10px] text-slate-500">
+                          Đổi tên nhãn hoặc thêm/xóa các nhãn gán bên dưới.
+                        </p>
+                      </div>
+                      {isEditable && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleAddLabel}
+                          className="h-8 border-slate-200 text-[11px]"
+                        >
+                          ➕ Thêm nhãn mới
+                        </Button>
+                      )}
                     </div>
-                    {isEditable && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleAddLabel}
-                        className="h-8 border-slate-200 text-[11px]"
-                      >
-                        ➕ Thêm nhãn mới
-                      </Button>
-                    )}
-                  </div>
 
-                  {/* List of active labels */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {labels.map((lbl, idx) => (
-                      <div
-                        key={idx}
-                        className="relative flex items-center space-x-2 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950"
-                      >
-                        {/* Color dot button */}
-                        <div className="relative">
-                          <button
-                            onClick={() => isEditable && setActiveColorPickerIdx(activeColorPickerIdx === idx ? null : idx)}
+                    {/* List of active labels */}
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {labels.map((lbl, idx) => (
+                        <div
+                          key={idx}
+                          className="relative flex items-center space-x-2 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950"
+                        >
+                          {/* Color dot button */}
+                          <div className="relative">
+                            <button
+                              onClick={() =>
+                                isEditable &&
+                                setActiveColorPickerIdx(
+                                  activeColorPickerIdx === idx ? null : idx
+                                )
+                              }
+                              disabled={!isEditable}
+                              style={{ backgroundColor: lbl.color }}
+                              className="h-5 w-5 cursor-pointer rounded-full border border-slate-300 shadow-sm"
+                              title="Chọn màu"
+                            />
+
+                            {/* Quick color picker popup */}
+                            {activeColorPickerIdx === idx && (
+                              <div className="absolute left-0 top-6 z-50 grid w-24 grid-cols-3 gap-1 rounded border border-slate-200 bg-white p-1.5 shadow-md dark:border-slate-700 dark:bg-slate-900">
+                                {PRESET_COLORS.map((color) => (
+                                  <button
+                                    key={color}
+                                    onClick={() =>
+                                      handleLabelColorChange(idx, color)
+                                    }
+                                    style={{ backgroundColor: color }}
+                                    className="border-slate-350 h-5 w-5 rounded border transition-transform hover:scale-110"
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Input Field */}
+                          <input
+                            type="text"
+                            value={lbl.value}
+                            onChange={(e) =>
+                              handleLabelTextChange(idx, e.target.value)
+                            }
                             disabled={!isEditable}
-                            style={{ backgroundColor: lbl.color }}
-                            className="h-5 w-5 rounded-full border border-slate-300 shadow-sm cursor-pointer"
-                            title="Chọn màu"
+                            className="dark:text-slate-250 flex-1 bg-transparent text-xs font-medium text-slate-800 focus:outline-none"
+                            placeholder="Tên nhãn..."
                           />
 
-                          {/* Quick color picker popup */}
-                          {activeColorPickerIdx === idx && (
-                            <div className="absolute left-0 top-6 z-50 grid grid-cols-3 gap-1 rounded border border-slate-200 bg-white p-1.5 shadow-md dark:border-slate-700 dark:bg-slate-900 w-24">
-                              {PRESET_COLORS.map((color) => (
-                                <button
-                                  key={color}
-                                  onClick={() => handleLabelColorChange(idx, color)}
-                                  style={{ backgroundColor: color }}
-                                  className="h-5 w-5 rounded border border-slate-350 hover:scale-110 transition-transform"
-                                />
-                              ))}
-                            </div>
+                          {/* Delete button */}
+                          {isEditable && (
+                            <button
+                              onClick={() => handleRemoveLabel(idx)}
+                              className="px-1.5 text-sm font-bold text-slate-400 hover:text-rose-600"
+                              title="Xóa nhãn này"
+                            >
+                              ×
+                            </button>
                           )}
                         </div>
-
-                        {/* Input Field */}
-                        <input
-                          type="text"
-                          value={lbl.value}
-                          onChange={(e) => handleLabelTextChange(idx, e.target.value)}
-                          disabled={!isEditable}
-                          className="flex-1 bg-transparent text-xs font-medium text-slate-800 focus:outline-none dark:text-slate-250"
-                          placeholder="Tên nhãn..."
-                        />
-
-                        {/* Delete button */}
-                        {isEditable && (
-                          <button
-                            onClick={() => handleRemoveLabel(idx)}
-                            className="text-slate-400 hover:text-rose-600 font-bold text-sm px-1.5"
-                            title="Xóa nhãn này"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  {labels.length === 0 && (
-                    <div className="py-6 text-center text-xs text-slate-500 font-mono">
-                      Chưa có nhãn nào. Bấm &quot;Thêm nhãn mới&quot; để thiết lập.
+                      ))}
                     </div>
-                  )}
-                </div>
-              )}
+
+                    {labels.length === 0 && (
+                      <div className="py-6 text-center font-mono text-xs text-slate-500">
+                        Chưa có nhãn nào. Bấm &quot;Thêm nhãn mới&quot; để thiết
+                        lập.
+                      </div>
+                    )}
+                  </div>
+                )}
 
               {/* XML Preview of selected or custom configuration */}
               {selectedTemplate && (
                 <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2 dark:border-slate-800">
                     <span className="text-[11px] font-semibold text-slate-900 dark:text-slate-200">
                       Xem trước cấu hình XML hiện tại (XML Config Preview):
                     </span>
@@ -512,7 +549,7 @@ export function LabelingSetupView({
                       Auto Generated
                     </span>
                   </div>
-                  <pre className="mt-3 overflow-x-auto font-mono text-[11px] leading-relaxed text-slate-700 dark:text-slate-400 max-h-48">
+                  <pre className="mt-3 max-h-48 overflow-x-auto font-mono text-[11px] leading-relaxed text-slate-700 dark:text-slate-400">
                     {currentXml}
                   </pre>
                 </div>

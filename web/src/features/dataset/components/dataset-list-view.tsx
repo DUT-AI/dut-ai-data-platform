@@ -69,7 +69,7 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
       <div className="space-y-4">
         <button
           onClick={() => setSelectedDatasetId(null)}
-          className="text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+          className="text-xs font-medium text-slate-500 transition-colors hover:text-slate-900 dark:hover:text-slate-100"
         >
           ← Quay lại danh sách Datasets
         </button>
@@ -85,8 +85,9 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Bộ Dữ Liệu Datasets ({datasets?.length || 0})</CardTitle>
-            <p className="text-xs text-slate-500 mt-1">
-              Quản lý danh sách tập tin dữ liệu thô, phiên bản lưu trữ và deduplicate SHA256.
+            <p className="mt-1 text-xs text-slate-500">
+              Quản lý danh sách tập tin dữ liệu thô, phiên bản lưu trữ và
+              deduplicate SHA256.
             </p>
           </div>
           <Button onClick={() => setIsCreateOpen(true)} size="sm">
@@ -100,47 +101,50 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
               Đang tải danh sách Datasets...
             </div>
           ) : !datasets || datasets.length === 0 ? (
-            <div className="p-12 text-center space-y-3">
+            <div className="space-y-3 p-12 text-center">
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Chưa có Dataset nào được tạo
               </p>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                Tạo một Dataset để bắt đầu tải lên tập tin ảnh, video, PDF hay audio cho gán nhãn viên.
+              <p className="mx-auto max-w-sm text-xs text-slate-500">
+                Tạo một Dataset để bắt đầu tải lên tập tin ảnh, video, PDF hay
+                audio cho gán nhãn viên.
               </p>
               <Button onClick={() => setIsCreateOpen(true)} size="sm">
                 Tạo Dataset đầu tiên
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {datasets.map((dataset) => (
                 <div
                   key={dataset.id}
                   onClick={() => setSelectedDatasetId(dataset.id)}
-                  className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-primary-500/50 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-3"
+                  className="hover:border-primary-500/50 flex cursor-pointer flex-col justify-between space-y-3 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+                      <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
                         {dataset.name}
                       </h3>
-                      <span className="text-xs px-2 py-0.5 rounded font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                      <span className="rounded bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                         {dataset.versions?.length || 1} versions
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 line-clamp-2">
+                    <p className="line-clamp-2 text-xs text-slate-500">
                       {dataset.description || "Chưa có mô tả."}
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400">
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-xs text-slate-400 dark:border-slate-800">
                     <span>
                       Tạo ngày:{" "}
                       {dataset.created_at
-                        ? new Date(dataset.created_at).toLocaleDateString("vi-VN")
+                        ? new Date(dataset.created_at).toLocaleDateString(
+                            "vi-VN"
+                          )
                         : "N/A"}
                     </span>
-                    <span className="font-semibold text-primary-600 dark:text-primary-400">
+                    <span className="text-primary-600 dark:text-primary-400 font-semibold">
                       Mở quản lý dữ liệu →
                     </span>
                   </div>
@@ -152,7 +156,10 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
       </Card>
 
       {/* Create Dataset Modal */}
-      <Dialog open={isCreateOpen} onOpenChange={(open) => !open && setIsCreateOpen(false)}>
+      <Dialog
+        open={isCreateOpen}
+        onOpenChange={(open) => !open && setIsCreateOpen(false)}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Tạo bộ Dữ liệu Dataset mới</DialogTitle>
@@ -163,7 +170,7 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
 
           <form onSubmit={handleCreateSubmit} className="space-y-4 py-2">
             {errorMsg && (
-              <div className="p-3 text-xs rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+              <div className="rounded-md border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-600 dark:text-rose-400">
                 {errorMsg}
               </div>
             )}
@@ -189,7 +196,7 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 text-sm rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
               />
             </div>
 

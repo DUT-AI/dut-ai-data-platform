@@ -1,10 +1,5 @@
 export type ResultType =
-  | "bbox"
-  | "polygon"
-  | "text_region"
-  | "caption"
-  | "classification"
-  | "ner";
+  "bbox" | "polygon" | "text_region" | "caption" | "classification" | "ner";
 
 export type RevisionSource = "human" | "machine";
 

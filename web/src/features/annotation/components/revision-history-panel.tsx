@@ -16,7 +16,7 @@ export function RevisionHistoryPanel({
 }: RevisionHistoryPanelProps) {
   if (revisions.length === 0) {
     return (
-      <div className="p-4 text-xs text-slate-500 text-center">
+      <div className="p-4 text-center text-xs text-slate-500">
         Chưa có lịch sử phiên bản sửa nhãn.
       </div>
     );
@@ -30,7 +30,7 @@ export function RevisionHistoryPanel({
         </h4>
       </div>
 
-      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+      <div className="max-h-[400px] space-y-2 overflow-y-auto pr-1">
         {revisions.map((rev) => {
           const isSelected = rev.id === selectedRevisionId;
 
@@ -38,20 +38,20 @@ export function RevisionHistoryPanel({
             <Card
               key={rev.id}
               onClick={() => onSelectRevision(rev.id)}
-              className={`p-3 cursor-pointer transition-all border ${
+              className={`cursor-pointer border p-3 transition-all ${
                 isSelected
                   ? "border-primary-500 bg-primary-500/10 dark:bg-primary-500/10"
                   : "border-slate-800 bg-slate-900 hover:border-slate-700"
               }`}
             >
-              <div className="flex items-center justify-between mb-1">
+              <div className="mb-1 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-xs font-bold text-slate-200">
                     r{rev.revision_number}
                   </span>
                   <Badge
                     variant={rev.source === "human" ? "default" : "secondary"}
-                    className="text-[9px] py-0 px-1 font-mono uppercase"
+                    className="px-1 py-0 font-mono text-[9px] uppercase"
                   >
                     {rev.source}
                   </Badge>

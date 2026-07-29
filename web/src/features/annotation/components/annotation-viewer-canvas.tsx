@@ -35,20 +35,20 @@ export function AnnotationViewerCanvas({
   };
 
   return (
-    <div className="relative w-full h-full min-h-[350px] bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center border border-slate-800">
+    <div className="relative flex h-full min-h-[350px] w-full items-center justify-center overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
       {imageUrl ? (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={imageUrl}
           alt="Asset Preview"
-          className="max-h-[500px] w-auto object-contain select-none"
+          className="max-h-[500px] w-auto select-none object-contain"
         />
       ) : (
-        <div className="text-slate-600 text-sm">Preview không khả dụng</div>
+        <div className="text-sm text-slate-600">Preview không khả dụng</div>
       )}
 
       {/* SVG Overlay layer for bounding boxes and polygons */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none">
+      <svg className="pointer-events-none absolute inset-0 h-full w-full">
         {results.map((res, idx) => {
           const color = getColor(res.category_id, idx);
           const labelStr = getLabel(res.category_id);
@@ -78,7 +78,7 @@ export function AnnotationViewerCanvas({
                 <foreignObject x={posX} y={posY} width="120" height="24">
                   <div
                     style={{ backgroundColor: color }}
-                    className="inline-block px-1.5 py-0.5 text-[10px] font-bold text-white rounded-br shadow truncate"
+                    className="inline-block truncate rounded-br px-1.5 py-0.5 text-[10px] font-bold text-white shadow"
                   >
                     {labelStr}
                   </div>

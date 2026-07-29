@@ -6,7 +6,9 @@ import {
   CreateRevisionRequest,
 } from "../types/annotation";
 
-export async function listAssetAnnotations(assetId: string): Promise<Annotation[]> {
+export async function listAssetAnnotations(
+  assetId: string
+): Promise<Annotation[]> {
   const { data } = await api.get<Annotation[]>(
     `/assets/${assetId}/annotations`
   );
@@ -16,9 +18,7 @@ export async function listAssetAnnotations(assetId: string): Promise<Annotation[
 export async function getAnnotationDetail(
   annotationId: string
 ): Promise<Annotation> {
-  const { data } = await api.get<Annotation>(
-    `/annotations/${annotationId}`
-  );
+  const { data } = await api.get<Annotation>(`/annotations/${annotationId}`);
   return data;
 }
 
@@ -43,10 +43,7 @@ export async function getRevisionDetail(
 export async function createAnnotation(
   request: CreateAnnotationRequest
 ): Promise<Annotation> {
-  const { data } = await api.post<Annotation>(
-    "/annotations",
-    request
-  );
+  const { data } = await api.post<Annotation>("/annotations", request);
   return data;
 }
 

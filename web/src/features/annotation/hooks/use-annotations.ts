@@ -7,14 +7,19 @@ import {
   listAnnotationRevisions,
   listAssetAnnotations,
 } from "../api/annotation-api";
-import { CreateAnnotationRequest, CreateRevisionRequest } from "../types/annotation";
+import {
+  CreateAnnotationRequest,
+  CreateRevisionRequest,
+} from "../types/annotation";
 
 export const annotationKeys = {
   all: ["annotations"] as const,
-  asset: (assetId: string) => [...annotationKeys.all, "asset", assetId] as const,
+  asset: (assetId: string) =>
+    [...annotationKeys.all, "asset", assetId] as const,
   detail: (id: string) => [...annotationKeys.all, "detail", id] as const,
   revisions: (id: string) => [...annotationKeys.all, "revisions", id] as const,
-  revisionDetail: (id: string) => [...annotationKeys.all, "revision", id] as const,
+  revisionDetail: (id: string) =>
+    [...annotationKeys.all, "revision", id] as const,
 };
 
 export function useAssetAnnotationsQuery(assetId: string) {
@@ -54,20 +59,31 @@ export function useCreateAnnotationMutation(assetId: string) {
   return useMutation({
     mutationFn: (request: CreateAnnotationRequest) => createAnnotation(request),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: annotationKeys.asset(assetId) });
+      queryClient.invalidateQueries({
+        queryKey: annotationKeys.asset(assetId),
+      });
     },
   });
 }
 
-export function useCreateRevisionMutation(annotationId: string, assetId: string) {
+export function useCreateRevisionMutation(
+  annotationId: string,
+  assetId: string
+) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: CreateRevisionRequest) =>
       createRevision(annotationId, request),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: annotationKeys.detail(annotationId) });
-      queryClient.invalidateQueries({ queryKey: annotationKeys.revisions(annotationId) });
-      queryClient.invalidateQueries({ queryKey: annotationKeys.asset(assetId) });
+      queryClient.invalidateQueries({
+        queryKey: annotationKeys.detail(annotationId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: annotationKeys.revisions(annotationId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: annotationKeys.asset(assetId),
+      });
     },
   });
 }

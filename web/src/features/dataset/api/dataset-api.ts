@@ -44,7 +44,9 @@ export const datasetApi = {
     return response.data;
   },
 
-  getDatasetVersionDetail: async (versionId: string): Promise<DatasetVersion> => {
+  getDatasetVersionDetail: async (
+    versionId: string
+  ): Promise<DatasetVersion> => {
     const response = await api.get<DatasetVersion>(
       `/dataset-versions/${versionId}`
     );

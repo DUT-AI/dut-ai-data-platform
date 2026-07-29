@@ -64,7 +64,10 @@ export function DatasetVersionView({
 
   const handleCreateVersion = () => {
     const nextVerStr = `v1.${versions.length}.0`;
-    const newVer = prompt("Nhập tên phiên bản mới (Dataset Version):", nextVerStr);
+    const newVer = prompt(
+      "Nhập tên phiên bản mới (Dataset Version):",
+      nextVerStr
+    );
     if (newVer && newVer.trim()) {
       createVersionMutation.mutate(
         { version: newVer.trim() },
@@ -92,25 +95,28 @@ export function DatasetVersionView({
   return (
     <div className="space-y-6">
       {/* Header Version Bar */}
-      <Card className="p-4 bg-slate-900 text-slate-50 border-slate-800">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <Card className="border-slate-800 bg-slate-900 p-4 text-slate-50">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div className="flex items-center gap-3">
             <div className="flex flex-col">
-              <span className="text-xs text-slate-400 font-medium">Dataset</span>
+              <span className="text-xs font-medium text-slate-400">
+                Dataset
+              </span>
               <h2 className="text-lg font-bold">{dataset.name}</h2>
             </div>
 
             {/* Version Selector Dropdown */}
-            <div className="flex items-center gap-2 ml-4">
+            <div className="ml-4 flex items-center gap-2">
               <span className="text-xs text-slate-400">Version:</span>
               <select
                 value={activeVersionId}
                 onChange={(e) => setSelectedVersionId(e.target.value)}
-                className="px-3 py-1.5 text-xs font-semibold rounded bg-slate-800 border border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="focus:ring-primary-500 rounded border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2"
               >
                 {versions.map((v) => (
                   <option key={v.id} value={v.id}>
-                    {v.version} ({v.status.toUpperCase()}) - {v.asset_count} assets
+                    {v.version} ({v.status.toUpperCase()}) - {v.asset_count}{" "}
+                    assets
                   </option>
                 ))}
               </select>
@@ -118,7 +124,7 @@ export function DatasetVersionView({
               <button
                 onClick={handleCreateVersion}
                 title="Tạo phiên bản mới"
-                className="px-2 py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300"
+                className="rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-300 hover:bg-slate-700"
               >
                 + Version
               </button>
@@ -127,9 +133,7 @@ export function DatasetVersionView({
             {versionDetail && (
               <Badge
                 variant={
-                  versionDetail.status === "published"
-                    ? "success"
-                    : "secondary"
+                  versionDetail.status === "published" ? "success" : "secondary"
                 }
               >
                 {versionDetail.status.toUpperCase()}
@@ -140,10 +144,10 @@ export function DatasetVersionView({
           {/* Header Action Buttons & View Toggle */}
           <div className="flex items-center gap-2">
             {/* View Mode Toggle */}
-            <div className="flex items-center rounded-lg bg-slate-800 p-0.5 border border-slate-700">
+            <div className="flex items-center rounded-lg border border-slate-700 bg-slate-800 p-0.5">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
                   viewMode === "grid"
                     ? "bg-slate-700 text-white shadow"
                     : "text-slate-400 hover:text-slate-200"
@@ -153,7 +157,7 @@ export function DatasetVersionView({
               </button>
               <button
                 onClick={() => setViewMode("table")}
-                className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
                   viewMode === "table"
                     ? "bg-slate-700 text-white shadow"
                     : "text-slate-400 hover:text-slate-200"

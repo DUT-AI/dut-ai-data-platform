@@ -31,14 +31,16 @@ export function AssetListTable({
   };
 
   const handleRemove = (assetId: string, filename: string) => {
-    if (confirm(`Bạn có chắc muốn xóa tập tin "${filename}" khỏi phiên bản này?`)) {
+    if (
+      confirm(`Bạn có chắc muốn xóa tập tin "${filename}" khỏi phiên bản này?`)
+    ) {
       removeMutation.mutate(assetId);
     }
   };
 
   if (assets.length === 0) {
     return (
-      <div className="p-12 text-center border-2 border-dashed rounded-xl border-slate-200 dark:border-slate-800 text-slate-400">
+      <div className="rounded-xl border-2 border-dashed border-slate-200 p-12 text-center text-slate-400 dark:border-slate-800">
         Chưa có tập tin dữ liệu nào trong phiên bản này.
       </div>
     );
@@ -48,7 +50,7 @@ export function AssetListTable({
     <>
       <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
         <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
-          <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 uppercase font-semibold text-slate-700 dark:text-slate-300">
+          <thead className="border-b border-slate-200 bg-slate-50 font-semibold uppercase text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
             <tr>
               <th className="px-4 py-3">Tên tập tin (Filename)</th>
               <th className="px-4 py-3">MIME Type</th>
@@ -58,14 +60,14 @@ export function AssetListTable({
               <th className="px-4 py-3 text-right">Thao tác</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-950">
+          <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-950">
             {assets.map((asset) => (
               <tr
                 key={asset.id}
                 onClick={() => setSelectedAsset(asset)}
-                className="hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
+                className="cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/50"
               >
-                <td className="px-4 py-3 font-mono font-medium text-slate-900 dark:text-slate-100 max-w-xs truncate">
+                <td className="max-w-xs truncate px-4 py-3 font-mono font-medium text-slate-900 dark:text-slate-100">
                   {asset.filename}
                 </td>
                 <td className="px-4 py-3 font-mono">

@@ -63,7 +63,7 @@ export function RevisionDiffView({
   }, [currentRevision, previousRevision]);
 
   return (
-    <Card className="p-3 bg-slate-900 border-slate-800 space-y-2 text-xs">
+    <Card className="space-y-2 border-slate-800 bg-slate-900 p-3 text-xs">
       <div className="flex items-center justify-between font-semibold text-slate-300">
         <span>So sánh Revision (Diff)</span>
         {previousRevision ? (
@@ -85,7 +85,10 @@ export function RevisionDiffView({
         <Badge variant="destructive" className="text-[10px]">
           -{diffSummary.removed} Đã xóa
         </Badge>
-        <Badge variant="outline" className="text-[10px] text-slate-400 border-slate-700">
+        <Badge
+          variant="outline"
+          className="border-slate-700 text-[10px] text-slate-400"
+        >
           {diffSummary.unchanged} Không đổi
         </Badge>
       </div>

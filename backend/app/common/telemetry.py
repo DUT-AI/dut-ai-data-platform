@@ -28,7 +28,7 @@ def setup_telemetry(app: FastAPI, service_name: str = "dut-ai-data-platform") ->
 
         provider = TracerProvider(resource=resource)
 
-        # Attempt to load OTLP Exporter if configured, otherwise use ConsoleSpanExporter in dev
+        # Attempt to load OTLP Exporter if configured, otherwise use ConsoleSpanExporter in dev if enabled
         otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
         if otlp_endpoint:
             try:
@@ -41,11 +41,19 @@ def setup_telemetry(app: FastAPI, service_name: str = "dut-ai-data-platform") ->
                 logger.info(f"OpenTelemetry OTLP Exporter enabled -> {otlp_endpoint}")
             except Exception as e:
                 logger.warning(f"Failed to initialize OTLPSpanExporter: {e}")
-                provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+                if os.getenv("ENABLE_OTEL_CONSOLE", "false").lower() == "true":
+                    provider.add_span_processor(
+                        BatchSpanProcessor(ConsoleSpanExporter())
+                    )
         else:
-            # Console Exporter for local debugging
-            provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
-            logger.info("OpenTelemetry Console Span Exporter enabled for local dev")
+            # Console Exporter for local debugging (disabled by default to avoid console pollution)
+            if os.getenv("ENABLE_OTEL_CONSOLE", "false").lower() == "true":
+                provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+                logger.info("OpenTelemetry Console Span Exporter enabled for local dev")
+            else:
+                logger.debug(
+                    "OpenTelemetry Console Span Exporter is disabled (set ENABLE_OTEL_CONSOLE=true to enable)"
+                )
 
         trace.set_tracer_provider(provider)
 

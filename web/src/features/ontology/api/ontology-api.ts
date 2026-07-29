@@ -108,4 +108,15 @@ export const ontologyApi = {
   deleteAttribute: async (attributeId: string): Promise<void> => {
     await api.delete(`/attributes/${attributeId}`);
   },
+
+  updateOntologyVersion: async (
+    versionId: string,
+    payload: { raw_label_config: string | null }
+  ): Promise<OntologyVersion> => {
+    const response = await api.put<OntologyVersion>(
+      `/ontologies/versions/${versionId}`,
+      payload
+    );
+    return response.data;
+  },
 };

@@ -101,4 +101,9 @@ class OntologyVersionResponseDTO(BaseModel):
     status: str
     created_at: datetime | None = None
     published_at: datetime | None = None
+    raw_label_config: str | None = None
     categories: list[CategoryResponseDTO] = Field(default_factory=list)
+
+
+class OntologyVersionUpdateDTO(BaseModel):
+    raw_label_config: str | None = None

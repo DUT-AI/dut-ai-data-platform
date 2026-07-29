@@ -67,6 +67,7 @@ def _map_version_to_entity(model: OntologyVersionModel) -> OntologyVersionEntity
         status=model.status,
         created_at=model.created_at,
         published_at=model.published_at,
+        raw_label_config=model.raw_label_config,
         categories=cats,
     )
 
@@ -154,6 +155,7 @@ class OntologyRepository(IOntologyRepository):
         if existing:
             existing.status = version.status
             existing.published_at = version.published_at
+            existing.raw_label_config = version.raw_label_config
             await self.session.flush()
             await self.session.refresh(existing)
             return _map_version_to_entity(existing)
@@ -164,6 +166,7 @@ class OntologyRepository(IOntologyRepository):
             version=version.version,
             status=version.status,
             published_at=version.published_at,
+            raw_label_config=version.raw_label_config,
         )
         self.session.add(model)
         await self.session.flush()

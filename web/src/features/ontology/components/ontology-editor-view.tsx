@@ -10,6 +10,7 @@ import {
 } from "../hooks/use-ontologies";
 import { CategoryTreeView } from "./category-tree-view";
 import { AttributeEditor } from "./attribute-editor";
+import { LabelingSetupView } from "./labeling-setup-view";
 
 interface OntologyEditorViewProps {
   ontology: Ontology;
@@ -27,6 +28,7 @@ export function OntologyEditorView({
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null
   );
+  const [activeSubTab, setActiveSubTab] = useState<"builder" | "setup">("builder");
 
   const activeVersionId = selectedVersionId || versions[0]?.id || "";
 
@@ -142,33 +144,67 @@ export function OntologyEditorView({
         </div>
       </Card>
 
+      {/* Subtabs for Visual Builder vs Labeling Setup */}
+      {versionDetail && (
+        <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+          <button
+            onClick={() => setActiveSubTab("builder")}
+            className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
+              activeSubTab === "builder"
+                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            }`}
+          >
+            🛠️ Visual Schema Builder
+          </button>
+          <button
+            onClick={() => setActiveSubTab("setup")}
+            className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
+              activeSubTab === "setup"
+                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            }`}
+          >
+            ⚙️ Labeling Setup (LS Templates)
+          </button>
+        </div>
+      )}
+
       {/* Editor Body Grid */}
       {isLoading ? (
         <div className="p-12 text-center text-sm text-slate-500">
           Đang tải cấu trúc Ontology...
         </div>
       ) : versionDetail ? (
-        <div className="grid min-h-[500px] grid-cols-1 gap-6 md:grid-cols-12">
-          {/* Left Panel: Category Tree */}
-          <div className="md:col-span-5">
-            <CategoryTreeView
-              versionId={versionDetail.id}
-              categories={versionDetail.categories}
-              selectedCategoryId={selectedCategoryId}
-              onSelectCategory={(cat) => setSelectedCategoryId(cat.id)}
-              isEditable={isEditable}
-            />
-          </div>
+        activeSubTab === "setup" ? (
+          <LabelingSetupView
+            versionId={versionDetail.id}
+            initialXml={versionDetail.raw_label_config}
+            isEditable={isEditable}
+          />
+        ) : (
+          <div className="grid min-h-[500px] grid-cols-1 gap-6 md:grid-cols-12">
+            {/* Left Panel: Category Tree */}
+            <div className="md:col-span-5">
+              <CategoryTreeView
+                versionId={versionDetail.id}
+                categories={versionDetail.categories}
+                selectedCategoryId={selectedCategoryId}
+                onSelectCategory={(cat) => setSelectedCategoryId(cat.id)}
+                isEditable={isEditable}
+              />
+            </div>
 
-          {/* Right Panel: Attributes Editor */}
-          <div className="md:col-span-7">
-            <AttributeEditor
-              versionId={versionDetail.id}
-              category={selectedCategory}
-              isEditable={isEditable}
-            />
+            {/* Right Panel: Attributes Editor */}
+            <div className="md:col-span-7">
+              <AttributeEditor
+                versionId={versionDetail.id}
+                category={selectedCategory}
+                isEditable={isEditable}
+              />
+            </div>
           </div>
-        </div>
+        )
       ) : null}
     </div>
   );

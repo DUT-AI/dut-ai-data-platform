@@ -11,6 +11,7 @@ from app.ontology.application.use_cases import (
     PublishOntologyVersionUseCase,
     UpdateAttributeUseCase,
     UpdateCategoryUseCase,
+    UpdateOntologyVersionUseCase,
 )
 from app.ontology.infrastructure.repository import OntologyRepository
 from dishka import Provider, Scope, provide
@@ -39,3 +40,4 @@ class OntologyProvider(Provider):
     create_attribute_uc = provide(CreateAttributeUseCase)
     update_attribute_uc = provide(UpdateAttributeUseCase)
     delete_attribute_uc = provide(DeleteAttributeUseCase)
+    update_ontology_version_uc = provide(UpdateOntologyVersionUseCase)

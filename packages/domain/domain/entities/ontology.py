@@ -39,6 +39,7 @@ class OntologyVersionEntity:
     status: str = "draft"  # draft, published, archived
     created_at: datetime | None = None
     published_at: datetime | None = None
+    raw_label_config: str | None = None
     categories: list[CategoryEntity] = field(default_factory=list)
 
     @property

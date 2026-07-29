@@ -176,3 +176,17 @@ export function useDeleteAttributeMutation(versionId: string) {
     },
   });
 }
+
+export function useUpdateOntologyVersionMutation(versionId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { raw_label_config: string | null }) =>
+      ontologyApi.updateOntologyVersion(versionId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ONTOLOGY_KEYS.versionDetail(versionId),
+      });
+    },
+  });
+}

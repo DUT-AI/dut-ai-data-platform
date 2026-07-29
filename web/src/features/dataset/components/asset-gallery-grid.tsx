@@ -124,6 +124,7 @@ export function AssetGalleryGrid({
         onClose={() => setSelectedAsset(null)}
         projectId={projectId}
         ontologyVersionId={ontologyVersionId}
+        datasetVersionId={versionId}
       />
     </>
   );

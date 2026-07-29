@@ -34,6 +34,7 @@ export interface OntologyVersion {
   status: VersionStatus;
   created_at: string | null;
   published_at: string | null;
+  raw_label_config: string | null;
   categories: Category[];
 }
 

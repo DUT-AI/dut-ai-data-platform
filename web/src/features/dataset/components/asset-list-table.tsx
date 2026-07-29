@@ -125,6 +125,7 @@ export function AssetListTable({
         onClose={() => setSelectedAsset(null)}
         projectId={projectId}
         ontologyVersionId={ontologyVersionId}
+        datasetVersionId={versionId}
       />
     </>
   );

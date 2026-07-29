@@ -11,6 +11,7 @@ from app.ontology.application.dtos import (
     OntologyVersionCreateDTO,
     OntologyVersionResponseDTO,
 )
+from app.ontology.application.dtos.ontology import OntologyVersionUpdateDTO
 from app.ontology.application.use_cases import (
     CloneOntologyVersionUseCase,
     CreateAttributeUseCase,
@@ -24,6 +25,7 @@ from app.ontology.application.use_cases import (
     PublishOntologyVersionUseCase,
     UpdateAttributeUseCase,
     UpdateCategoryUseCase,
+    UpdateOntologyVersionUseCase,
 )
 from app.project.presentation.deps import require_project_role
 from dishka.integrations.fastapi import FromDishka, inject
@@ -214,3 +216,18 @@ async def delete_attribute(
 ):
     """Delete an attribute specification."""
     await use_case.execute(attribute_id)
+
+
+@router.put(
+    "/api/v1/ontologies/versions/{version_id}",
+    response_model=OntologyVersionResponseDTO,
+)
+@inject
+async def update_ontology_version(
+    version_id: str,
+    data: OntologyVersionUpdateDTO,
+    use_case: FromDishka[UpdateOntologyVersionUseCase],
+    current_user: CurrentUser,
+):
+    """Update custom Label Studio config/setup for an ontology version."""
+    return await use_case.execute(version_id, data.raw_label_config)

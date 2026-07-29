@@ -11,6 +11,10 @@ import {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const isAnnotateScreen = pathname?.includes("/annotate/");
+  if (isAnnotateScreen) {
+    return <>{children}</>;
+  }
 
   const navItems = [
     {

@@ -45,6 +45,7 @@ class OntologyVersionModel(BaseModel):
     published_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    raw_label_config: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     ontology: Mapped["OntologyModel"] = relationship(
         "OntologyModel", back_populates="versions"

@@ -52,9 +52,11 @@ class OpenAssetInLabelStudioUseCase:
         presigned_url: str,
         dataset_version_id: str | None = None,
     ) -> OpenInLabelStudioResult:
-        # 1. Lấy Ontology categories để build LS label config
+        # 1. Lấy Ontology categories để build LS label config hoặc dùng raw_label_config nếu có
         ontology_ver = await self.onto_repo.get_version_by_id(ontology_version_id)
-        if ontology_ver and ontology_ver.categories:
+        if ontology_ver and ontology_ver.raw_label_config:
+            label_config = ontology_ver.raw_label_config
+        elif ontology_ver and ontology_ver.categories:
             label_config = self.ls_adapter.convert_ontology_to_label_config(
                 ontology_ver.categories
             )

@@ -34,6 +34,9 @@ from .update_attribute import (
 from .update_category import (
     UpdateCategoryUseCase,
 )
+from .update_ontology_version import (
+    UpdateOntologyVersionUseCase,
+)
 
 __all__ = [
     "CloneOntologyVersionUseCase",
@@ -48,4 +51,5 @@ __all__ = [
     "PublishOntologyVersionUseCase",
     "UpdateAttributeUseCase",
     "UpdateCategoryUseCase",
+    "UpdateOntologyVersionUseCase",
 ]

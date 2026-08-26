@@ -11,7 +11,12 @@ interface DialogProps {
   className?: string;
 }
 
-export function Dialog({ open, onOpenChange, children, className }: DialogProps) {
+export function Dialog({
+  open,
+  onOpenChange,
+  children,
+  className,
+}: DialogProps) {
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && open) {

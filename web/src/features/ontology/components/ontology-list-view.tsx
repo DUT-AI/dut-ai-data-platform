@@ -15,11 +15,11 @@ import {
   DialogTitle,
   Input,
 } from "@/components/ui";
-import { Ontology } from "../types/ontology";
+import { Ontology } from "../types";
 import {
   useCreateOntologyMutation,
   useProjectOntologiesQuery,
-} from "../hooks/use-ontologies";
+} from "../hooks";
 import { OntologyEditorView } from "./ontology-editor-view";
 
 interface OntologyListViewProps {

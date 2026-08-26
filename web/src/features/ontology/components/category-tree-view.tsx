@@ -8,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui";
-import { Category } from "../types/ontology";
-import { useDeleteCategoryMutation } from "../hooks/use-ontologies";
+import { Category } from "../types";
+import { useDeleteCategoryMutation } from "../hooks";
 import { CategoryFormModal } from "./category-form-modal";
 
 interface CategoryTreeViewProps {

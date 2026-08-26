@@ -9,7 +9,7 @@ import {
   Ontology,
   OntologyCreatePayload,
   OntologyVersion,
-} from "../types/ontology";
+} from "../types";
 
 export const ontologyApi = {
   getProjectOntologies: async (projectId: string): Promise<Ontology[]> => {

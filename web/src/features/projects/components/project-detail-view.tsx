@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Badge, Button } from "@/components/ui";
-import { useProjectQuery } from "../hooks/use-projects";
-import { PROJECT_TYPE_OPTIONS } from "../types/project";
+import { useProjectQuery } from "../hooks";
+import { PROJECT_TYPE_OPTIONS } from "../types";
 import { ProjectOverviewTab } from "./project-overview-tab";
 import { ProjectMembersTab } from "./project-members-tab";
 import { ProjectSettingsTab } from "./project-settings-tab";

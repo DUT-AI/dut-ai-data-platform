@@ -11,11 +11,11 @@ import {
   DialogTitle,
   Input,
 } from "@/components/ui";
-import { Attribute, AttributeType } from "../types/ontology";
+import { Attribute, AttributeType } from "../types";
 import {
   useCreateAttributeMutation,
   useUpdateAttributeMutation,
-} from "../hooks/use-ontologies";
+} from "../hooks";
 
 interface AttributeFormModalProps {
   versionId: string;

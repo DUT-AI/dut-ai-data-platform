@@ -9,12 +9,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui";
-import { ProjectMemberRole } from "../types/project";
+import { ProjectMemberRole } from "../types";
 import {
   useProjectMembersQuery,
   useRemoveMemberMutation,
   useUpdateMemberRoleMutation,
-} from "../hooks/use-projects";
+} from "../hooks";
 import { InviteMemberModal } from "./invite-member-modal";
 
 interface ProjectMembersTabProps {

@@ -15,11 +15,11 @@ import {
   DialogTitle,
   Input,
 } from "@/components/ui";
-import { Dataset } from "../types/dataset";
+import { Dataset } from "../types";
 import {
   useCreateDatasetMutation,
   useProjectDatasetsQuery,
-} from "../hooks/use-datasets";
+} from "../hooks";
 import { DatasetVersionView } from "./dataset-version-view";
 
 interface DatasetListViewProps {

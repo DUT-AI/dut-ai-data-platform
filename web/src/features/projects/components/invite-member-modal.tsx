@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
   Dialog,
@@ -10,9 +12,19 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
 } from "@/components/ui";
-import { ProjectMemberRole } from "../types/project";
-import { useAddMemberMutation } from "../hooks/use-projects";
+import {
+  ProjectMemberRole,
+  inviteMemberSchema,
+  InviteMemberFormValues,
+} from "../types";
+import { useAddMemberMutation } from "../hooks";
 
 interface InviteMemberModalProps {
   projectId: string;
@@ -25,24 +37,24 @@ export function InviteMemberModal({
   isOpen,
   onClose,
 }: InviteMemberModalProps) {
-  const [userId, setUserId] = useState("");
-  const [role, setRole] =
-    useState<Exclude<ProjectMemberRole, "owner">>("annotator");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
   const addMemberMutation = useAddMemberMutation(projectId);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userId.trim()) return;
+  const form = useForm<InviteMemberFormValues>({
+    resolver: zodResolver(inviteMemberSchema),
+    defaultValues: {
+      user_id: "",
+      role: "annotator",
+    },
+  });
 
+  const onSubmit = (values: InviteMemberFormValues) => {
     setErrorMsg(null);
     addMemberMutation.mutate(
-      { user_id: userId.trim(), role },
+      { user_id: values.user_id.trim(), role: values.role },
       {
         onSuccess: () => {
-          setUserId("");
-          setRole("annotator");
+          form.reset();
           onClose();
         },
         onError: (err: unknown) => {
@@ -55,71 +67,85 @@ export function InviteMemberModal({
     );
   };
 
+  const handleClose = () => {
+    form.reset();
+    setErrorMsg(null);
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Mời thành viên vào dự án</DialogTitle>
+          <DialogTitle>Thêm thành viên vào dự án</DialogTitle>
           <DialogDescription>
-            Nhập User ID để phân quyền thành viên tham gia gán nhãn hoặc quản lý
-            dự án.
+            Nhập ID người dùng và phân quyền tương ứng cho dự án này.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          {errorMsg && (
-            <div className="rounded-md border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-600 dark:text-rose-400">
-              {errorMsg}
-            </div>
-          )}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {errorMsg && (
+              <div className="rounded-md bg-rose-50 p-3 text-xs font-medium text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
+                {errorMsg}
+              </div>
+            )}
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              User ID <span className="text-rose-500">*</span>
-            </label>
-            <Input
-              placeholder="VD: user_12345 hoặc Email ID"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              required
+            <FormField
+              control={form.control}
+              name="user_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>User ID / Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="01JN..."
+                      disabled={addMemberMutation.isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Vai trò (Role) <span className="text-rose-500">*</span>
-            </label>
-            <select
-              value={role}
-              onChange={(e) =>
-                setRole(e.target.value as Exclude<ProjectMemberRole, "owner">)
-              }
-              className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
-            >
-              <option value="admin">Admin — Quản trị dự án & thành viên</option>
-              <option value="annotator">
-                Annotator — Người thực hiện gán nhãn
-              </option>
-              <option value="reviewer">
-                Reviewer — Kiểm định & duyệt nhãn
-              </option>
-            </select>
-          </div>
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Vai trò (Role)</FormLabel>
+                  <FormControl>
+                    <select
+                      {...field}
+                      disabled={addMemberMutation.isPending}
+                      className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:ring-offset-slate-950"
+                    >
+                      <option value="annotator">Annotator (Gán nhãn)</option>
+                      <option value="reviewer">Reviewer (Kiểm duyệt)</option>
+                      <option value="admin">Admin (Quản trị viên)</option>
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <DialogFooter className="pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={addMemberMutation.isPending}
-            >
-              Hủy
-            </Button>
-            <Button type="submit" isLoading={addMemberMutation.isPending}>
-              Thêm thành viên
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={addMemberMutation.isPending}
+              >
+                Hủy
+              </Button>
+              <Button type="submit" disabled={addMemberMutation.isPending}>
+                {addMemberMutation.isPending ? "Đang thêm..." : "Thêm thành viên"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

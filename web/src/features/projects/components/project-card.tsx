@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Folder, ArrowRight, Calendar, User } from "lucide-react";
-import { Project, PROJECT_TYPE_OPTIONS } from "../types/project";
+import { Project, PROJECT_TYPE_OPTIONS } from "../types";
 import {
   Badge,
   Card,

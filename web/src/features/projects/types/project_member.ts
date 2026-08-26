@@ -19,7 +19,6 @@ export const projectMemberSchema = z.object({
 
 export type ProjectMember = z.infer<typeof projectMemberSchema>;
 
-
 export const inviteMemberSchema = z.object({
   user_id: z.string().trim().min(1, "Vui lòng nhập User ID hoặc Email"),
   role: z.enum(["admin", "annotator", "reviewer"], {

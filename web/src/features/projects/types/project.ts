@@ -13,7 +13,6 @@ export type ProjectType = z.infer<typeof projectTypeSchema>;
 export const projectStatusSchema = z.enum(["active", "archived"]);
 export type ProjectStatus = z.infer<typeof projectStatusSchema>;
 
-
 export const projectSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -47,7 +46,6 @@ export const updateProjectSchema = z.object({
   status: projectStatusSchema.optional(),
 });
 export type ProjectUpdatePayload = z.infer<typeof updateProjectSchema>;
-
 
 export const projectConfigSchema = z.object({
   project_id: z.string(),

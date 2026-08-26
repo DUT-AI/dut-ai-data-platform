@@ -119,7 +119,7 @@ export function InviteMemberModal({
                     <select
                       {...field}
                       disabled={addMemberMutation.isPending}
-                      className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:ring-offset-slate-950"
+                      className="focus-visible:outline-hidden flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:ring-offset-slate-950"
                     >
                       <option value="annotator">Annotator (Gán nhãn)</option>
                       <option value="reviewer">Reviewer (Kiểm duyệt)</option>
@@ -141,7 +141,9 @@ export function InviteMemberModal({
                 Hủy
               </Button>
               <Button type="submit" disabled={addMemberMutation.isPending}>
-                {addMemberMutation.isPending ? "Đang thêm..." : "Thêm thành viên"}
+                {addMemberMutation.isPending
+                  ? "Đang thêm..."
+                  : "Thêm thành viên"}
               </Button>
             </DialogFooter>
           </form>

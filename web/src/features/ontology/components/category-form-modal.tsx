@@ -12,10 +12,7 @@ import {
   Input,
 } from "@/components/ui";
 import { Category, PRESET_COLORS } from "../types";
-import {
-  useCreateCategoryMutation,
-  useUpdateCategoryMutation,
-} from "../hooks";
+import { useCreateCategoryMutation, useUpdateCategoryMutation } from "../hooks";
 
 interface CategoryFormModalProps {
   versionId: string;

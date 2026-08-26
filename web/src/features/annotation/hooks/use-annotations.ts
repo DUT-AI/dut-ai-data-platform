@@ -7,10 +7,7 @@ import {
   listAnnotationRevisions,
   listAssetAnnotations,
 } from "../api";
-import {
-  CreateAnnotationRequest,
-  CreateRevisionRequest,
-} from "../types";
+import { CreateAnnotationRequest, CreateRevisionRequest } from "../types";
 
 export const annotationKeys = {
   all: ["annotations"] as const,

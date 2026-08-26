@@ -1,9 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { projectMemberApi } from "../api";
-import {
-  ProjectMemberAddPayload,
-  ProjectMemberRole,
-} from "../types";
+import { ProjectMemberAddPayload, ProjectMemberRole } from "../types";
 
 export const PROJECT_MEMBER_KEYS = {
   all: ["project-members"] as const,

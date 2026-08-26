@@ -16,10 +16,7 @@ import {
   Input,
 } from "@/components/ui";
 import { Dataset } from "../types";
-import {
-  useCreateDatasetMutation,
-  useProjectDatasetsQuery,
-} from "../hooks";
+import { useCreateDatasetMutation, useProjectDatasetsQuery } from "../hooks";
 import { DatasetVersionView } from "./dataset-version-view";
 
 interface DatasetListViewProps {

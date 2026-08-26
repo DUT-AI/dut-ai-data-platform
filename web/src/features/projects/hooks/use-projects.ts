@@ -1,9 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { projectApi } from "../api";
-import {
-  ProjectCreatePayload,
-  ProjectUpdatePayload,
-} from "../types";
+import { ProjectCreatePayload, ProjectUpdatePayload } from "../types";
 
 export const PROJECT_KEYS = {
   all: ["projects"] as const,

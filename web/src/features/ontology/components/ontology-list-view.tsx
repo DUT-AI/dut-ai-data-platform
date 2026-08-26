@@ -16,10 +16,7 @@ import {
   Input,
 } from "@/components/ui";
 import { Ontology } from "../types";
-import {
-  useCreateOntologyMutation,
-  useProjectOntologiesQuery,
-} from "../hooks";
+import { useCreateOntologyMutation, useProjectOntologiesQuery } from "../hooks";
 import { OntologyEditorView } from "./ontology-editor-view";
 
 interface OntologyListViewProps {

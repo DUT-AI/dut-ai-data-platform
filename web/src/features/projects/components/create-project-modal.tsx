@@ -331,7 +331,9 @@ export function CreateProjectModal({
                       </button>
                     </div>
 
-                    <span className="text-sm font-medium text-slate-400">or</span>
+                    <span className="text-sm font-medium text-slate-400">
+                      or
+                    </span>
 
                     <input
                       type="file"
@@ -607,8 +609,8 @@ export function CreateProjectModal({
                             Custom Label Studio XML Config
                           </h3>
                           <p className="mt-1 text-sm text-slate-500">
-                            Write or paste your custom XML labeling configuration
-                            below:
+                            Write or paste your custom XML labeling
+                            configuration below:
                           </p>
                         </div>
                         <textarea

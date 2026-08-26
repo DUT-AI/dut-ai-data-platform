@@ -1,9 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { datasetApi } from "../api";
-import {
-  DatasetCreatePayload,
-  DatasetVersionCreatePayload,
-} from "../types";
+import { DatasetCreatePayload, DatasetVersionCreatePayload } from "../types";
 
 export const DATASET_KEYS = {
   all: ["datasets"] as const,

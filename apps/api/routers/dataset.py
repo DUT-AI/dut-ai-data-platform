@@ -1,6 +1,8 @@
 from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 
+from apps.api.deps.auth import CurrentUser
+from apps.api.deps.roles import require_project_role
 from modules.dataset.dtos.dataset_dtos import (
     AssetDownloadUrlResponseDTO,
     AssetResponseDTO,
@@ -23,17 +25,15 @@ from modules.dataset.use_cases import (
     RemoveVersionAssetUseCase,
     UploadVersionAssetsUseCase,
 )
-from modules.identity.presentation.deps import CurrentUser
-from modules.project.presentation.deps import require_project_role
 
 router = APIRouter(tags=["Datasets"])
-dataset_router = router
 
 
 @router.post(
     "/api/v1/projects/{project_id}/datasets",
     response_model=DatasetResponseDTO,
     status_code=status.HTTP_201_CREATED,
+    summary="Create a new dataset for a project",
 )
 @inject
 async def create_dataset(
@@ -43,13 +43,13 @@ async def create_dataset(
     use_case: FromDishka[CreateDatasetUseCase],
     role: str = Depends(require_project_role("owner", "admin")),
 ):
-    dataset = await use_case.execute(project_id, payload)
-    return dataset
+    return await use_case.execute(project_id, payload)
 
 
 @router.get(
     "/api/v1/projects/{project_id}/datasets",
     response_model=list[DatasetResponseDTO],
+    summary="List all datasets of a project",
 )
 @inject
 async def list_project_datasets(
@@ -60,13 +60,13 @@ async def list_project_datasets(
         require_project_role("owner", "admin", "annotator", "reviewer")
     ),
 ):
-    datasets = await use_case.execute(project_id)
-    return datasets
+    return await use_case.execute(project_id)
 
 
 @router.get(
     "/api/v1/datasets/{dataset_id}",
     response_model=DatasetResponseDTO,
+    summary="Get dataset details",
 )
 @inject
 async def get_dataset_detail(
@@ -74,14 +74,14 @@ async def get_dataset_detail(
     current_user: CurrentUser,
     use_case: FromDishka[GetDatasetDetailUseCase],
 ):
-    dataset = await use_case.execute(dataset_id)
-    return dataset
+    return await use_case.execute(dataset_id)
 
 
 @router.post(
     "/api/v1/datasets/{dataset_id}/versions",
     response_model=DatasetVersionResponseDTO,
     status_code=status.HTTP_201_CREATED,
+    summary="Create a new dataset version",
 )
 @inject
 async def create_dataset_version(
@@ -90,13 +90,13 @@ async def create_dataset_version(
     current_user: CurrentUser,
     use_case: FromDishka[CreateDatasetVersionUseCase],
 ):
-    version = await use_case.execute(dataset_id, payload)
-    return version
+    return await use_case.execute(dataset_id, payload)
 
 
 @router.get(
     "/api/v1/dataset-versions/{version_id}",
     response_model=DatasetVersionResponseDTO,
+    summary="Get dataset version details",
 )
 @inject
 async def get_dataset_version_detail(
@@ -104,13 +104,13 @@ async def get_dataset_version_detail(
     current_user: CurrentUser,
     use_case: FromDishka[GetDatasetVersionDetailUseCase],
 ):
-    version = await use_case.execute(version_id)
-    return version
+    return await use_case.execute(version_id)
 
 
 @router.get(
     "/api/v1/dataset-versions/{version_id}/assets",
     response_model=list[AssetResponseDTO],
+    summary="List all assets belonging to a dataset version",
 )
 @inject
 async def list_version_assets(
@@ -120,14 +120,14 @@ async def list_version_assets(
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
-    assets = await use_case.execute(version_id, limit=limit, offset=offset)
-    return assets
+    return await use_case.execute(version_id, limit=limit, offset=offset)
 
 
 @router.post(
     "/api/v1/dataset-versions/{version_id}/assets",
     response_model=BatchUploadResultDTO,
     status_code=status.HTTP_201_CREATED,
+    summary="Batch upload assets to a draft dataset version",
 )
 @inject
 async def upload_version_assets(
@@ -142,13 +142,13 @@ async def upload_version_assets(
         filename = f.filename or "unnamed_file"
         file_tuples.append((filename, content, f.content_type))
 
-    result = await use_case.execute(version_id, file_tuples)
-    return result
+    return await use_case.execute(version_id, file_tuples)
 
 
 @router.delete(
     "/api/v1/dataset-versions/{version_id}/assets/{asset_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    summary="Remove an asset link from a draft dataset version",
 )
 @inject
 async def remove_version_asset(
@@ -163,6 +163,7 @@ async def remove_version_asset(
 @router.put(
     "/api/v1/dataset-versions/{version_id}/publish",
     response_model=DatasetVersionResponseDTO,
+    summary="Publish a draft dataset version (locking assets)",
 )
 @inject
 async def publish_dataset_version(
@@ -170,13 +171,13 @@ async def publish_dataset_version(
     current_user: CurrentUser,
     use_case: FromDishka[PublishDatasetVersionUseCase],
 ):
-    version = await use_case.execute(version_id)
-    return version
+    return await use_case.execute(version_id)
 
 
 @router.get(
     "/api/v1/assets/{asset_id}",
     response_model=AssetResponseDTO,
+    summary="Get single asset metadata",
 )
 @inject
 async def get_asset_detail(
@@ -184,13 +185,13 @@ async def get_asset_detail(
     current_user: CurrentUser,
     use_case: FromDishka[GetAssetDetailUseCase],
 ):
-    asset = await use_case.execute(asset_id)
-    return asset
+    return await use_case.execute(asset_id)
 
 
 @router.get(
     "/api/v1/assets/{asset_id}/download",
     response_model=AssetDownloadUrlResponseDTO,
+    summary="Get presigned download URL for an asset",
 )
 @inject
 async def get_asset_download_url(
@@ -199,5 +200,4 @@ async def get_asset_download_url(
     use_case: FromDishka[GetAssetDownloadUrlUseCase],
     expires_in_seconds: int = Query(3600, ge=60, le=86400),
 ):
-    result = await use_case.execute(asset_id, expires_in_seconds=expires_in_seconds)
-    return result
+    return await use_case.execute(asset_id, expires_in_seconds=expires_in_seconds)

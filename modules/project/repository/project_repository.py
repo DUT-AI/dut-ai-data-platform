@@ -23,7 +23,11 @@ class SqlProjectRepository(IProjectRepository):
         return model.to_entity() if model else None
 
     async def list_by_user(
-        self, user_id: str, offset: int = 0, limit: int = 20
+        self,
+        user_id: str,
+        offset: int = 0,
+        limit: int = 20,
+        status: str | None = None,
     ) -> Sequence[ProjectEntity]:
         stmt = (
             select(ProjectModel)
@@ -35,9 +39,11 @@ class SqlProjectRepository(IProjectRepository):
                 ProjectMemberModel.user_id == user_id,
                 ProjectMemberModel.status == "active",
             )
-            .offset(offset)
-            .limit(limit)
         )
+        if status:
+            stmt = stmt.where(ProjectModel.status == status)
+
+        stmt = stmt.offset(offset).limit(limit)
         result = await self.session.execute(stmt)
         models = result.scalars().all()
         return [model.to_entity() for model in models]

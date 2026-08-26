@@ -3,6 +3,7 @@ from typing import Any
 from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, Body, status
 
+from apps.api.deps.auth import CurrentUser
 from modules.annotation.dtos.annotation_dtos import (
     AnnotationCreateDTO,
     AnnotationResponseDTO,
@@ -21,10 +22,8 @@ from modules.annotation.use_cases import (
     OpenAssetInLabelStudioUseCase,
     SyncLabelStudioWebhookUseCase,
 )
-from modules.identity.presentation.deps import CurrentUser
 
 router = APIRouter(tags=["Annotations"])
-annotation_router = router
 
 
 # ---------------------------------------------------------------------------
@@ -35,6 +34,7 @@ annotation_router = router
 @router.get(
     "/api/v1/assets/{asset_id}/annotations",
     response_model=list[AnnotationResponseDTO],
+    summary="List all annotations for an asset",
 )
 @inject
 async def list_asset_annotations(
@@ -81,6 +81,7 @@ async def open_asset_in_label_studio(
     "/api/v1/annotations",
     response_model=AnnotationResponseDTO,
     status_code=status.HTTP_201_CREATED,
+    summary="Create a new annotation revision",
 )
 @inject
 async def create_annotation(
@@ -97,6 +98,7 @@ async def create_annotation(
 @router.get(
     "/api/v1/annotations/{annotation_id}",
     response_model=AnnotationResponseDTO,
+    summary="Get annotation details with revisions",
 )
 @inject
 async def get_annotation_detail(
@@ -110,6 +112,7 @@ async def get_annotation_detail(
 @router.get(
     "/api/v1/annotations/{annotation_id}/revisions",
     response_model=list[AnnotationRevisionResponseDTO],
+    summary="List all revisions for an annotation",
 )
 @inject
 async def list_annotation_revisions(
@@ -129,6 +132,7 @@ async def list_annotation_revisions(
     "/api/v1/annotations/{annotation_id}/revisions",
     response_model=AnnotationRevisionResponseDTO,
     status_code=status.HTTP_201_CREATED,
+    summary="Create a new revision for an existing annotation",
 )
 @inject
 async def create_revision(
@@ -146,6 +150,7 @@ async def create_revision(
 @router.get(
     "/api/v1/annotation-revisions/{revision_id}",
     response_model=AnnotationRevisionResponseDTO,
+    summary="Get specific revision details",
 )
 @inject
 async def get_revision_detail(
@@ -165,11 +170,11 @@ async def get_revision_detail(
     "/api/v1/annotations/sync",
     response_model=AnnotationRevisionResponseDTO | None,
     status_code=status.HTTP_200_OK,
+    summary="Webhook endpoint for Label Studio sync",
 )
 @inject
 async def sync_label_studio_webhook(
     payload: dict[str, Any] = Body(...),
     use_case: FromDishka[SyncLabelStudioWebhookUseCase] = None,  # type: ignore
 ):
-    rev = await use_case.execute(payload)
-    return rev
+    return await use_case.execute(payload)

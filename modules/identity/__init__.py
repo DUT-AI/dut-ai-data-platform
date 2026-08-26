@@ -1,17 +1,23 @@
+from modules.identity.client.auth_client import AuthClient
 from modules.identity.di import IdentityProvider
-from modules.identity.presentation.deps import (
-    AdminUser,
-    CurrentUser,
-    get_current_user,
-    require_roles,
+from modules.identity.domain.entities import (
+    AuthPayload,
+    AuthUser,
+    TokenResponse,
+    UserEntity,
 )
-from modules.identity.presentation.router import router as identity_router
+from modules.identity.dtos.auth_dtos import (
+    LoginRequestDTO,
+    LoginResponseDTO,
+)
 
 __all__ = [
-    "AdminUser",
-    "CurrentUser",
+    "AuthClient",
+    "AuthPayload",
+    "AuthUser",
     "IdentityProvider",
-    "get_current_user",
-    "identity_router",
-    "require_roles",
+    "LoginRequestDTO",
+    "LoginResponseDTO",
+    "TokenResponse",
+    "UserEntity",
 ]

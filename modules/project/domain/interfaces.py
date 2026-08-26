@@ -11,7 +11,11 @@ class IProjectRepository(ABC):
 
     @abstractmethod
     async def list_by_user(
-        self, user_id: str, offset: int = 0, limit: int = 20
+        self,
+        user_id: str,
+        offset: int = 0,
+        limit: int = 20,
+        status: str | None = None,
     ) -> Sequence[ProjectEntity]:
         pass
 

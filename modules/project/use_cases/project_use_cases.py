@@ -46,7 +46,9 @@ class GetProjectUseCase:
     def __init__(self, repo: IProjectRepository) -> None:
         self.repo = repo
 
-    async def execute(self, project_id: str, user_id: str) -> ProjectResponseDTO:
+    async def execute(
+        self, project_id: str, user_id: str | None = None
+    ) -> ProjectResponseDTO:
         project = await self.repo.get_by_id(project_id)
         if not project:
             raise NotFoundException(f"Project '{project_id}' not found.")
@@ -58,10 +60,16 @@ class ListUserProjectsUseCase:
         self.repo = repo
 
     async def execute(
-        self, user_id: str, page: int = 1, page_size: int = 20
+        self,
+        user_id: str,
+        page: int = 1,
+        page_size: int = 20,
+        status: str | None = None,
     ) -> list[ProjectResponseDTO]:
         offset = (page - 1) * page_size
-        projects = await self.repo.list_by_user(user_id, offset=offset, limit=page_size)
+        projects = await self.repo.list_by_user(
+            user_id, offset=offset, limit=page_size, status=status
+        )
         return [ProjectResponseDTO.model_validate(p) for p in projects]
 
 

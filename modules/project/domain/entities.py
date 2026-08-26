@@ -1,7 +1,15 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 from core.utils.id_generator import generate_ulid
+
+
+@dataclass
+class ProjectConfigurationEntity:
+    project_id: str
+    id: str = field(default_factory=generate_ulid)
+    settings: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

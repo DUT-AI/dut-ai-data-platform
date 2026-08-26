@@ -1,9 +1,9 @@
 import httpx
 import pytest
 
+from apps.api.deps import get_current_user
 from apps.api.main import app
 from modules.identity.domain.entities import AuthUser
-from modules.identity.presentation.deps import get_current_user
 
 mock_user = AuthUser(
     id=101,

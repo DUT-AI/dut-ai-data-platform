@@ -12,6 +12,9 @@ class TokenResponseDTO(BaseModel):
     token_type: str = "bearer"
 
 
+LoginResponseDTO = TokenResponseDTO
+
+
 class AuthUserResponseDTO(BaseModel):
     id: int
     name: str

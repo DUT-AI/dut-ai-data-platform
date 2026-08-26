@@ -13,6 +13,9 @@ class OntologyVersionCreateDTO(BaseModel):
     version: str = Field(..., min_length=1, max_length=50)
 
 
+CloneVersionDTO = OntologyVersionCreateDTO
+
+
 class CategoryCreateDTO(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     display_name: str | None = None
@@ -90,6 +93,9 @@ class OntologyVersionResponseDTO(BaseModel):
     published_at: datetime | None = None
     raw_label_config: str | None = None
     categories: list[CategoryResponseDTO] = Field(default_factory=list)
+
+
+OntologyVersionDetailResponseDTO = OntologyVersionResponseDTO
 
 
 class OntologyResponseDTO(BaseModel):

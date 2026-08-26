@@ -13,9 +13,6 @@ from modules.annotation.models.annotation import (
     AnnotationResultModel,
     AnnotationRevisionModel,
 )
-from modules.annotation.presentation.router import (
-    annotation_router,
-)
 
 __all__ = [
     "AnnotationEntity",
@@ -27,5 +24,4 @@ __all__ = [
     "AnnotationRevisionModel",
     "IAnnotationRepository",
     "IToolAdapter",
-    "annotation_router",
 ]

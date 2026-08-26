@@ -6,22 +6,16 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from apps.api.di import setup_di
 from apps.api.health import check_database, check_minio, check_redis
+from apps.api.routers import (
+    annotation_router,
+    dataset_router,
+    identity_router,
+    ontology_router,
+    project_router,
+)
 from core.config import settings
 from core.exceptions import setup_exception_handlers
 from core.telemetry import setup_telemetry
-from modules.annotation.presentation.router import (
-    annotation_router,
-)
-from modules.dataset.presentation.router import dataset_router
-from modules.identity.presentation.router import (
-    router as identity_router,
-)
-from modules.ontology.presentation.router import (
-    router as ontology_router,
-)
-from modules.project.presentation.router import (
-    router as project_router,
-)
 
 app = FastAPI(
     title="DUT AI Data Platform API",
@@ -47,7 +41,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 5. Register Module Routers
+# 5. Register Application Routers
 app.include_router(identity_router)
 app.include_router(project_router)
 app.include_router(ontology_router)

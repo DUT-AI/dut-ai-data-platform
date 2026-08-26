@@ -12,7 +12,6 @@ from modules.ontology.models.ontology import (
     OntologyModel,
     OntologyVersionModel,
 )
-from modules.ontology.presentation.router import router as ontology_router
 
 __all__ = [
     "AttributeEntity",
@@ -25,5 +24,4 @@ __all__ = [
     "OntologyProvider",
     "OntologyVersionEntity",
     "OntologyVersionModel",
-    "ontology_router",
 ]

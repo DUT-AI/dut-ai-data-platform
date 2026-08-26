@@ -1,19 +1,20 @@
 from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, Depends, status
 
-from modules.identity.presentation.deps import CurrentUser
-from modules.ontology.dtos.ontology_dtos import (
+from apps.api.deps.auth import CurrentUser
+from apps.api.deps.roles import require_project_role
+from modules.ontology.dtos import (
     AttributeCreateDTO,
     AttributeResponseDTO,
-    AttributeUpdateDTO,
     CategoryCreateDTO,
     CategoryResponseDTO,
     CategoryUpdateDTO,
+    CloneVersionDTO,
     OntologyCreateDTO,
     OntologyResponseDTO,
     OntologyVersionCreateDTO,
+    OntologyVersionDetailResponseDTO,
     OntologyVersionResponseDTO,
-    OntologyVersionUpdateDTO,
 )
 from modules.ontology.use_cases import (
     CloneOntologyVersionUseCase,
@@ -26,209 +27,196 @@ from modules.ontology.use_cases import (
     GetOntologyVersionDetailUseCase,
     ListProjectOntologiesUseCase,
     PublishOntologyVersionUseCase,
-    UpdateAttributeUseCase,
     UpdateCategoryUseCase,
-    UpdateOntologyVersionUseCase,
 )
-from modules.project.presentation.deps import require_project_role
 
-router = APIRouter(tags=["ontologies"])
+router = APIRouter(tags=["Ontology"])
 
 
-# 1. Project Ontologies
+# ---------------------------------------------------------------------------
+# Ontology Level
+# ---------------------------------------------------------------------------
+
+
 @router.post(
     "/api/v1/projects/{project_id}/ontologies",
     response_model=OntologyResponseDTO,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_project_role("admin"))],
+    summary="Create a new ontology schema for a project",
 )
 @inject
 async def create_ontology(
     project_id: str,
     data: OntologyCreateDTO,
+    current_user: CurrentUser,
     use_case: FromDishka[CreateOntologyUseCase],
+    role: str = Depends(require_project_role("owner", "admin")),
 ):
-    """Create a new Ontology and default v1.0.0 draft version."""
     return await use_case.execute(project_id, data)
 
 
 @router.get(
     "/api/v1/projects/{project_id}/ontologies",
     response_model=list[OntologyResponseDTO],
-    dependencies=[Depends(require_project_role("admin", "annotator", "reviewer"))],
+    summary="List all ontologies of a project",
 )
 @inject
 async def list_project_ontologies(
     project_id: str,
+    current_user: CurrentUser,
     use_case: FromDishka[ListProjectOntologiesUseCase],
+    role: str = Depends(
+        require_project_role("owner", "admin", "annotator", "reviewer")
+    ),
 ):
-    """List all ontologies for a given project."""
     return await use_case.execute(project_id)
 
 
-# 2. Ontology Versions
+# ---------------------------------------------------------------------------
+# Version Level
+# ---------------------------------------------------------------------------
+
+
 @router.post(
     "/api/v1/ontologies/{ontology_id}/versions",
     response_model=OntologyVersionResponseDTO,
     status_code=status.HTTP_201_CREATED,
+    summary="Create a new draft version for an ontology",
 )
 @inject
-async def create_ontology_version(
+async def create_version(
     ontology_id: str,
     data: OntologyVersionCreateDTO,
-    use_case: FromDishka[CreateOntologyVersionUseCase],
     current_user: CurrentUser,
+    use_case: FromDishka[CreateOntologyVersionUseCase],
 ):
-    """Create a new draft version for an ontology."""
     return await use_case.execute(ontology_id, data)
 
 
 @router.get(
     "/api/v1/ontology-versions/{version_id}",
-    response_model=OntologyVersionResponseDTO,
+    response_model=OntologyVersionDetailResponseDTO,
+    summary="Get full details of an ontology version with categories and attributes",
 )
 @inject
-async def get_ontology_version_detail(
+async def get_version_detail(
     version_id: str,
-    use_case: FromDishka[GetOntologyVersionDetailUseCase],
     current_user: CurrentUser,
+    use_case: FromDishka[GetOntologyVersionDetailUseCase],
 ):
-    """Get full details of a version including tree of categories and attributes."""
     return await use_case.execute(version_id)
 
 
 @router.put(
     "/api/v1/ontology-versions/{version_id}/publish",
     response_model=OntologyVersionResponseDTO,
+    summary="Publish a draft version (becomes immutable)",
 )
 @inject
-async def publish_ontology_version(
+async def publish_version(
     version_id: str,
-    use_case: FromDishka[PublishOntologyVersionUseCase],
     current_user: CurrentUser,
+    use_case: FromDishka[PublishOntologyVersionUseCase],
 ):
-    """Publish a draft version (locks modifications completely)."""
     return await use_case.execute(version_id)
 
 
 @router.post(
     "/api/v1/ontology-versions/{version_id}/clone",
-    response_model=OntologyVersionResponseDTO,
+    response_model=OntologyVersionDetailResponseDTO,
     status_code=status.HTTP_201_CREATED,
+    summary="Clone a published version into a new draft version",
 )
 @inject
-async def clone_ontology_version(
+async def clone_version(
     version_id: str,
-    data: OntologyVersionCreateDTO,
-    use_case: FromDishka[CloneOntologyVersionUseCase],
+    data: CloneVersionDTO,
     current_user: CurrentUser,
+    use_case: FromDishka[CloneOntologyVersionUseCase],
 ):
-    """Clone a published version into a new draft version with all categories & attributes copied."""
     return await use_case.execute(version_id, data.version)
 
 
-# 3. Categories Management
+# ---------------------------------------------------------------------------
+# Category Level
+# ---------------------------------------------------------------------------
+
+
 @router.post(
     "/api/v1/ontology-versions/{version_id}/categories",
     response_model=CategoryResponseDTO,
     status_code=status.HTTP_201_CREATED,
+    summary="Add a category (label) to a draft ontology version",
 )
 @inject
-async def create_category(
+async def add_category(
     version_id: str,
     data: CategoryCreateDTO,
-    use_case: FromDishka[CreateCategoryUseCase],
     current_user: CurrentUser,
+    use_case: FromDishka[CreateCategoryUseCase],
 ):
-    """Add a category to a draft version."""
     return await use_case.execute(version_id, data)
 
 
 @router.put(
     "/api/v1/categories/{category_id}",
     response_model=CategoryResponseDTO,
+    summary="Update category in a draft version",
 )
 @inject
 async def update_category(
     category_id: str,
     data: CategoryUpdateDTO,
-    use_case: FromDishka[UpdateCategoryUseCase],
     current_user: CurrentUser,
+    use_case: FromDishka[UpdateCategoryUseCase],
 ):
-    """Update a category in a draft version."""
     return await use_case.execute(category_id, data)
 
 
 @router.delete(
     "/api/v1/categories/{category_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a category from a draft version",
 )
 @inject
 async def delete_category(
     category_id: str,
-    use_case: FromDishka[DeleteCategoryUseCase],
     current_user: CurrentUser,
+    use_case: FromDishka[DeleteCategoryUseCase],
 ):
-    """Delete a category from a draft version."""
     await use_case.execute(category_id)
 
 
-# 4. Attributes Management
+# ---------------------------------------------------------------------------
+# Attribute Level
+# ---------------------------------------------------------------------------
+
+
 @router.post(
     "/api/v1/categories/{category_id}/attributes",
     response_model=AttributeResponseDTO,
     status_code=status.HTTP_201_CREATED,
+    summary="Add an attribute schema to a category",
 )
 @inject
-async def create_attribute(
+async def add_attribute(
     category_id: str,
     data: AttributeCreateDTO,
+    current_user: CurrentUser,
     use_case: FromDishka[CreateAttributeUseCase],
-    current_user: CurrentUser,
 ):
-    """Add an attribute specification to a category."""
     return await use_case.execute(category_id, data)
-
-
-@router.put(
-    "/api/v1/attributes/{attribute_id}",
-    response_model=AttributeResponseDTO,
-)
-@inject
-async def update_attribute(
-    attribute_id: str,
-    data: AttributeUpdateDTO,
-    use_case: FromDishka[UpdateAttributeUseCase],
-    current_user: CurrentUser,
-):
-    """Update an attribute specification."""
-    return await use_case.execute(attribute_id, data)
 
 
 @router.delete(
     "/api/v1/attributes/{attribute_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete an attribute schema from a category",
 )
 @inject
 async def delete_attribute(
     attribute_id: str,
+    current_user: CurrentUser,
     use_case: FromDishka[DeleteAttributeUseCase],
-    current_user: CurrentUser,
 ):
-    """Delete an attribute specification."""
     await use_case.execute(attribute_id)
-
-
-@router.put(
-    "/api/v1/ontologies/versions/{version_id}",
-    response_model=OntologyVersionResponseDTO,
-)
-@inject
-async def update_ontology_version(
-    version_id: str,
-    data: OntologyVersionUpdateDTO,
-    use_case: FromDishka[UpdateOntologyVersionUseCase],
-    current_user: CurrentUser,
-):
-    """Update custom Label Studio config/setup for an ontology version."""
-    return await use_case.execute(version_id, data.raw_label_config)

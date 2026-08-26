@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -13,6 +14,14 @@ class UserEntity:
     name: str | None = None
     avatar_url: str | None = None
     created_at: datetime | None = None
+
+
+@dataclass
+class AuthPayload:
+    user_id: str
+    email: str | None = None
+    role: str = "user"
+    raw_payload: dict[str, Any] | None = None
 
 
 class AuthUser(BaseModel):

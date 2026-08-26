@@ -12,7 +12,6 @@ from modules.dataset.models.dataset import (
     DatasetVersionAssetModel,
     DatasetVersionModel,
 )
-from modules.dataset.presentation.router import dataset_router
 
 __all__ = [
     "AssetEntity",
@@ -25,5 +24,4 @@ __all__ = [
     "DatasetVersionEntity",
     "DatasetVersionModel",
     "IDatasetRepository",
-    "dataset_router",
 ]

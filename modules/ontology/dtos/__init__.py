@@ -5,9 +5,11 @@ from modules.ontology.dtos.ontology_dtos import (
     CategoryCreateDTO,
     CategoryResponseDTO,
     CategoryUpdateDTO,
+    CloneVersionDTO,
     OntologyCreateDTO,
     OntologyResponseDTO,
     OntologyVersionCreateDTO,
+    OntologyVersionDetailResponseDTO,
     OntologyVersionResponseDTO,
     OntologyVersionUpdateDTO,
 )
@@ -19,9 +21,11 @@ __all__ = [
     "CategoryCreateDTO",
     "CategoryResponseDTO",
     "CategoryUpdateDTO",
+    "CloneVersionDTO",
     "OntologyCreateDTO",
     "OntologyResponseDTO",
     "OntologyVersionCreateDTO",
+    "OntologyVersionDetailResponseDTO",
     "OntologyVersionResponseDTO",
     "OntologyVersionUpdateDTO",
 ]

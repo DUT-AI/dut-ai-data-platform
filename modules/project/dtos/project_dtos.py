@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -41,9 +41,16 @@ class ProjectMemberAddDTO(BaseModel):
     role: Literal["admin", "annotator", "reviewer"]
 
 
+AddMemberDTO = ProjectMemberAddDTO
+
+
 class ProjectMemberUpdateDTO(BaseModel):
     role: Literal["owner", "admin", "annotator", "reviewer"] | None = None
     status: Literal["active", "inactive"] | None = None
+
+
+class UpdateMemberRoleDTO(BaseModel):
+    role: Literal["owner", "admin", "annotator", "reviewer"]
 
 
 class ProjectMemberResponseDTO(BaseModel):
@@ -59,4 +66,13 @@ class ProjectMemberResponseDTO(BaseModel):
 
 class ProjectConfigDTO(BaseModel):
     project_id: str
-    settings: dict = Field(default_factory=dict)
+    settings: dict[str, Any] = Field(default_factory=dict)
+
+
+class ProjectConfigurationResponseDTO(BaseModel):
+    project_id: str
+    settings: dict[str, Any] = Field(default_factory=dict)
+
+
+class UpdateConfigurationDTO(BaseModel):
+    settings: dict[str, Any] = Field(default_factory=dict)

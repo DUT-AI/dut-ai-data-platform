@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from core.config import settings
 from core.security.jwt import decode_access_token
 from modules.identity.client.auth_client import AuthClient
 from modules.identity.domain.entities import AuthPayload, AuthUser
@@ -56,8 +57,8 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    client = AuthClient()
-    return await client.get_user_info(credentials.credentials)
+    client = AuthClient(auth_server_url=settings.auth_server_url)
+    return await client.get_me(credentials.credentials)
 
 
 CurrentUserPayload = Annotated[AuthPayload, Depends(get_current_user_payload)]

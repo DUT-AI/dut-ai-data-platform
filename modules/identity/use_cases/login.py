@@ -9,9 +9,7 @@ class LoginUseCase:
         self.auth_client = auth_client
 
     async def execute(self, data: LoginRequestDTO) -> TokenResponseDTO:
-        res = await self.auth_client.login(
-            email=str(data.email), password=data.password
-        )
+        res = await self.auth_client.login(email=data.email, password=data.password)
         return TokenResponseDTO(
             access_token=res.access_token,
             refresh_token=res.refresh_token,

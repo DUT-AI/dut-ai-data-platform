@@ -1,21 +1,24 @@
 import httpx
 import pytest
-from app.common.deps import get_current_user
-from app.main import app
-from domain.entities import ProjectMemberEntity
+
+from apps.api.main import app
+from modules.identity.domain.entities import AuthUser
+from modules.identity.presentation.deps import get_current_user
+
+mock_user = AuthUser(
+    id=101,
+    name="Test Owner",
+    email="owner@dut.ai",
+    status="ACTIVE",
+    role_names=["USER"],
+)
 
 
-def mock_get_current_user():
-    return ProjectMemberEntity(
-        id="user_test_id",
-        project_id="test_proj",
-        user_id="user_test_id",
-        role="owner",
-        status="active",
-    )
-
-
-app.dependency_overrides[get_current_user] = mock_get_current_user
+@pytest.fixture(autouse=True)
+def override_auth_dep():
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+    yield
+    app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
@@ -117,7 +120,8 @@ async def test_dataset_full_lifecycle():
             files=files_data,
         )
         assert failed_upload_res.status_code == 400
-        assert (
-            "Only draft versions allow asset uploads"
-            in failed_upload_res.json()["detail"]
+        assert "Only draft versions allow asset uploads" in failed_upload_res.json()[
+            "error"
+        ]["message"] or "Only draft versions allow asset uploads" in str(
+            failed_upload_res.json()
         )

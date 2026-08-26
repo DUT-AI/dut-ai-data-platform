@@ -1,8 +1,9 @@
 import httpx
 import pytest
-from app.common.deps import get_current_user
-from app.main import app
-from shared.auth import AuthUser
+
+from apps.api.main import app
+from modules.identity.domain.entities import AuthUser
+from modules.identity.presentation.deps import get_current_user
 
 mock_user = AuthUser(
     id=101,
@@ -75,7 +76,12 @@ async def test_ontology_full_lifecycle():
                 "display_name": "Loại nhiên liệu",
                 "type": "enum",
                 "required": True,
-                "allowed_values": ["Gasoline", "Diesel", "Electric", "Hybrid"],
+                "allowed_values": [
+                    "Gasoline",
+                    "Diesel",
+                    "Electric",
+                    "Hybrid",
+                ],
                 "default_value": "Gasoline",
             },
         )
@@ -83,7 +89,12 @@ async def test_ontology_full_lifecycle():
         attr = attr_res.json()
         assert attr["name"] == "fuel_type"
         assert attr["type"] == "enum"
-        assert attr["allowed_values"] == ["Gasoline", "Diesel", "Electric", "Hybrid"]
+        assert attr["allowed_values"] == [
+            "Gasoline",
+            "Diesel",
+            "Electric",
+            "Hybrid",
+        ]
 
         # 5. Get Version Detail
         ver_detail_res = await client.get(
@@ -106,7 +117,11 @@ async def test_ontology_full_lifecycle():
         # 7. Attempt to add Category to Published Version (Expect 400 Bad Request)
         bad_cat_res = await client.post(
             f"/api/v1/ontology-versions/{draft_version_id}/categories",
-            json={"name": "bus", "display_name": "Xe buýt", "color": "#10B981"},
+            json={
+                "name": "bus",
+                "display_name": "Xe buýt",
+                "color": "#10B981",
+            },
         )
         assert bad_cat_res.status_code == 400
 
@@ -126,7 +141,11 @@ async def test_ontology_full_lifecycle():
         # 9. Add new Category to the Cloned Draft Version
         cat2_res = await client.post(
             f"/api/v1/ontology-versions/{cloned_version_id}/categories",
-            json={"name": "truck", "display_name": "Xe tải", "color": "#F59E0B"},
+            json={
+                "name": "truck",
+                "display_name": "Xe tải",
+                "color": "#F59E0B",
+            },
         )
         assert cat2_res.status_code == 201
         assert cat2_res.json()["name"] == "truck"

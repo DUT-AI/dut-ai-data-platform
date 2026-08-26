@@ -1,5 +1,6 @@
 import pytest_asyncio
-from app.common.database import engine
+
+from core.database.session import engine
 
 
 @pytest_asyncio.fixture(autouse=True)

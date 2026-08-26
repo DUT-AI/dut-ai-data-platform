@@ -1,8 +1,0 @@
-Metadata-Version: 2.4
-Name: infrastructure
-Version: 0.1.0
-Summary: Shared Infrastructure Layer, Repositories and External Integrations
-Requires-Python: >=3.11
-Requires-Dist: domain
-Requires-Dist: database
-Requires-Dist: shared

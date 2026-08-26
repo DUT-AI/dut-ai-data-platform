@@ -1,23 +1,52 @@
-[tool.uv.workspace]
-members = [
-    "packages/*",
-    "backend",
-]
-
 [project]
 name = "dut-ai-data-platform"
 version = "0.1.0"
-description = "DUT AI Data Platform Workspace"
-requires-python = ">=3.11"
+description = "DUT AI Data Platform - Multi-Module Architecture"
+readme = "README.md"
+requires-python = ">=3.11, <3.13"
 dependencies = [
-    "domain",
-    "database",
-    "shared",
-    "application",
-    "infrastructure",
-    "backend",
-    "pillow>=12.3.0",
+    # Core API & Framework
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.4.0",
+    "dishka>=1.4.0",
+    "python-multipart>=0.0.9",
+    # Database & Storage
+    "sqlalchemy>=2.0.0",
+    "asyncpg>=0.29.0",
+    "greenlet>=3.0.0",
+    "alembic>=1.13.0",
+    "redis>=5.0.0",
+    "boto3>=1.35.0",
+    # Auth & Security
+    "pyjwt>=2.9.0",
+    "bcrypt>=4.2.0",
+    # Observability & Utilities
+    "loguru>=0.7.2",
+    "httpx>=0.27.0",
+    "pillow>=10.4.0",
+    "python-ulid>=3.0.0",
     "label-studio-sdk>=2.1.0",
+    "opentelemetry-api>=1.25.0",
+    "opentelemetry-sdk>=1.25.0",
+    "opentelemetry-instrumentation-fastapi>=0.46b0",
+    "opentelemetry-exporter-otlp>=1.25.0",
+]
+
+[project.optional-dependencies]
+# Background Worker Dependencies (Task queue processing)
+worker = [
+    "arq>=0.26.0",
+]
+
+# AI & Machine Learning Worker Dependencies (CUDA, PyTorch, Model Inference)
+ai = [
+    "torch>=2.4.0",
+    "torchvision>=0.19.0",
+    "ultralytics>=8.3.0",
+    "opencv-python-headless>=4.10.0",
+    "numpy>=1.26.0",
 ]
 
 [dependency-groups]
@@ -26,21 +55,20 @@ dev = [
     "pytest-asyncio>=0.24.0",
     "httpx>=0.27.0",
     "ruff>=0.8.0",
-    "pytest-cov>=7.1.0",
-    "mypy>=2.3.0",
+    "pytest-cov>=5.0.0",
+    "mypy>=1.11.0",
 ]
 
-[tool.uv.sources]
-domain = { workspace = true }
-database = { workspace = true }
-shared = { workspace = true }
-application = { workspace = true }
-infrastructure = { workspace = true }
-backend = { workspace = true }
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["core", "modules", "apps"]
 
 [tool.ruff]
 target-version = "py312"
-exclude = [".agent", ".venv", ".git"]
+exclude = [".agent", ".venv", ".git", "web", "label-studio"]
 
 [tool.ruff.lint]
 ignore = ["B008", "BLE001", "UP046"]
@@ -48,4 +76,4 @@ ignore = ["B008", "BLE001", "UP046"]
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true
-exclude = [".agent", ".venv"]
+exclude = [".agent", ".venv", "web", "label-studio"]

@@ -1,21 +1,24 @@
 import httpx
 import pytest
-from app.common.deps import get_current_user
-from app.main import app
-from domain.entities import ProjectMemberEntity
+
+from apps.api.main import app
+from modules.identity.domain.entities import AuthUser
+from modules.identity.presentation.deps import get_current_user
+
+mock_user = AuthUser(
+    id=101,
+    name="Test Owner",
+    email="owner@dut.ai",
+    status="ACTIVE",
+    role_names=["USER"],
+)
 
 
-def mock_get_current_user():
-    return ProjectMemberEntity(
-        id="user_test_id",
-        project_id="test_proj",
-        user_id="user_test_id",
-        role="owner",
-        status="active",
-    )
-
-
-app.dependency_overrides[get_current_user] = mock_get_current_user
+@pytest.fixture(autouse=True)
+def override_auth_dep():
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+    yield
+    app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
@@ -25,7 +28,10 @@ async def test_annotation_full_lifecycle():
         # 1. Create a Project
         p_res = await client.post(
             "/api/v1/projects",
-            json={"name": "Annotation Test Project", "project_type": "detection"},
+            json={
+                "name": "Annotation Test Project",
+                "project_type": "detection",
+            },
         )
         assert p_res.status_code == 201
         project_id = p_res.json()["id"]
@@ -33,7 +39,10 @@ async def test_annotation_full_lifecycle():
         # 2. Create an Ontology Schema & Categories
         onto_res = await client.post(
             f"/api/v1/projects/{project_id}/ontologies",
-            json={"name": "Detection Schema", "description": "Vehicle schema"},
+            json={
+                "name": "Detection Schema",
+                "description": "Vehicle schema",
+            },
         )
         assert onto_res.status_code == 201
         ontology_ver_id = onto_res.json()["versions"][0]["id"]

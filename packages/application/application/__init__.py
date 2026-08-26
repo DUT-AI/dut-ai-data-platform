@@ -1,1 +1,0 @@
-# Shared Application Layer Package

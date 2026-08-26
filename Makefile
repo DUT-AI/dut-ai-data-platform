@@ -1,9 +1,11 @@
 FRONTEND_DIR=web
-.PHONY: help dev-api dev-web docker-up docker-down docker-dev-web migrate create-migration test install-hooks lint ruff check
+.PHONY: help dev-api dev-web dev-worker dev-ai-worker docker-up docker-down migrate create-migration test install-hooks lint ruff check
 
 help:
 	@echo "Available commands:"
 	@echo "  make dev-api        - Start local FastAPI server (uvicorn)"
+	@echo "  make dev-worker     - Start background task worker"
+	@echo "  make dev-ai-worker  - Start AI / GPU inference worker"
 	@echo "  make dev-web        - Start frontend dev server (Next.js)"
 	@echo "  make docker-up      - Start full stack in background with Docker Compose"
 	@echo "  make docker-down    - Stop and remove Docker Compose containers"
@@ -16,29 +18,26 @@ help:
 	@echo "  make lint           - Run all formatting, linting, and tests"
 
 dev-api:
-	cd ./backend && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+	uv run uvicorn apps.api.main:app --host 0.0.0.0 --port 8000 --reload
+
+dev-worker:
+	uv run python apps/worker/main.py
+
+dev-ai-worker:
+	uv run python apps/ai_worker/main.py
 
 dev-web:
 	cd ./$(FRONTEND_DIR) && pnpm dev
 
-docker-up:
-	docker compose up -d
-
 docker-label-studio:
 	docker compose up -d label-studio
 
-docker-down:
-	docker compose down
-
-docker-dev-web:
-	docker compose up web
-
 migrate:
-	cd ./packages/database && uv run alembic upgrade head
+	uv run alembic upgrade head
 
 create-migration:
 	@if [ -z "$(DESC)" ]; then echo "Error: Please specify DESC, e.g., make create-migration DESC=\"add new table\""; exit 1; fi
-	cd ./packages/database && uv run alembic revision --autogenerate -m "$(DESC)"
+	uv run alembic revision --autogenerate -m "$(DESC)"
 
 test:
 	uv run pytest tests/
@@ -48,7 +47,7 @@ ruff:
 	uv run ruff check --fix .
 
 check:
-	uv run mypy backend/app packages/domain packages/database packages/shared
+	uv run mypy core modules apps
 
 install-hooks:
 	mkdir -p .git/hooks

@@ -1,7 +1,4 @@
 services:
-  # ---------------------------------------------------------------------------
-  # Database Service (PostgreSQL 16)
-  # ---------------------------------------------------------------------------
   db:
     image: postgres:16-alpine
     container_name: data-platform-db
@@ -22,9 +19,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ---------------------------------------------------------------------------
-  # Redis Cache & Message Broker
-  # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
     container_name: data-platform-redis
@@ -41,9 +35,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ---------------------------------------------------------------------------
-  # MinIO Object Storage (S3-compatible)
-  # ---------------------------------------------------------------------------
   minio:
     image: minio/minio:latest
     container_name: data-platform-minio
@@ -86,15 +77,9 @@ services:
       - label_studio_data:/label-studio/data
     networks:
       - platform-net
-    # Cho phép LS container gọi về host machine (Platform API)
-    # macOS / Windows: host.docker.internal tự động có
-    # Linux: cần dòng extra_hosts dưới đây
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  # ---------------------------------------------------------------------------
-  # MinIO One-Shot Bucket Initialization Job
-  # ---------------------------------------------------------------------------
   createbuckets:
     image: minio/mc:latest
     container_name: data-platform-minio-init
@@ -115,20 +100,16 @@ services:
       exit 0;
       "
 
-  # ---------------------------------------------------------------------------
-  # FastAPI Backend API Service (Multi-stage Build)
-  # Context: Root monorepo directory (.)
-  # ---------------------------------------------------------------------------
   api:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: apps/api/Dockerfile
     container_name: data-platform-api
     restart: always
     ports:
       - "8000:8000"
     env_file:
-      - ./backend/.env
+      - ./.env
     networks:
       - platform-net
     depends_on:
@@ -141,18 +122,14 @@ services:
       createbuckets:
         condition: service_completed_successfully
 
-  # ---------------------------------------------------------------------------
-  # Celery Worker Service (Multi-stage Build)
-  # Context: Root monorepo directory (.)
-  # ---------------------------------------------------------------------------
   worker:
     build:
       context: .
-      dockerfile: worker/Dockerfile
+      dockerfile: apps/worker/Dockerfile
     container_name: data-platform-worker
     restart: always
     env_file:
-      - ./worker/.env
+      - ./.env
     networks:
       - platform-net
     depends_on:
@@ -163,10 +140,6 @@ services:
       minio:
         condition: service_healthy
 
-  # ---------------------------------------------------------------------------
-  # Next.js 15 Frontend Web Service (Multi-stage Build)
-  # Context: ./web directory
-  # ---------------------------------------------------------------------------
   web:
     build:
       context: ./web

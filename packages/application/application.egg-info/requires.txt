@@ -1,2 +1,0 @@
-domain
-pydantic>=2.9.0

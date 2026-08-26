@@ -1,7 +1,8 @@
 from unittest.mock import AsyncMock, patch
 
-from app.main import app
 from fastapi.testclient import TestClient
+
+from apps.api.main import app
 
 client = TestClient(app)
 
@@ -12,9 +13,9 @@ def test_health_check():
     assert response.json() == {"status": "ok", "version": "0.1.0"}
 
 
-@patch("app.main.check_database", new_callable=AsyncMock)
-@patch("app.main.check_redis", new_callable=AsyncMock)
-@patch("app.main.check_minio", new_callable=AsyncMock)
+@patch("apps.api.main.check_database", new_callable=AsyncMock)
+@patch("apps.api.main.check_redis", new_callable=AsyncMock)
+@patch("apps.api.main.check_minio", new_callable=AsyncMock)
 def test_readiness_check_success(mock_minio, mock_redis, mock_db):
     mock_db.return_value = (True, "ok")
     mock_redis.return_value = (True, "ok")
@@ -31,9 +32,9 @@ def test_readiness_check_success(mock_minio, mock_redis, mock_db):
     }
 
 
-@patch("app.main.check_database", new_callable=AsyncMock)
-@patch("app.main.check_redis", new_callable=AsyncMock)
-@patch("app.main.check_minio", new_callable=AsyncMock)
+@patch("apps.api.main.check_database", new_callable=AsyncMock)
+@patch("apps.api.main.check_redis", new_callable=AsyncMock)
+@patch("apps.api.main.check_minio", new_callable=AsyncMock)
 def test_readiness_check_unhealthy(mock_minio, mock_redis, mock_db):
     mock_db.return_value = (True, "ok")
     mock_redis.return_value = (False, "error: connection failed")

@@ -1,8 +1,9 @@
 import httpx
 import pytest
-from app.common.deps import get_current_user
-from app.main import app
-from shared.auth import AuthUser
+
+from apps.api.main import app
+from modules.identity.domain.entities import AuthUser
+from modules.identity.presentation.deps import get_current_user
 
 mock_user = AuthUser(
     id=101,
@@ -48,7 +49,10 @@ async def test_project_full_lifecycle():
         # 3. Update project
         update_res = await client.put(
             f"/api/v1/projects/{project_id}",
-            json={"name": "Updated Project Name", "description": "Updated description"},
+            json={
+                "name": "Updated Project Name",
+                "description": "Updated description",
+            },
         )
         assert update_res.status_code == 200
         assert update_res.json()["name"] == "Updated Project Name"

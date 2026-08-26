@@ -21,7 +21,7 @@ class AppSettings(BaseSettings):
     jwt_expire_minutes: int = 1440
 
     # Auth Server
-    auth_server_url: str = "https://manage.dutai.site/api/v1"
+    auth_server_url: str = ""
 
     # Server configs
     api_host: str = "0.0.0.0"

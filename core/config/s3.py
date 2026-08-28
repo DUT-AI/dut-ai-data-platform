@@ -16,8 +16,8 @@ class S3Settings(BaseSettings):
     )
 
     minio_endpoint: str = "https://dataplatforms3.dutai.io.vn"
-    minio_access_key: str = "dutai"
-    minio_secret_key: str = "dutai123"
+    minio_access_key: str = ""
+    minio_secret_key: str = ""
     minio_secure: bool = False
     default_bucket: str = "ai-data-platform"
     minio_public_endpoint: str | None = None

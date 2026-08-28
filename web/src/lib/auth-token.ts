@@ -1,4 +1,4 @@
-const AUTH_TOKEN_KEY = "project_boilerplate_token";
+const AUTH_TOKEN_KEY = "dut_ai_token";
 
 export function getAuthToken() {
   if (typeof window === "undefined") {

@@ -21,8 +21,9 @@ class AppSettings(BaseSettings):
     jwt_expire_minutes: int = 1440
 
     # Auth & Manage Server
-    auth_server_url: str = "https://manage.dutai.site/api/v1"
+    auth_server_url: str = "https://manage.dutai.io.vn/api/v1"
     manage_server_url: str = "https://manage.dutai.io.vn/api/v1"
+    external_api_timeout: float = 10.0
 
     # Server configs
     api_host: str = "0.0.0.0"

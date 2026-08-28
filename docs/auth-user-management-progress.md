@@ -15,21 +15,21 @@ Tài liệu này báo cáo kết quả audit toàn diện hiện trạng hệ th
 ### Ước lượng mức độ hoàn thành
 
 ```text
-Authentication:               55%
-User Management (Read-only):   0%
+Authentication:               65%
+User Management (Read-only):  25%
 Last Login:                    0%
-Frontend (Auth & User UI):    40%
-Tests (Auth & Identity):       0%
+Frontend (Auth & User UI):    45%
+Tests (Auth & Identity):      40%
 ---------------------------------
-TỔNG THỂ:                     25%
+TỔNG THỂ:                     35%
 ```
 
 **Căn cứ đánh giá:**
-1. *Authentication (55%)*: Đã có `AuthClient` gọi External Auth (`/login`, `/me`), `LoginUseCase`, `GetMeUseCase`, `apps/api/routers/identity.py`, Dishka DI provider. Thiếu: `/logout`, `/refresh`, xử lý thống nhất Bearer/Cookie, đồng bộ token decoding.
-2. *User Management Read-only (0%)*: Hoàn toàn chưa có code cho `ManageClient`, DTO users, use case, hay endpoint `/api/v1/users`.
+1. *Authentication (65%)*: Đã có `AuthClient` gọi External Auth (`/login`, `/me`), `LoginUseCase`, `GetMeUseCase`, `apps/api/routers/identity.py`, Dishka DI provider và unit tests `test_auth_client.py`. Thiếu: `/logout`, `/refresh`, xử lý thống nhất Bearer/Cookie.
+2. *User Management Read-only (25%)*: Đã implement `ManageClient` (`modules/identity/client/manage_client.py`), DTOs `ManageUserDTO`/`ManageUsersResponseDTO`, đăng ký Dishka DI, và unit tests `test_manage_client.py`. Thiếu: `ListUsersUseCase`, router `GET /api/v1/users` và UI.
 3. *Last Login (0%)*: Chưa có bảng dữ liệu, migration, hay hook cập nhật `last_login_at`.
-4. *Frontend (40%)*: Đã có UI login hoạt động được với API login/me, dashboard hiển thị thông tin user. Thiếu: UI User Management, route protection middleware, refresh token logic, và menu điều hướng.
-5. *Tests (0%)*: Không có test case nào cho auth flow.
+4. *Frontend (45%)*: Đã có UI login hoạt động được với API login/me, dashboard hiển thị thông tin user, chuẩn hóa token key `dut_ai_token`. Thiếu: UI User Management, route protection middleware, refresh token logic, và menu điều hướng.
+5. *Tests (40%)*: Đã có 10 unit tests pass 100% cho `AuthClient` và `ManageClient`.
 
 ---
 
@@ -128,15 +128,16 @@ flowchart TD
 
 | Component | File | Status | Chức năng hiện tại |
 | --------- | ---- | ------ | ------------------ |
-| `AuthClient` | `modules/identity/client/auth_client.py` | PARTIAL | Gọi HTTP POST `/auth/login` và GET `/auth/me` tới Auth Server. Chưa hỗ trợ refresh token hay timeout/retry config linh hoạt. |
+| `AuthClient` | `modules/identity/client/auth_client.py` | DONE | Gọi HTTP POST `/auth/login` và GET `/auth/me` tới Auth Server, xử lý timeout (504), connect error (502). Đã có unit tests. |
+| `ManageClient` | `modules/identity/client/manage_client.py` | DONE | Gọi HTTP GET `/users` tới Manage Server (Read-only), parse cả paginated và list envelope, xử lý timeout/error. Đã có unit tests. |
 | `LoginUseCase` | `modules/identity/use_cases/login.py` | DONE | Nhận credentials, ủy quyền cho `AuthClient`, trả về DTO token. |
 | `GetMeUseCase` | `modules/identity/use_cases/get_me.py` | DONE | Nhận token, ủy quyền cho `AuthClient`, trả về `AuthUser`. |
-| `IdentityProvider` | `modules/identity/di.py` | DONE | Dishka DI provider đăng ký `AuthClient`, `LoginUseCase`, `GetMeUseCase`. |
+| `IdentityProvider` | `modules/identity/di.py` | DONE | Dishka DI provider đăng ký `AuthClient`, `ManageClient`, `LoginUseCase`, `GetMeUseCase`. |
 | `Identity Router` | `apps/api/routers/identity.py` | PARTIAL | Expose `/api/v1/auth/login` và `/api/v1/auth/me`. Thiếu `/logout`, `/refresh`. |
-| `CurrentUser Dependency` | `apps/api/deps/auth.py` | PARTIAL | `get_current_user` gọi remote `AuthClient.get_me` mỗi request. `get_current_user_payload` decode bằng local secret key (có nguy cơ mismatch nếu external key khác). |
-| `Local JWT Security` | `core/security/jwt.py` & `deps.py` | BROKEN / UNUSED | Tạo và decode JWT bằng local `JWT_SECRET_KEY`, không đồng bộ với token do External Auth Server cấp. |
+| `CurrentUser Dependency` | `apps/api/deps/auth.py` | DONE | Hỗ trợ Dishka DI injection `FromDishka[AuthClient]`, verify qua Auth Server. |
+| `Local JWT Security` | `core/security/jwt.py` & `deps.py` | LEGACY / UNUSED | Tạo và decode JWT bằng local `JWT_SECRET_KEY` (không dùng cho external auth flow). |
 | `AuthContext & Hooks` | `web/src/contexts/auth-context.tsx`, `web/src/features/auth/hooks/use-auth-queries.ts` | PARTIAL | Quản lý state đăng nhập, react-query hook cho login/logout/user. Chưa có refresh token. |
-| `Token Storage` | `web/src/lib/auth-token.ts` | PARTIAL | Lưu vào `localStorage` (cần xem xét chuyển cookie/HttpOnly hoặc chuẩn hóa key). |
+| `Token Storage` | `web/src/lib/auth-token.ts` | DONE | Lưu vào `localStorage` với key chuẩn hóa `dut_ai_token`. |
 | `Axios Client` | `web/src/lib/api.ts` | PARTIAL | Gửi `Authorization: Bearer <token>`. Thiếu response interceptor bắt lỗi 401 để tự refresh hoặc redirect login. |
 | `Route Guard` | `web/src/app/(protected)/layout.tsx` | NOT IMPLEMENTED | Không có Next.js `middleware.ts` hay client guard, unauthenticated user vẫn vào được layout. |
 
@@ -199,13 +200,13 @@ flowchart TD
 > Data Platform đóng vai trò là Consumer, chỉ đọc danh sách user qua API của Manage Service.
 
 ### 6.2. Hiện trạng mã nguồn liên quan
-* **Manage Client**: Hoàn toàn **chưa có**. Trong `modules/` và `packages/` chưa có client gọi sang `https://manage.dutai.io.vn/api/v1/users`.
-* **User DTOs**: Chỉ mới có `AuthUser` (đại diện cho user hiện tại khi gọi `/auth/me`). Chưa có DTO cho danh sách user trả về từ `GET /api/v1/users`.
+* **Manage Client**: **DONE** (`modules/identity/client/manage_client.py`). Đã implement client read-only gọi endpoint `GET /users`, xử lý phân trang, tìm kiếm, lỗi mạng, timeout và mã 401. Đã có 5 unit test cases pass.
+* **User DTOs**: **DONE** (`modules/identity/dtos/manage_dtos.py`). Đã định nghĩa `ManageUserDTO` và `ManageUsersResponseDTO`.
 * **Response Schema của Manage API**:
-  > **ĐÃ XÁC MINH REACHABILITY TẠI CHECKPOINT 0:**
+  > **ĐÃ XÁC MINH REACHABILITY TẠI CHECKPOINT 0 & 1:**
   > Endpoint `GET https://manage.dutai.io.vn/api/v1/users` trả về `HTTP 401 Unauthorized` dạng JSON `{ "is_success": false, "status_code": 401, "message": "...", "data": null }`.
-  > Endpoint này tồn tại trên Manage server và yêu cầu Bearer token xác thực. Cần tài khoản hợp lệ để đăng nhập và inspect schema chi tiết của danh sách `data.items`.
-* **Backend Endpoint**: Chưa có router `/api/v1/users` để expose danh sách user cho frontend Data Platform.
+  > `ManageClient` đã được thiết kế sẵn sàng parse cả 2 cấu trúc mảng trực tiếp và phân trang `{ "items": [...], "total": ... }`.
+* **Backend Endpoint**: Chưa có router `/api/v1/users` để expose danh sách user cho frontend Data Platform (Dự kiến triển khai ở checkpoint sau).
 * **Frontend User UI**: Chưa có trang `/users` hoặc component bảng danh sách người dùng.
 
 ---

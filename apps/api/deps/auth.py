@@ -1,5 +1,6 @@
 from typing import Annotated
 
+from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -14,7 +15,7 @@ bearer_scheme = HTTPBearer(auto_error=False)
 async def get_current_user_payload(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> AuthPayload:
-    """Extract and validate the current JWT token payload."""
+    """Extract and validate JWT token payload using local secret key (Legacy/Fallback)."""
     if not credentials or not credentials.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -22,7 +23,15 @@ async def get_current_user_payload(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    payload_dict = decode_access_token(credentials.credentials)
+    try:
+        payload_dict = decode_access_token(credentials.credentials)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Token xác thực đã hết hạn hoặc không hợp lệ: {e}",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
+
     if not payload_dict:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -46,10 +55,12 @@ async def get_current_user_payload(
     )
 
 
+@inject
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    client: FromDishka[AuthClient] = None,  # type: ignore
 ) -> AuthUser:
-    """Verify user identity via internal AuthClient (DUT Central Auth)."""
+    """Verify user identity via AuthClient (DUT Central Auth)."""
     if not credentials or not credentials.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -57,8 +68,11 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    client = AuthClient(auth_server_url=settings.auth_server_url)
-    return await client.get_me(credentials.credentials)
+    auth_client = client or AuthClient(
+        auth_server_url=settings.auth_server_url,
+        timeout=settings.external_api_timeout,
+    )
+    return await auth_client.get_me(credentials.credentials)
 
 
 CurrentUserPayload = Annotated[AuthPayload, Depends(get_current_user_payload)]

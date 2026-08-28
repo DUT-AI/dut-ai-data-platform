@@ -29,9 +29,7 @@ class IdentityProvider(Provider):
         )
 
     @provide
-    def get_user_login_repository(
-        self, session: AsyncSession
-    ) -> IUserLoginRepository:
+    def get_user_login_repository(self, session: AsyncSession) -> IUserLoginRepository:
         return SqlUserLoginRepository(session)
 
     login_uc = provide(LoginUseCase)

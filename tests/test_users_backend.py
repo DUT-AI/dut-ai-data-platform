@@ -153,7 +153,9 @@ async def test_api_get_users_authenticated_success(monkeypatch):
         role_names=["ADMIN"],
     )
 
-    async def mock_list_users(self, token: str, page: int = 1, page_size: int = 20, search: str | None = None):
+    async def mock_list_users(
+        self, token: str, page: int = 1, page_size: int = 20, search: str | None = None
+    ):
         return ManageUsersResponseDTO(
             items=[
                 ManageUserDTO(

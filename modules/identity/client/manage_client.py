@@ -57,7 +57,9 @@ class ManageClient:
                 if not payload.get("is_success") and "data" not in payload:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=payload.get("message", "Lỗi lấy danh sách người dùng từ Manage API"),
+                        detail=payload.get(
+                            "message", "Lỗi lấy danh sách người dùng từ Manage API"
+                        ),
                     )
 
                 data = payload.get("data")
@@ -75,7 +77,8 @@ class ManageClient:
                                     email=item.get("email", ""),
                                     status=item.get("status", "ACTIVE"),
                                     avatar_url=item.get("avatar_url"),
-                                    role_names=item.get("role_names") or ([item["role"]] if "role" in item else []),
+                                    role_names=item.get("role_names")
+                                    or ([item["role"]] if "role" in item else []),
                                     raw_data=item,
                                 )
                             )
@@ -92,7 +95,8 @@ class ManageClient:
                                     email=item.get("email", ""),
                                     status=item.get("status", "ACTIVE"),
                                     avatar_url=item.get("avatar_url"),
-                                    role_names=item.get("role_names") or ([item["role"]] if "role" in item else []),
+                                    role_names=item.get("role_names")
+                                    or ([item["role"]] if "role" in item else []),
                                     raw_data=item,
                                 )
                             )

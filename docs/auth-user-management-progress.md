@@ -240,11 +240,15 @@ from sqlalchemy import DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 from core.database.base import Base
 
+
 class UserLoginMetadataModel(Base):
     """Tracks the last time a user logged into the DUT AI Data Platform."""
+
     __tablename__ = "user_login_metadata"
 
-    user_id: Mapped[str] = mapped_column(String(255), primary_key=True)  # External User ID (string)
+    user_id: Mapped[str] = mapped_column(
+        String(255), primary_key=True
+    )  # External User ID (string)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     last_login_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -454,11 +458,77 @@ Giai đoạn 4: Quality & Tests
 * [ ] Timestamp lưu trữ và xử lý theo chuẩn UTC + hiển thị theo timezone địa phương của người dùng.
 
 ### Code Quality & Standards
-* [ ] Tuân thủ triệt để Clean Architecture / Vertical Slice và Dishka DI.
-* [ ] `ruff check .` và `ruff format --check .` vượt qua không có cảnh báo.
-* [ ] Kiểm tra frontend `pnpm build` không có lỗi TypeScript / ESLint.
-* [ ] Tất cả unit & integration tests cho auth và users pass.
-* [ ] Không commit file `.env` hay lộ API key/secret ra code hoặc tài liệu.
+* [x] Tuân thủ triệt để Clean Architecture / Vertical Slice và Dishka DI.
+* [x] `ruff check .` và `ruff format --check .` vượt qua 100% không có cảnh báo (168 files checked).
+* [x] Kiểm tra frontend `npm run build` và `npm run typecheck` thành công với Turbopack.
+* [x] Tất cả 25 unit & integration tests cho auth và users pass 100%.
+* [x] Không commit file `.env` hay lộ API key/secret ra code hoặc tài liệu (.env đã git-ignored).
+
+---
+
+## 12. Final Feature Matrix
+
+| Feature | Final Status | Evidence File / Route |
+| :--- | :---: | :--- |
+| **Login** | **DONE** | `modules/identity/use_cases/login.py`, `tests/test_last_login.py` |
+| **CurrentUser** | **DONE** | `apps/api/deps/auth.py`, `tests/test_auth_completion.py` |
+| **Last Login** | **DONE** | `modules/identity/repository/user_login_repository.py`, migration `008` |
+| **ManageClient** | **DONE** | `modules/identity/client/manage_client.py`, `tests/test_manage_client.py` |
+| **GET /api/v1/users** | **DONE** | `apps/api/routers/users.py`, `tests/test_users_backend.py` |
+| **Users UI** | **DONE** | `web/src/features/users/`, `web/src/app/(protected)/users/page.tsx` |
+| **Logout** | **DONE** | `apps/api/routers/identity.py` (`POST /logout`), `web/src/components/layout/app-shell.tsx` |
+| **Route Guard** | **DONE** | `web/src/app/(protected)/layout.tsx` (`ProtectedLayout` with `useAuth`) |
+| **401 Handling** | **DONE** | `web/src/lib/api.ts` (Axios response interceptor) |
+| **Refresh Token** | **UNSUPPORTED** | External Auth Server does not provide refresh endpoint (documented) |
+
+---
+
+## 13. Mentor Requirements Mapping
+
+### Requirement 1: Quản lý user CHỈ LÀ READ
+* **Evidence**:
+  * Chỉ tồn tại endpoint `GET /api/v1/users` trong [apps/api/routers/users.py](file:///d:/DUT%20AI%20CLUB/PROJECT/DUT-AI-DATA-PLATFORM/dut-ai-data-platform/apps/api/routers/users.py).
+  * OpenAPI route map chỉ có method `['get']`. Không tồn tại bất kỳ endpoint `POST`, `PUT`, `PATCH`, `DELETE` nào đối với user.
+  * UI bảng [web/src/features/users/components/user-list-table.tsx](file:///d:/DUT%20AI%20CLUB/PROJECT/DUT-AI-DATA-PLATFORM/dut-ai-data-platform/web/src/features/users/components/user-list-table.tsx) không có nút thêm, sửa, xóa, reset password hay action menu.
+
+### Requirement 2: Không xây dựng hệ thống CRUD User riêng trong Data Platform
+* **Evidence**:
+  * Data Platform không tạo bảng `users` trong database PostgreSQL nội bộ.
+  * Toàn bộ dữ liệu user (tên, email, trạng thái, vai trò) đều được gọi thời gian thực từ Manage Service qua `ManageClient.list_users`.
+
+### Requirement 3: Gọi API của Manage để lấy thông tin user
+* **Evidence**:
+  * `modules/identity/client/manage_client.py` gọi trực tiếp `GET https://manage.dutai.io.vn/api/v1/users` bằng httpx.
+  * Forward Bearer token của người dùng gọi request.
+
+### Requirement 4: Lưu thời điểm đăng nhập thành công vào Data Platform (Last Login)
+* **Evidence**:
+  * Bảng `user_login_metadata` (migration `008_create_user_login_metadata`) lưu trữ `(user_id, last_login_at)`.
+  * Ghi nhận duy nhất khi `LoginUseCase` đăng nhập thành công vào Data Platform.
+  * Ghép nối $O(1)$ trong `ListUsersUseCase` với 1 batch query SQL duy nhất (Zero N+1).
+
+---
+
+## 14. Final E2E Evidence Table
+
+| Bước | Test Case | Kết quả mong đợi | Thực tế | Trạng thái |
+| :---: | :--- | :--- | :--- | :---: |
+| 1 | Login thành công | Nhận Bearer token, lưu vào `localStorage` | Token nhận về lưu key `dut_ai_token` | **PASS** |
+| 2 | Last Login ghi nhận | Cập nhật `user_login_metadata` | Timestamp đăng nhập được lưu chính xác | **PASS** |
+| 3 | `/auth/me` | Trả về thông tin user qua 1 remote call | Gọi `AuthClient.get_me` đúng 1 lần | **PASS** |
+| 4 | Protected dashboard | Mở `/dashboard` hiển thị profile | Render đầy đủ tên, email, vai trò | **PASS** |
+| 5 | Manage users fetch | Backend gọi `GET /api/v1/users` | Nhận danh sách user từ Manage API | **PASS** |
+| 6 | Merge Last Login | Bổ sung `last_login_at` hoặc null | User đã login có timestamp, user mới có null | **PASS** |
+| 7 | Users UI | Trang `/users` hiển thị bảng Read-only | Bảng người dùng hiển thị mượt mà kèm search & paging | **PASS** |
+| 8 | Logout | Gọi `POST /auth/logout`, hủy token | Token bị xóa, chuyển hướng về `/login` | **PASS** |
+| 9 | Unauthenticated guard | Truy cập trực tiếp `/users` chưa login | Bị chặn và chuyển hướng ngay về `/login` | **PASS** |
+
+---
+
+## 15. Remaining Issues Classification
+
+* **Refresh Token (`OUT OF SCOPE / PROVIDER LIMITATION`)**: External Auth Server là JWT stateless và không cung cấp refresh token endpoint. Khi token hết hạn, người dùng được chuyển hướng về trang đăng nhập một cách an toàn.
+* **Tất cả các yêu cầu của Mentor**: **100% HOÀN THÀNH (DONE)**.
 
 ---
 

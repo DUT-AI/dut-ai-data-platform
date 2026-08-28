@@ -8,11 +8,20 @@ from modules.identity.client.auth_client import AuthClient
 @pytest.mark.asyncio
 async def test_auth_client_build_url():
     client1 = AuthClient(auth_server_url="https://manage.dutai.io.vn/api/v1")
-    assert client1._build_url("/auth/login") == "https://manage.dutai.io.vn/api/v1/auth/login"
-    assert client1._build_url("api/v1/auth/login") == "https://manage.dutai.io.vn/api/v1/auth/login"
+    assert (
+        client1._build_url("/auth/login")
+        == "https://manage.dutai.io.vn/api/v1/auth/login"
+    )
+    assert (
+        client1._build_url("api/v1/auth/login")
+        == "https://manage.dutai.io.vn/api/v1/auth/login"
+    )
 
     client2 = AuthClient(auth_server_url="https://manage.dutai.io.vn")
-    assert client2._build_url("/api/v1/auth/login") == "https://manage.dutai.io.vn/api/v1/auth/login"
+    assert (
+        client2._build_url("/api/v1/auth/login")
+        == "https://manage.dutai.io.vn/api/v1/auth/login"
+    )
 
 
 @pytest.mark.asyncio

@@ -19,7 +19,5 @@ class IUserLoginRepository(ABC):
         """Get last login metadata for a specific user ID."""
 
     @abstractmethod
-    async def get_by_user_ids(
-        self, user_ids: Sequence[str]
-    ) -> dict[str, datetime]:
+    async def get_by_user_ids(self, user_ids: Sequence[str]) -> dict[str, datetime]:
         """Batch fetch last login timestamps mapped by user ID."""

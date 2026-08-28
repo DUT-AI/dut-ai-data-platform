@@ -27,4 +27,3 @@ class AuthUserResponseDTO(BaseModel):
 class LogoutResponseDTO(BaseModel):
     is_success: bool = True
     message: str = "Đăng xuất thành công."
-

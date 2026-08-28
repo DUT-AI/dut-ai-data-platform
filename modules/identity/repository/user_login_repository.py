@@ -52,9 +52,7 @@ class SqlUserLoginRepository(IUserLoginRepository):
         model = result.scalar_one_or_none()
         return model.to_entity() if model else None
 
-    async def get_by_user_ids(
-        self, user_ids: Sequence[str]
-    ) -> dict[str, datetime]:
+    async def get_by_user_ids(self, user_ids: Sequence[str]) -> dict[str, datetime]:
         """Batch fetch last login timestamps mapped by user_id."""
         if not user_ids:
             return {}

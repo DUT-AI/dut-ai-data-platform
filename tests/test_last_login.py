@@ -40,10 +40,12 @@ class InMemoryUserLoginRepository(IUserLoginRepository):
     async def get_by_user_id(self, user_id: str) -> UserLoginMetadataEntity | None:
         return self.records.get(user_id)
 
-    async def get_by_user_ids(
-        self, user_ids: list[str]
-    ) -> dict[str, datetime]:
-        return {uid: rec.last_login_at for uid, rec in self.records.items() if uid in user_ids}
+    async def get_by_user_ids(self, user_ids: list[str]) -> dict[str, datetime]:
+        return {
+            uid: rec.last_login_at
+            for uid, rec in self.records.items()
+            if uid in user_ids
+        }
 
 
 @pytest.mark.asyncio
@@ -66,10 +68,14 @@ async def test_first_login_creates_last_login_record():
     repo = InMemoryUserLoginRepository()
     use_case = LoginUseCase(auth_client=auth_client, login_repo=repo)
 
-    res = await use_case.execute(LoginRequestDTO(email="test@dutai.io.vn", password="pass"))
+    res = await use_case.execute(
+        LoginRequestDTO(email="test@dutai.io.vn", password="pass")
+    )
 
     assert res.access_token == "acc_tok_1"
-    auth_client.login.assert_awaited_once_with(email="test@dutai.io.vn", password="pass")
+    auth_client.login.assert_awaited_once_with(
+        email="test@dutai.io.vn", password="pass"
+    )
     auth_client.get_me.assert_awaited_once_with("acc_tok_1")
 
     record = await repo.get_by_user_id("101")
@@ -114,13 +120,17 @@ async def test_second_login_updates_existing_record():
 async def test_failed_login_does_not_update_last_login():
     """Test 3: Failed login (401) does not touch last_login_metadata."""
     auth_client = AsyncMock(spec=AuthClient)
-    auth_client.login.side_effect = HTTPException(status_code=401, detail="Email hoặc mật khẩu không chính xác.")
+    auth_client.login.side_effect = HTTPException(
+        status_code=401, detail="Email hoặc mật khẩu không chính xác."
+    )
 
     repo = InMemoryUserLoginRepository()
     use_case = LoginUseCase(auth_client=auth_client, login_repo=repo)
 
     with pytest.raises(HTTPException) as exc_info:
-        await use_case.execute(LoginRequestDTO(email="wrong@dutai.io.vn", password="wrong"))
+        await use_case.execute(
+            LoginRequestDTO(email="wrong@dutai.io.vn", password="wrong")
+        )
 
     assert exc_info.value.status_code == 401
     assert len(repo.records) == 0
@@ -144,10 +154,14 @@ async def test_db_failure_does_not_break_login():
     )
 
     failing_repo = AsyncMock(spec=IUserLoginRepository)
-    failing_repo.upsert_last_login.side_effect = RuntimeError("PostgreSQL connection lost")
+    failing_repo.upsert_last_login.side_effect = RuntimeError(
+        "PostgreSQL connection lost"
+    )
 
     use_case = LoginUseCase(auth_client=auth_client, login_repo=failing_repo)
-    res = await use_case.execute(LoginRequestDTO(email="dberr@dutai.io.vn", password="pass"))
+    res = await use_case.execute(
+        LoginRequestDTO(email="dberr@dutai.io.vn", password="pass")
+    )
 
     # Login must still succeed
     assert res.access_token == "acc_tok_ok"

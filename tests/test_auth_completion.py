@@ -19,9 +19,7 @@ async def test_get_me_single_remote_call():
         role_names=["ADMIN"],
     )
 
-    with patch.object(
-        AuthClient, "get_me", new_callable=AsyncMock
-    ) as mock_get_me:
+    with patch.object(AuthClient, "get_me", new_callable=AsyncMock) as mock_get_me:
         mock_get_me.return_value = mock_user
 
         async with AsyncClient(
@@ -52,7 +50,10 @@ async def test_get_me_unauthenticated():
         resp = await client.get("/api/v1/auth/me")
 
     assert resp.status_code == 401
-    assert "Authorization" in resp.json()["detail"] or "token" in resp.json()["detail"].lower()
+    assert (
+        "Authorization" in resp.json()["detail"]
+        or "token" in resp.json()["detail"].lower()
+    )
 
 
 @pytest.mark.asyncio
@@ -82,7 +83,10 @@ async def test_get_me_does_not_update_last_login():
 
     with (
         patch.object(AuthClient, "get_me", new_callable=AsyncMock) as mock_get_me,
-        patch("modules.identity.repository.user_login_repository.SqlUserLoginRepository.upsert_last_login", new_callable=AsyncMock) as mock_upsert,
+        patch(
+            "modules.identity.repository.user_login_repository.SqlUserLoginRepository.upsert_last_login",
+            new_callable=AsyncMock,
+        ) as mock_upsert,
     ):
         mock_get_me.return_value = mock_user
 

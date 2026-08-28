@@ -49,4 +49,3 @@ async def get_me(
 async def logout() -> LogoutResponseDTO:
     """Perform user session logout (client token disposal)."""
     return LogoutResponseDTO()
-

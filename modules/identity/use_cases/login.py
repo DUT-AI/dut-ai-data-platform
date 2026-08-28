@@ -29,9 +29,7 @@ class LoginUseCase:
             user = await self.auth_client.get_me(token_res.access_token)
             user_id = str(user.id)
             now = datetime.now(UTC)
-            await self.login_repo.upsert_last_login(
-                user_id=user_id, last_login_at=now
-            )
+            await self.login_repo.upsert_last_login(user_id=user_id, last_login_at=now)
             logger.info(f"Updated last_login_at for user_id={user_id}")
         except Exception as e:
             # Best-effort tracking: do not fail login if metadata logging fails

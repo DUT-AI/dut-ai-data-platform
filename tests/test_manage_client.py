@@ -9,10 +9,14 @@ from modules.identity.client.manage_client import ManageClient
 async def test_manage_client_build_url():
     client1 = ManageClient(manage_server_url="https://manage.dutai.io.vn/api/v1")
     assert client1._build_url("/users") == "https://manage.dutai.io.vn/api/v1/users"
-    assert client1._build_url("api/v1/users") == "https://manage.dutai.io.vn/api/v1/users"
+    assert (
+        client1._build_url("api/v1/users") == "https://manage.dutai.io.vn/api/v1/users"
+    )
 
     client2 = ManageClient(manage_server_url="https://manage.dutai.io.vn")
-    assert client2._build_url("/api/v1/users") == "https://manage.dutai.io.vn/api/v1/users"
+    assert (
+        client2._build_url("/api/v1/users") == "https://manage.dutai.io.vn/api/v1/users"
+    )
 
 
 @pytest.mark.asyncio

@@ -2,6 +2,7 @@ from modules.identity.dtos.auth_dtos import (
     AuthUserResponseDTO,
     LoginRequestDTO,
     LoginResponseDTO,
+    LogoutResponseDTO,
     TokenResponseDTO,
 )
 from modules.identity.dtos.manage_dtos import (
@@ -17,6 +18,7 @@ __all__ = [
     "AuthUserResponseDTO",
     "LoginRequestDTO",
     "LoginResponseDTO",
+    "LogoutResponseDTO",
     "ManageUserDTO",
     "ManageUsersResponseDTO",
     "TokenResponseDTO",

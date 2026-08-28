@@ -1,10 +1,14 @@
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, status
 
 from apps.api.deps.auth import CurrentUser
 from modules.identity.domain.entities import AuthUser
-from modules.identity.dtos.auth_dtos import LoginRequestDTO, LoginResponseDTO
-from modules.identity.use_cases import GetMeUseCase, LoginUseCase
+from modules.identity.dtos.auth_dtos import (
+    LoginRequestDTO,
+    LoginResponseDTO,
+    LogoutResponseDTO,
+)
+from modules.identity.use_cases import LoginUseCase
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 
@@ -29,17 +33,20 @@ async def login(
     status_code=status.HTTP_200_OK,
     summary="Get current logged in user information",
 )
-@inject
 async def get_me(
     current_user: CurrentUser,
-    use_case: FromDishka[GetMeUseCase],
-    authorization: str | None = Header(default=None),
-):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing or invalid token",
-        )
+) -> AuthUser:
+    """Return current logged in user (validated exactly once via CurrentUser dependency)."""
+    return current_user
 
-    token = authorization.split(" ")[1]
-    return await use_case.execute(token)
+
+@router.post(
+    "/logout",
+    response_model=LogoutResponseDTO,
+    status_code=status.HTTP_200_OK,
+    summary="User Logout",
+)
+async def logout() -> LogoutResponseDTO:
+    """Perform user session logout (client token disposal)."""
+    return LogoutResponseDTO()
+

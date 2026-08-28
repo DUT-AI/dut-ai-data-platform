@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getAuthToken } from "./auth-token";
+import { clearAuthToken, getAuthToken } from "./auth-token";
 
 export const api = axios.create({
   baseURL:
@@ -19,3 +19,24 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear token on 401 Unauthorized
+      clearAuthToken();
+
+      if (typeof window !== "undefined") {
+        const isLoginRequest = error.config?.url?.includes("/auth/login");
+        const isLoginPage = window.location.pathname === "/login";
+
+        // Prevent redirect loop and allow login page to display bad credentials error
+        if (!isLoginRequest && !isLoginPage) {
+          window.location.href = "/login";
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);

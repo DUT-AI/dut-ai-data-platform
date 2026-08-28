@@ -1,3 +1,10 @@
+"""Internal JWT utilities for signing/verifying internal platform tokens.
+
+NOTE: Authentication in DUT AI Data Platform delegates to the External Auth Server
+as the single Source of Truth (via AuthClient.get_me). This module is reserved for
+any local internal signing tasks and is NOT used to verify external auth tokens.
+"""
+
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -11,7 +18,7 @@ from core.exceptions import UnauthorizedException
 def create_access_token(
     data: dict[str, Any], expires_delta: timedelta | None = None
 ) -> str:
-    """Encode payload dictionary into signed JWT access token."""
+    """Encode payload dictionary into signed internal JWT access token."""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(UTC) + expires_delta

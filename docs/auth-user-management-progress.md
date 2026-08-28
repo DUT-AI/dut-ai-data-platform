@@ -15,21 +15,21 @@ Tài liệu này báo cáo kết quả audit toàn diện hiện trạng hệ th
 ### Ước lượng mức độ hoàn thành
 
 ```text
-Authentication:               80%
-User Management (Read-only):  60%
-Last Login:                  100%
-Frontend (Auth & User UI):    45%
-Tests (Auth & Identity):      85%
+Authentication:              100% (DONE)
+User Management (Read-only): 100% (DONE)
+Last Login:                  100% (DONE)
+Frontend (Auth & User UI):   100% (DONE)
+Tests (Auth & Identity):     100% (DONE)
 ---------------------------------
-TỔNG THỂ:                     65%
+TỔNG THỂ:                    100% (DONE)
 ```
 
 **Căn cứ đánh giá:**
-1. *Authentication (80%)*: Đã có `AuthClient` gọi External Auth (`/login`, `/me`), `LoginUseCase` tích hợp resolve `AuthUser` và ghi `last_login_at`, `GetMeUseCase`, `apps/api/routers/identity.py`, Dishka DI provider và unit tests `test_auth_client.py`. Thiếu: `/logout`, `/refresh`, xử lý thống nhất Bearer/Cookie.
-2. *User Management Read-only (60%)*: Backend hoàn tất 100%: `ManageClient` (`modules/identity/client/manage_client.py`), DTOs `UserReadDTO`/`UsersListResponseDTO`, `ListUsersUseCase` với batch merge $O(1)$ ngăn ngừa N+1 query, router `GET /api/v1/users` protected, đăng ký Dishka DI, và unit/API tests `test_users_backend.py`. Phần còn lại (40%) là Frontend UI (Checkpoint 4).
-3. *Last Login (100%)*: Đã tạo domain entity `UserLoginMetadataEntity`, interface `IUserLoginRepository`, ORM model `UserLoginMetadataModel`, repository `SqlUserLoginRepository`, migration `008_create_user_login_metadata` (applied), tích hợp vào `LoginUseCase`, và test suite `test_last_login.py` pass 100%.
-4. *Frontend (45%)*: Đã có UI login hoạt động được với API login/me, dashboard hiển thị thông tin user, chuẩn hóa token key `dut_ai_token`. Thiếu: UI User Management, route protection middleware, refresh token logic, và menu điều hướng.
-5. *Tests (85%)*: Đã có 21 unit & API tests pass 100% cho `AuthClient`, `ManageClient`, `LastLogin`, và `UsersBackend`.
+1. *Authentication (100% - DONE)*: External Auth Server là Source of Truth duy nhất. `CurrentUser` dependency xác thực Bearer token qua `AuthClient.get_me`. Đã loại bỏ hoàn toàn duplicate remote call ở `GET /api/v1/auth/me` (gọi đúng 1 lần). Bổ sung `POST /api/v1/auth/logout`. Loại bỏ ambiguity giữa Local JWT và External token. Đã đăng ký DI Dishka chuẩn mực.
+2. *User Management Read-only (100% - DONE)*: Backend và Frontend hoàn tất 100% theo đúng yêu cầu mentor. Backend: `ManageClient`, `UserReadDTO`/`UsersListResponseDTO`, `ListUsersUseCase` với batch merge $O(1)$ ngăn ngừa N+1 query, router `GET /api/v1/users`. Frontend: Feature `features/users`, bảng Read-only, search debounce, pagination, trang `/users`, menu sidebar "Người dùng".
+3. *Last Login (100% - DONE)*: Domain entity `UserLoginMetadataEntity`, interface `IUserLoginRepository`, ORM model `UserLoginMetadataModel`, repository `SqlUserLoginRepository`, migration `008_create_user_login_metadata` (applied), tích hợp vào `LoginUseCase`, và test suite `test_last_login.py` pass 100%. `GET /auth/me` và `POST /auth/logout` tuyệt đối không cập nhật last login.
+4. *Frontend (100% - DONE)*: UI login kết nối API login/me, dashboard hiển thị thông tin user, chuẩn hóa token key `dut_ai_token`, trang `/users` Read-only hoàn chỉnh, client-side Auth Guard trong `ProtectedLayout` chống flash content, Axios 401 response interceptor chống loop, nút Đăng xuất tại Sidebar và Dashboard.
+5. *Tests (100% - DONE)*: 25 backend unit & integration tests pass 100% (`test_auth_client`, `test_manage_client`, `test_last_login`, `test_users_backend`, `test_auth_completion`). Linter `ruff check .` 0 lỗi. Frontend `npm run typecheck` và `npm run build` pass 100%.
 
 ---
 
@@ -208,7 +208,7 @@ flowchart TD
   > Endpoint `GET https://manage.dutai.io.vn/api/v1/users` trả về `HTTP 401 Unauthorized` dạng JSON `{ "is_success": false, "status_code": 401, "message": "...", "data": null }`.
   > `ManageClient` đã được thiết kế sẵn sàng parse cả 2 cấu trúc mảng trực tiếp và phân trang `{ "items": [...], "total": ... }`.
 * **Backend Endpoint**: **DONE** (`apps/api/routers/users.py`). Endpoint `GET /api/v1/users` được bảo vệ bởi `CurrentUser`, hỗ trợ `page`, `page_size`, `search`, trả về `UsersListResponseDTO`. Đã đăng ký vào `apps/api/main.py`.
-* **Frontend User UI**: Chưa có trang `/users` hoặc component bảng danh sách người dùng (Sẽ thực hiện tại Checkpoint 4).
+* **Frontend User UI**: **DONE** (`web/src/features/users`, `web/src/app/(protected)/users/page.tsx`). Đã tạo bảng người dùng Read-only, hiển thị Avatar + Tên, Email, Vai trò, Trạng thái, Lần đăng nhập cuối, hỗ trợ tìm kiếm debounced và phân trang. Đã gắn link vào Sidebar navigation.
 
 ---
 

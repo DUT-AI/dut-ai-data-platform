@@ -20,8 +20,9 @@ class AppSettings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 1440
 
-    # Auth Server
+    # Auth & Manage Server
     auth_server_url: str = "https://manage.dutai.site/api/v1"
+    manage_server_url: str = "https://manage.dutai.io.vn/api/v1"
 
     # Server configs
     api_host: str = "0.0.0.0"

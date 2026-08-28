@@ -15,21 +15,21 @@ Tài liệu này báo cáo kết quả audit toàn diện hiện trạng hệ th
 ### Ước lượng mức độ hoàn thành
 
 ```text
-Authentication:               65%
+Authentication:               80%
 User Management (Read-only):  25%
-Last Login:                    0%
+Last Login:                  100%
 Frontend (Auth & User UI):    45%
-Tests (Auth & Identity):      40%
+Tests (Auth & Identity):      70%
 ---------------------------------
-TỔNG THỂ:                     35%
+TỔNG THỂ:                     55%
 ```
 
 **Căn cứ đánh giá:**
-1. *Authentication (65%)*: Đã có `AuthClient` gọi External Auth (`/login`, `/me`), `LoginUseCase`, `GetMeUseCase`, `apps/api/routers/identity.py`, Dishka DI provider và unit tests `test_auth_client.py`. Thiếu: `/logout`, `/refresh`, xử lý thống nhất Bearer/Cookie.
+1. *Authentication (80%)*: Đã có `AuthClient` gọi External Auth (`/login`, `/me`), `LoginUseCase` tích hợp resolve `AuthUser` và ghi `last_login_at`, `GetMeUseCase`, `apps/api/routers/identity.py`, Dishka DI provider và unit tests `test_auth_client.py`. Thiếu: `/logout`, `/refresh`, xử lý thống nhất Bearer/Cookie.
 2. *User Management Read-only (25%)*: Đã implement `ManageClient` (`modules/identity/client/manage_client.py`), DTOs `ManageUserDTO`/`ManageUsersResponseDTO`, đăng ký Dishka DI, và unit tests `test_manage_client.py`. Thiếu: `ListUsersUseCase`, router `GET /api/v1/users` và UI.
-3. *Last Login (0%)*: Chưa có bảng dữ liệu, migration, hay hook cập nhật `last_login_at`.
+3. *Last Login (100%)*: Đã tạo domain entity `UserLoginMetadataEntity`, interface `IUserLoginRepository`, ORM model `UserLoginMetadataModel`, repository `SqlUserLoginRepository`, migration `008_create_user_login_metadata` (applied), tích hợp vào `LoginUseCase`, và test suite `test_last_login.py` pass 100%.
 4. *Frontend (45%)*: Đã có UI login hoạt động được với API login/me, dashboard hiển thị thông tin user, chuẩn hóa token key `dut_ai_token`. Thiếu: UI User Management, route protection middleware, refresh token logic, và menu điều hướng.
-5. *Tests (40%)*: Đã có 10 unit tests pass 100% cho `AuthClient` và `ManageClient`.
+5. *Tests (70%)*: Đã có 15 unit tests pass 100% cho `AuthClient`, `ManageClient`, and `LastLogin`.
 
 ---
 
@@ -211,11 +211,15 @@ flowchart TD
 
 ---
 
-## 7. Last Login Design
+## 7. Last Login Design & Implementation
 
-### 7.1. Phân tích yêu cầu
-Mentor yêu cầu:
-> "Lưu lại một bản `last_login` để biết người dùng đăng nhập lần cuối khi nào."
+### 7.1. Trạng thái thực tế: **DONE (100%)**
+* **Entity & Interface**: `UserLoginMetadataEntity`, `IUserLoginRepository` (`modules/identity/domain/`).
+* **Model**: `UserLoginMetadataModel` (`modules/identity/models/user_login.py`).
+* **Repository**: `SqlUserLoginRepository` (`modules/identity/repository/user_login_repository.py`) hỗ trợ atomic PostgreSQL UPSERT và batch query `get_by_user_ids`.
+* **Migration**: `migrations/versions/008_create_user_login_metadata.py` (Đã upgrade head thành công).
+* **Use Case**: `LoginUseCase` resolve `AuthUser` từ `AuthClient.get_me` và ghi nhận `last_login_at` theo cơ chế best-effort.
+* **Tests**: `tests/test_last_login.py` (5 test cases pass 100%).
 
 ### 7.2. So sánh các phương án thiết kế
 

@@ -1,8 +1,11 @@
 from dishka import Provider, Scope, provide
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
 from modules.identity.client.auth_client import AuthClient
 from modules.identity.client.manage_client import ManageClient
+from modules.identity.domain.interfaces import IUserLoginRepository
+from modules.identity.repository.user_login_repository import SqlUserLoginRepository
 from modules.identity.use_cases import GetMeUseCase, LoginUseCase
 
 
@@ -24,6 +27,12 @@ class IdentityProvider(Provider):
             manage_server_url=settings.manage_server_url,
             timeout=settings.external_api_timeout,
         )
+
+    @provide
+    def get_user_login_repository(
+        self, session: AsyncSession
+    ) -> IUserLoginRepository:
+        return SqlUserLoginRepository(session)
 
     login_uc = provide(LoginUseCase)
     get_me_uc = provide(GetMeUseCase)

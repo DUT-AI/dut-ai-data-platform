@@ -12,6 +12,7 @@ from apps.api.routers import (
     identity_router,
     ontology_router,
     project_router,
+    users_router,
 )
 from core.config import settings
 from core.exceptions import setup_exception_handlers
@@ -43,6 +44,7 @@ app.add_middleware(
 
 # 5. Register Application Routers
 app.include_router(identity_router)
+app.include_router(users_router)
 app.include_router(project_router)
 app.include_router(ontology_router)
 app.include_router(dataset_router)

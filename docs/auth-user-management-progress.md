@@ -16,20 +16,20 @@ Tài liệu này báo cáo kết quả audit toàn diện hiện trạng hệ th
 
 ```text
 Authentication:               80%
-User Management (Read-only):  25%
+User Management (Read-only):  60%
 Last Login:                  100%
 Frontend (Auth & User UI):    45%
-Tests (Auth & Identity):      70%
+Tests (Auth & Identity):      85%
 ---------------------------------
-TỔNG THỂ:                     55%
+TỔNG THỂ:                     65%
 ```
 
 **Căn cứ đánh giá:**
 1. *Authentication (80%)*: Đã có `AuthClient` gọi External Auth (`/login`, `/me`), `LoginUseCase` tích hợp resolve `AuthUser` và ghi `last_login_at`, `GetMeUseCase`, `apps/api/routers/identity.py`, Dishka DI provider và unit tests `test_auth_client.py`. Thiếu: `/logout`, `/refresh`, xử lý thống nhất Bearer/Cookie.
-2. *User Management Read-only (25%)*: Đã implement `ManageClient` (`modules/identity/client/manage_client.py`), DTOs `ManageUserDTO`/`ManageUsersResponseDTO`, đăng ký Dishka DI, và unit tests `test_manage_client.py`. Thiếu: `ListUsersUseCase`, router `GET /api/v1/users` và UI.
+2. *User Management Read-only (60%)*: Backend hoàn tất 100%: `ManageClient` (`modules/identity/client/manage_client.py`), DTOs `UserReadDTO`/`UsersListResponseDTO`, `ListUsersUseCase` với batch merge $O(1)$ ngăn ngừa N+1 query, router `GET /api/v1/users` protected, đăng ký Dishka DI, và unit/API tests `test_users_backend.py`. Phần còn lại (40%) là Frontend UI (Checkpoint 4).
 3. *Last Login (100%)*: Đã tạo domain entity `UserLoginMetadataEntity`, interface `IUserLoginRepository`, ORM model `UserLoginMetadataModel`, repository `SqlUserLoginRepository`, migration `008_create_user_login_metadata` (applied), tích hợp vào `LoginUseCase`, và test suite `test_last_login.py` pass 100%.
 4. *Frontend (45%)*: Đã có UI login hoạt động được với API login/me, dashboard hiển thị thông tin user, chuẩn hóa token key `dut_ai_token`. Thiếu: UI User Management, route protection middleware, refresh token logic, và menu điều hướng.
-5. *Tests (70%)*: Đã có 15 unit tests pass 100% cho `AuthClient`, `ManageClient`, and `LastLogin`.
+5. *Tests (85%)*: Đã có 21 unit & API tests pass 100% cho `AuthClient`, `ManageClient`, `LastLogin`, và `UsersBackend`.
 
 ---
 
@@ -201,13 +201,14 @@ flowchart TD
 
 ### 6.2. Hiện trạng mã nguồn liên quan
 * **Manage Client**: **DONE** (`modules/identity/client/manage_client.py`). Đã implement client read-only gọi endpoint `GET /users`, xử lý phân trang, tìm kiếm, lỗi mạng, timeout và mã 401. Đã có 5 unit test cases pass.
-* **User DTOs**: **DONE** (`modules/identity/dtos/manage_dtos.py`). Đã định nghĩa `ManageUserDTO` và `ManageUsersResponseDTO`.
+* **User DTOs**: **DONE** (`modules/identity/dtos/user_dtos.py`). Đã định nghĩa `UserReadDTO` và `UsersListResponseDTO`.
+* **Use Case**: **DONE** (`modules/identity/use_cases/list_users.py`). `ListUsersUseCase` batch merge $O(1)$ thông tin user từ Manage API với `last_login_at` từ DB local, hoàn toàn không có N+1 query.
 * **Response Schema của Manage API**:
   > **ĐÃ XÁC MINH REACHABILITY TẠI CHECKPOINT 0 & 1:**
   > Endpoint `GET https://manage.dutai.io.vn/api/v1/users` trả về `HTTP 401 Unauthorized` dạng JSON `{ "is_success": false, "status_code": 401, "message": "...", "data": null }`.
   > `ManageClient` đã được thiết kế sẵn sàng parse cả 2 cấu trúc mảng trực tiếp và phân trang `{ "items": [...], "total": ... }`.
-* **Backend Endpoint**: Chưa có router `/api/v1/users` để expose danh sách user cho frontend Data Platform (Dự kiến triển khai ở checkpoint sau).
-* **Frontend User UI**: Chưa có trang `/users` hoặc component bảng danh sách người dùng.
+* **Backend Endpoint**: **DONE** (`apps/api/routers/users.py`). Endpoint `GET /api/v1/users` được bảo vệ bởi `CurrentUser`, hỗ trợ `page`, `page_size`, `search`, trả về `UsersListResponseDTO`. Đã đăng ký vào `apps/api/main.py`.
+* **Frontend User UI**: Chưa có trang `/users` hoặc component bảng danh sách người dùng (Sẽ thực hiện tại Checkpoint 4).
 
 ---
 

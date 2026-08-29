@@ -33,9 +33,22 @@ setup_exception_handlers(app)
 # 3. Setup Dishka Dependency Injection Container
 setup_di(app)
 
+
+class AppCORSMiddleware(CORSMiddleware):
+    """Enhanced CORS Middleware supporting all local development ports."""
+
+    def is_allowed_origin(self, origin: str) -> bool:
+        if super().is_allowed_origin(origin):
+            return True
+        # Automatically allow any local dev port on localhost, 127.0.0.1, or [::1]
+        return origin.startswith(
+            ("http://localhost:", "http://127.0.0.1:", "http://[::1]:")
+        ) or origin in ("http://localhost", "http://127.0.0.1", "http://[::1]")
+
+
 # 4. Configure CORS Middleware
 app.add_middleware(
-    CORSMiddleware,
+    AppCORSMiddleware,
     allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],

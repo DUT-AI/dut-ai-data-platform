@@ -34,8 +34,7 @@ class AppSettings(BaseSettings):
 
     # Server configs
     api_host: str = "0.0.0.0"
-    api_port: int = 8000
-    cors_origins: str = "http://localhost:3000,http://localhost:8000"
+    cors_origins: str = "http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000"
 
     # Telemetry
     otel_exporter_otlp_endpoint: str | None = None

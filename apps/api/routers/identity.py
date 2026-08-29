@@ -43,3 +43,13 @@ async def get_me(
 
     token = authorization.split(" ")[1]
     return await use_case.execute(token)
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="User Logout",
+)
+async def logout() -> None:
+    return None
+

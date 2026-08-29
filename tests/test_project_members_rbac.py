@@ -222,3 +222,44 @@ async def test_all_roles_can_list_members():
         assert list_res.status_code == 200
         members = list_res.json()
         assert len(members) >= 2  # Owner + Annotator
+
+
+# ─── Test 8: Cập nhật và Xóa theo member.id (thay vì user_id) ───────────────
+@pytest.mark.asyncio
+async def test_remove_and_update_by_member_id():
+    """Hỗ trợ cập nhật role và xóa member bằng member_id (UUID/ULID) hoặc user_id."""
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        project_id = await create_test_project(client)
+
+        add_res = await client.post(
+            f"/api/v1/projects/{project_id}/members",
+            json={"user_id": str(ANNOTATOR_USER.id), "role": "annotator"},
+        )
+        assert add_res.status_code == 201
+        member_id = add_res.json()["id"]
+
+        # Cập nhật bằng member_id
+        update_res = await client.put(
+            f"/api/v1/projects/{project_id}/members/{member_id}",
+            json={"role": "reviewer"},
+        )
+        assert update_res.status_code == 200
+        assert update_res.json()["role"] == "reviewer"
+
+        # Xóa bằng member_id
+        del_res = await client.delete(
+            f"/api/v1/projects/{project_id}/members/{member_id}"
+        )
+        assert del_res.status_code == 204
+
+
+# ─── Test 9: Auth logout endpoint ────────────────────────────────────────────
+@pytest.mark.asyncio
+async def test_auth_logout_endpoint():
+    """Endpoint POST /api/v1/auth/logout trả về 204 No Content."""
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post("/api/v1/auth/logout")
+        assert res.status_code == 204
+

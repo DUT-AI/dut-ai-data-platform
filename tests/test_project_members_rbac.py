@@ -257,9 +257,10 @@ async def test_remove_and_update_by_member_id():
 # ─── Test 9: Auth logout endpoint ────────────────────────────────────────────
 @pytest.mark.asyncio
 async def test_auth_logout_endpoint():
-    """Endpoint POST /api/v1/auth/logout trả về 204 No Content."""
+    """Endpoint POST /api/v1/auth/logout trả về 200 OK."""
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         res = await client.post("/api/v1/auth/logout")
-        assert res.status_code == 204
+        assert res.status_code == 200
+
 

@@ -1,5 +1,5 @@
 import { use } from "react";
-import { AnnotationWorkspaceView } from "@/features/annotation/components/annotation-workspace-view";
+import { AnnotationWorkspaceView } from "@/features/annotation";
 
 interface PageProps {
   params: Promise<{ id: string; assetId: string }>;

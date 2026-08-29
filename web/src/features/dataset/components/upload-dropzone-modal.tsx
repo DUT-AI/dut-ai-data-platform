@@ -10,8 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui";
-import { BatchUploadResult } from "../types/dataset";
-import { useUploadVersionAssetsMutation } from "../hooks/use-datasets";
+import { BatchUploadResult } from "../types";
+import { useUploadVersionAssetsMutation } from "../hooks";
 
 interface UploadDropzoneModalProps {
   versionId: string;

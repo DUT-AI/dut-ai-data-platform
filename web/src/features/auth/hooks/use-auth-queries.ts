@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { authService } from "../services/auth-service";
-import type { LoginInput } from "../schemas/login-schema";
+import { authService } from "../services";
+import type { LoginInput } from "../types";
 
 export const AUTH_QUERY_KEY = ["auth", "me"] as const;
 

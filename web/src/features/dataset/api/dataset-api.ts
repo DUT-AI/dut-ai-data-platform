@@ -7,7 +7,7 @@ import {
   DatasetCreatePayload,
   DatasetVersion,
   DatasetVersionCreatePayload,
-} from "../types/dataset";
+} from "../types";
 
 export const datasetApi = {
   getProjectDatasets: async (projectId: string): Promise<Dataset[]> => {

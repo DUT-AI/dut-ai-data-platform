@@ -8,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui";
-import { PROJECT_TYPE_OPTIONS, Project } from "../types/project";
-import { useArchiveProjectMutation } from "../hooks/use-projects";
+import { PROJECT_TYPE_OPTIONS, Project } from "../types";
+import { useArchiveProjectMutation } from "../hooks";
 
 interface ProjectOverviewTabProps {
   project: Project;

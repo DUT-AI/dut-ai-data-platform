@@ -1,14 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui";
 import { useAuth } from "@/contexts/auth-context";
-import { ProjectMember, ProjectMemberRole } from "../types/project";
+import { ProjectMember, ProjectMemberRole } from "../types";
 import {
   useProjectMembersQuery,
   useRemoveMemberMutation,
   useUpdateMemberRoleMutation,
-} from "../hooks/use-projects";
+} from "../hooks";
 import { InviteMemberModal } from "./invite-member-modal";
 import { RolePermissionsModal } from "./role-permissions-modal";
 

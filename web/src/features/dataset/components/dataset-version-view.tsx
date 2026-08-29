@@ -2,18 +2,18 @@
 
 import { useMemo, useState } from "react";
 import { Badge, Button, Card } from "@/components/ui";
-import { Dataset } from "../types/dataset";
+import { Dataset } from "../types";
 import {
   useCreateDatasetVersionMutation,
   useDatasetVersionQuery,
   usePublishDatasetVersionMutation,
   useVersionAssetsQuery,
-} from "../hooks/use-datasets";
+} from "../hooks";
 import { UploadDropzoneModal } from "./upload-dropzone-modal";
 import { AssetGalleryGrid } from "./asset-gallery-grid";
 import { AssetListTable } from "./asset-list-table";
 import { AnnotationStatsBar } from "@/features/annotation";
-import { useProjectOntologiesQuery } from "@/features/ontology/hooks/use-ontologies";
+import { useProjectOntologiesQuery } from "@/features/ontology";
 
 interface DatasetVersionViewProps {
   dataset: Dataset;

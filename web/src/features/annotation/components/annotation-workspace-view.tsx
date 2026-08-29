@@ -4,14 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui";
-import { useAssetAnnotationsQuery } from "../hooks/use-annotations";
+import { useAssetAnnotationsQuery } from "../hooks";
 import {
   useAssetDownloadUrlQuery,
   useVersionAssetsQuery,
-} from "@/features/dataset/hooks/use-datasets";
+} from "@/features/dataset";
 import { RevisionHistoryPanel } from "./revision-history-panel";
 import { RevisionDiffView } from "./revision-diff-view";
-import { openAssetInLabelStudio } from "../api/annotation-api";
+import { openAssetInLabelStudio } from "../api";
 
 interface AnnotationWorkspaceViewProps {
   projectId: string;

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Badge, Card } from "@/components/ui";
-import { AnnotationRevision } from "../types/annotation";
+import { AnnotationRevision } from "../types";
 
 interface RevisionDiffViewProps {
   currentRevision: AnnotationRevision;

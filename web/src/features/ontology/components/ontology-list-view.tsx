@@ -15,11 +15,8 @@ import {
   DialogTitle,
   Input,
 } from "@/components/ui";
-import { Ontology } from "../types/ontology";
-import {
-  useCreateOntologyMutation,
-  useProjectOntologiesQuery,
-} from "../hooks/use-ontologies";
+import { Ontology } from "../types";
+import { useCreateOntologyMutation, useProjectOntologiesQuery } from "../hooks";
 import { OntologyEditorView } from "./ontology-editor-view";
 
 interface OntologyListViewProps {

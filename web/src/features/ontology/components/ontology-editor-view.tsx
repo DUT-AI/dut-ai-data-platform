@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { Badge, Button, Card } from "@/components/ui";
-import { Category, Ontology, OntologyVersion } from "../types/ontology";
+import { Category, Ontology, OntologyVersion } from "../types";
 import {
   useCloneVersionMutation,
   useOntologyVersionQuery,
   usePublishVersionMutation,
-} from "../hooks/use-ontologies";
+} from "../hooks";
 import { CategoryTreeView } from "./category-tree-view";
 import { AttributeEditor } from "./attribute-editor";
 import { LabelingSetupView } from "./labeling-setup-view";

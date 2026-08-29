@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge, Card } from "@/components/ui";
-import { AnnotationRevision } from "../types/annotation";
+import { AnnotationRevision } from "../types";
 
 interface RevisionHistoryPanelProps {
   revisions: AnnotationRevision[];

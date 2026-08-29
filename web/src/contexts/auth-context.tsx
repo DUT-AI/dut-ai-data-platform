@@ -1,13 +1,13 @@
 "use client";
 
 import { createContext, useContext, useMemo } from "react";
-import type { LoginInput } from "@/features/auth/schemas/login-schema";
-import type { User } from "@/features/auth/types";
 import {
+  type LoginInput,
+  type User,
   useLoginMutation,
   useLogoutMutation,
   useUserQuery,
-} from "@/features/auth/hooks/use-auth-queries";
+} from "@/features/auth";
 
 type AuthContextValue = {
   user: User | null;

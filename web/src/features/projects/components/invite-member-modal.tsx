@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
   Dialog,
@@ -10,9 +12,19 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
 } from "@/components/ui";
-import { ProjectMemberRole } from "../types/project";
-import { useAddMemberMutation } from "../hooks/use-projects";
+import {
+  ProjectMemberRole,
+  inviteMemberSchema,
+  InviteMemberFormValues,
+} from "../types";
+import { useAddMemberMutation } from "../hooks";
 
 interface InviteMemberModalProps {
   projectId: string;
@@ -94,24 +106,27 @@ export function InviteMemberModal({
   isOpen,
   onClose,
 }: InviteMemberModalProps) {
-  const [userId, setUserId] = useState("");
-  const [role, setRole] = useState<InvitableRole>("annotator");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
   const addMemberMutation = useAddMemberMutation(projectId);
-  const selectedPreview = ROLE_PREVIEWS[role];
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userId.trim()) return;
+  const form = useForm<InviteMemberFormValues>({
+    resolver: zodResolver(inviteMemberSchema),
+    defaultValues: {
+      user_id: "",
+      role: "annotator",
+    },
+  });
 
+  const selectedRole = (form.watch("role") as InvitableRole) || "annotator";
+  const selectedPreview = ROLE_PREVIEWS[selectedRole] || ROLE_PREVIEWS.annotator;
+
+  const onSubmit = (values: InviteMemberFormValues) => {
     setErrorMsg(null);
     addMemberMutation.mutate(
-      { user_id: userId.trim(), role },
+      { user_id: values.user_id.trim(), role: values.role },
       {
         onSuccess: () => {
-          setUserId("");
-          setRole("annotator");
+          form.reset();
           onClose();
         },
         onError: (err: unknown) => {
@@ -125,8 +140,7 @@ export function InviteMemberModal({
   };
 
   const handleClose = () => {
-    setUserId("");
-    setRole("annotator");
+    form.reset();
     setErrorMsg(null);
     onClose();
   };
@@ -135,132 +149,132 @@ export function InviteMemberModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Mời thành viên vào dự án</DialogTitle>
+          <DialogTitle>Thêm thành viên vào dự án</DialogTitle>
           <DialogDescription>
-            Nhập User ID của thành viên và chọn vai trò phù hợp để cấp quyền truy cập vào dự án.
+            Nhập ID người dùng và chọn vai trò phù hợp để cấp quyền truy cập vào dự án.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5 py-1">
-          {/* Error message */}
-          {errorMsg && (
-            <div
-              role="alert"
-              className="flex items-start gap-2.5 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3.5 py-3 text-sm text-rose-600 dark:text-rose-400"
-            >
-              <svg
-                className="mt-0.5 h-4 w-4 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-                aria-hidden="true"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Error message */}
+            {errorMsg && (
+              <div
+                role="alert"
+                className="flex items-start gap-2.5 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3.5 py-3 text-sm text-rose-600 dark:text-rose-400"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-                />
-              </svg>
-              {errorMsg}
-            </div>
-          )}
+                <svg
+                  className="mt-0.5 h-4 w-4 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                  />
+                </svg>
+                {errorMsg}
+              </div>
+            )}
 
-          {/* User ID input */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="invite-user-id"
-              className="text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              User ID <span className="text-rose-500" aria-label="bắt buộc">*</span>
-            </label>
-            <Input
-              id="invite-user-id"
-              placeholder="VD: 101, 202"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              required
-              autoFocus
-              aria-required="true"
-              aria-describedby="invite-user-id-hint"
+            {/* User ID input */}
+            <FormField
+              control={form.control}
+              name="user_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    User ID <span className="text-rose-500" aria-label="bắt buộc">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="VD: 101, 202"
+                      disabled={addMemberMutation.isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            <p
-              id="invite-user-id-hint"
-              className="text-xs text-slate-400 dark:text-slate-500"
-            >
-              Nhập ID số của thành viên CLB trên hệ thống quản lý.
-            </p>
-          </div>
 
-          {/* Role select */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="invite-role"
-              className="text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Vai trò (Role) <span className="text-rose-500" aria-label="bắt buộc">*</span>
-            </label>
-            <select
-              id="invite-role"
-              value={role}
-              onChange={(e) => setRole(e.target.value as InvitableRole)}
-              className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
-              aria-required="true"
-            >
-              <option value="admin">Admin — Quản trị viên dự án</option>
-              <option value="annotator">Annotator — Người thực hiện gán nhãn</option>
-              <option value="reviewer">Reviewer — Người kiểm định & duyệt nhãn</option>
-            </select>
-          </div>
+            {/* Role select */}
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Vai trò (Role) <span className="text-rose-500" aria-label="bắt buộc">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <select
+                      {...field}
+                      disabled={addMemberMutation.isPending}
+                      className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                    >
+                      <option value="admin">Admin — Quản trị viên dự án</option>
+                      <option value="annotator">Annotator — Người thực hiện gán nhãn</option>
+                      <option value="reviewer">Reviewer — Người kiểm định & duyệt nhãn</option>
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* Dynamic Role Preview Card */}
-          <div
-            className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/40"
-            aria-live="polite"
-          >
-            <div className="mb-2.5 flex items-center gap-2">
-              <span
-                className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${selectedPreview.badgeClass}`}
-              >
-                {selectedPreview.label}
-              </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                {selectedPreview.description}
-              </span>
+            {/* Dynamic Role Preview Card */}
+            <div
+              className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/40"
+              aria-live="polite"
+            >
+              <div className="mb-2.5 flex items-center gap-2">
+                <span
+                  className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${selectedPreview.badgeClass}`}
+                >
+                  {selectedPreview.label}
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {selectedPreview.description}
+                </span>
+              </div>
+              <p className="mb-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+                Quyền hạn được cấp:
+              </p>
+              <ul className="space-y-1.5">
+                {selectedPreview.permissions.map((perm) => (
+                  <li key={perm} className="flex items-start gap-2">
+                    <CheckCircleIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500 dark:text-emerald-400" />
+                    <span className="text-xs text-slate-600 dark:text-slate-400">
+                      {perm}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <p className="mb-2 text-xs font-medium text-slate-600 dark:text-slate-400">
-              Quyền hạn được cấp:
-            </p>
-            <ul className="space-y-1.5">
-              {selectedPreview.permissions.map((perm) => (
-                <li key={perm} className="flex items-start gap-2">
-                  <CheckCircleIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500 dark:text-emerald-400" />
-                  <span className="text-xs text-slate-600 dark:text-slate-400">
-                    {perm}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
 
-          <DialogFooter className="pt-1">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={addMemberMutation.isPending}
-            >
-              Hủy
-            </Button>
-            <Button
-              type="submit"
-              isLoading={addMemberMutation.isPending}
-              disabled={!userId.trim()}
-            >
-              Thêm thành viên
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={addMemberMutation.isPending}
+              >
+                Hủy
+              </Button>
+              <Button
+                type="submit"
+                disabled={addMemberMutation.isPending}
+              >
+                {addMemberMutation.isPending ? "Đang thêm..." : "Thêm thành viên"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

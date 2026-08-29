@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ontologyApi } from "../api/ontology-api";
+import { ontologyApi } from "../api";
 import {
   AttributeCreatePayload,
   AttributeUpdatePayload,
   CategoryCreatePayload,
   CategoryUpdatePayload,
   OntologyCreatePayload,
-} from "../types/ontology";
+} from "../types";
 
 export const ONTOLOGY_KEYS = {
   all: ["ontologies"] as const,

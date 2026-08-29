@@ -139,3 +139,32 @@ async def test_manage_client_timeout(monkeypatch):
         await client.list_users(token="token")
 
     assert exc_info.value.status_code == 504
+
+
+@pytest.mark.asyncio
+async def test_manage_client_error_envelope(monkeypatch):
+    class MockResponse:
+        status_code = 200
+
+        def json(self):
+            return {
+                "is_success": False,
+                "data": None,
+                "message": "Manage service internal failure",
+            }
+
+        def raise_for_status(self):
+            pass
+
+    async def mock_get(self, url, headers=None, params=None, **kwargs):
+        return MockResponse()
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", mock_get)
+
+    client = ManageClient(manage_server_url="https://manage.example.com/api/v1")
+    with pytest.raises(HTTPException) as exc_info:
+        await client.list_users(token="token")
+
+    assert exc_info.value.status_code == 400
+    assert "Manage service internal failure" in exc_info.value.detail
+

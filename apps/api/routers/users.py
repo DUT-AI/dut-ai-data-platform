@@ -1,8 +1,7 @@
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import APIRouter, Depends, Query
-from fastapi.security import HTTPAuthorizationCredentials
+from fastapi import APIRouter, Query
 
-from apps.api.deps.auth import CurrentUser, bearer_scheme
+from apps.api.deps.auth import CurrentUser
 from modules.identity.dtos.user_dtos import UsersListResponseDTO
 from modules.identity.use_cases.list_users import ListUsersUseCase
 
@@ -17,16 +16,12 @@ router = APIRouter(prefix="/api/v1/users", tags=["Users"])
 @inject
 async def list_users(
     current_user: CurrentUser,
-    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-    use_case: FromDishka[ListUsersUseCase] = None,  # type: ignore
+    use_case: FromDishka[ListUsersUseCase],
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     search: str | None = Query(None, description="Search by name or email"),
 ) -> UsersListResponseDTO:
-    # Forward Manage bearer token if explicitly provided by caller, else None (ManageClient uses manage_api_token)
-    manage_token = credentials.credentials if credentials else None
     return await use_case.execute(
-        token=manage_token,
         page=page,
         page_size=page_size,
         search=search,

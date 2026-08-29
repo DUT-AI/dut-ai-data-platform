@@ -51,7 +51,11 @@ def setup_telemetry(app: FastAPI, service_name: str = "dut-ai-data-platform") ->
     )
 
     # 2. Setup OpenTelemetry Tracing
-    otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+    from core.config import app_settings
+
+    otlp_endpoint = app_settings.otel_exporter_otlp_endpoint or os.getenv(
+        "OTEL_EXPORTER_OTLP_ENDPOINT"
+    )
     if otlp_endpoint:
         resource = Resource.create({"service.name": service_name})
         provider = TracerProvider(resource=resource)

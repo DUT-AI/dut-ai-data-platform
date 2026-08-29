@@ -59,6 +59,11 @@ class AuthClient:
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail=f"Không thể kết nối tới Auth Server tại {self.auth_server_url}. Vui lòng kiểm tra lại Auth Server.",
             )
+        except httpx.TimeoutException:
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail=f"Yêu cầu tới Auth Server tại {self.auth_server_url} bị quá thời gian (timeout).",
+            )
         except httpx.HTTPStatusError as exc:
             raise HTTPException(
                 status_code=exc.response.status_code,
@@ -101,6 +106,11 @@ class AuthClient:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail=f"Không thể kết nối tới Auth Server tại {self.auth_server_url}. Vui lòng kiểm tra lại Auth Server.",
+            )
+        except httpx.TimeoutException:
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail=f"Yêu cầu tới Auth Server tại {self.auth_server_url} bị quá thời gian (timeout).",
             )
         except httpx.HTTPStatusError as exc:
             raise HTTPException(

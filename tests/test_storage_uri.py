@@ -13,7 +13,7 @@ from modules.dataset.dtos.dataset_dtos import AssetResponseDTO
 
 
 def test_build_storage_public_url():
-    base = "https://dataplatforms3.dutai.io.vn"
+    base = "https://s3.example.com"
 
     # Leading slash path with bucket
     res1 = build_storage_public_url(
@@ -22,7 +22,7 @@ def test_build_storage_public_url():
     )
     assert (
         res1
-        == "https://dataplatforms3.dutai.io.vn/ai-data-platform/project-01KYMVXAFWSPFZ10D5RQZ4EFAZ/assets/01KYMVXBACFGPV70TZDB7VYNVR/car_01.png"
+        == "https://s3.example.com/ai-data-platform/project-01KYMVXAFWSPFZ10D5RQZ4EFAZ/assets/01KYMVXBACFGPV70TZDB7VYNVR/car_01.png"
     )
 
     # Relative path without leading slash
@@ -32,7 +32,7 @@ def test_build_storage_public_url():
     )
     assert (
         res2
-        == "https://dataplatforms3.dutai.io.vn/ai-data-platform/project-01KYMVXAFWSPFZ10D5RQZ4EFAZ/assets/01KYMVXBACFGPV70TZDB7VYNVR/car_01.png"
+        == "https://s3.example.com/ai-data-platform/project-01KYMVXAFWSPFZ10D5RQZ4EFAZ/assets/01KYMVXBACFGPV70TZDB7VYNVR/car_01.png"
     )
 
     # Legacy s3:// format
@@ -42,7 +42,7 @@ def test_build_storage_public_url():
     )
     assert (
         res3
-        == "https://dataplatforms3.dutai.io.vn/ai-data-platform/project-01KYMVXAFWSPFZ10D5RQZ4EFAZ/assets/01KYMVXBACFGPV70TZDB7VYNVR/car_01.png"
+        == "https://s3.example.com/ai-data-platform/project-01KYMVXAFWSPFZ10D5RQZ4EFAZ/assets/01KYMVXBACFGPV70TZDB7VYNVR/car_01.png"
     )
 
     # Already absolute HTTP/HTTPS URL
@@ -60,7 +60,7 @@ def test_build_storage_public_url():
     )
     assert (
         res5
-        == "https://dataplatforms3.dutai.io.vn/ai-data-platform/project-01KYMVXAFWSPFZ10D5RQZ4EFAZ/assets/01KYMVXBACFGPV70TZDB7VYNVR/car_01.png"
+        == "https://s3.example.com/ai-data-platform/project-01KYMVXAFWSPFZ10D5RQZ4EFAZ/assets/01KYMVXBACFGPV70TZDB7VYNVR/car_01.png"
     )
 
 
@@ -100,9 +100,9 @@ def test_asset_response_dto_resolves_full_uri():
 @pytest.mark.asyncio
 async def test_minio_storage_adapter_upload_and_build_url():
     adapter = MinIOStorageAdapter(
-        endpoint_url="https://dataplatforms3.dutai.io.vn",
-        access_key="dutai",
-        secret_key="dutai123",
+        endpoint_url="https://s3.example.com",
+        access_key="test_access",
+        secret_key="test_secret",
         secure=True,
     )
     adapter.client = MagicMock()
@@ -112,7 +112,7 @@ async def test_minio_storage_adapter_upload_and_build_url():
     )
     assert (
         url
-        == "https://dataplatforms3.dutai.io.vn/ai-data-platform/project-01KYMVXAFWSPFZ10D5RQZ4EFAZ/assets/01KYMVXBACFGPV70TZDB7VYNVR/car_01.png"
+        == "https://s3.example.com/ai-data-platform/project-01KYMVXAFWSPFZ10D5RQZ4EFAZ/assets/01KYMVXBACFGPV70TZDB7VYNVR/car_01.png"
     )
 
 

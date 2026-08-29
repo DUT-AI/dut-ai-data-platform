@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from core.config import settings
+from core.config.auth import auth_settings
 from core.exceptions import UnauthorizedException
 from core.security.jwt import decode_access_token
 from modules.identity.domain.entities import AuthUser
@@ -21,7 +21,7 @@ async def get_current_user(
     1. HttpOnly Cookie (`settings.auth_cookie_name`) - primary for browser clients.
     2. Authorization Bearer header - fallback for API clients / external integrations / test suites.
     """
-    platform_access_token: str | None = request.cookies.get(settings.auth_cookie_name)
+    platform_access_token = request.cookies.get(auth_settings.auth_cookie_name)
     if not platform_access_token and credentials and credentials.credentials:
         platform_access_token = credentials.credentials
 

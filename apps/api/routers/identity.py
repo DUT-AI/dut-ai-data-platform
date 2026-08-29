@@ -2,7 +2,7 @@ from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, Response, status
 
 from apps.api.deps.auth import CurrentUser
-from core.config import settings
+from core.config.auth import auth_settings
 from modules.identity.domain.entities import AuthUser
 from modules.identity.dtos.auth_dtos import (
     LoginRequestDTO,
@@ -28,12 +28,12 @@ async def login(
 ) -> LoginResponseDTO:
     res = await use_case.execute(payload)
     response.set_cookie(
-        key=settings.auth_cookie_name,
+        key=auth_settings.auth_cookie_name,
         value=res.access_token,
         httponly=True,
-        secure=settings.auth_cookie_secure,
-        samesite=settings.auth_cookie_samesite,
-        max_age=settings.auth_cookie_max_age,
+        secure=auth_settings.auth_cookie_secure,
+        samesite=auth_settings.auth_cookie_samesite,
+        max_age=auth_settings.auth_cookie_max_age,
         path="/",
     )
     return res
@@ -61,9 +61,9 @@ async def get_me(
 async def logout(response: Response) -> LogoutResponseDTO:
     """Perform user session logout (clearing HttpOnly auth cookie)."""
     response.delete_cookie(
-        key=settings.auth_cookie_name,
+        key=auth_settings.auth_cookie_name,
         path="/",
-        secure=settings.auth_cookie_secure,
-        samesite=settings.auth_cookie_samesite,
+        secure=auth_settings.auth_cookie_secure,
+        samesite=auth_settings.auth_cookie_samesite,
     )
     return LogoutResponseDTO()

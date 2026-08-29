@@ -16,14 +16,12 @@ class ListUsersUseCase:
 
     async def execute(
         self,
-        token: str | None = None,
         page: int = 1,
         page_size: int = 20,
         search: str | None = None,
     ) -> UsersListResponseDTO:
         # 1. Fetch users from external Manage Service (Read-Only)
         manage_resp = await self.manage_client.list_users(
-            token=token,
             page=page,
             page_size=page_size,
             search=search,
@@ -44,7 +42,7 @@ class ListUsersUseCase:
         last_login_map = await self.login_repo.get_by_user_ids(user_ids)
 
         # 4. Merge data into UserReadDTO
-        items = [
+        all_user_dtos = [
             UserReadDTO(
                 id=u.id,
                 name=u.name,
@@ -57,9 +55,23 @@ class ListUsersUseCase:
             for u in manage_resp.items
         ]
 
+        # 5. Sắp xếp theo thời gian đăng nhập gần nhất (DESC)
+        # User có last_login_at mới nhất đứng đầu, user chưa từng đăng nhập (None) đứng cuối
+        all_user_dtos.sort(
+            key=lambda u: (
+                0 if u.last_login_at is not None else 1,
+                -u.last_login_at.timestamp() if u.last_login_at is not None else 0,
+            )
+        )
+
+        # 6. Cắt trang (Pagination Slicing)
+        total = manage_resp.total or len(all_user_dtos)
+        start_idx = (page - 1) * page_size
+        paginated_items = all_user_dtos[start_idx : start_idx + page_size]
+
         return UsersListResponseDTO(
-            items=items,
-            total=manage_resp.total,
-            page=manage_resp.page,
-            page_size=manage_resp.page_size,
+            items=paginated_items,
+            total=total,
+            page=page,
+            page_size=page_size,
         )

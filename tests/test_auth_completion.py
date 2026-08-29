@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from httpx import ASGITransport, AsyncClient
 
 from apps.api.main import app
-from core.config import settings
+from core.config.auth import auth_settings
 from core.security.jwt import create_access_token, decode_access_token
 from modules.identity.client.auth_client import AuthClient
 from modules.identity.domain.entities import AuthUser, TokenResponse
@@ -60,7 +60,7 @@ async def test_login_issues_platform_jwt_and_sets_httponly_cookie():
 
         # Verify HttpOnly Cookie
         set_cookie_header = resp.headers.get("set-cookie", "")
-        assert settings.auth_cookie_name in set_cookie_header
+        assert auth_settings.auth_cookie_name in set_cookie_header
         assert "httponly" in set_cookie_header.lower()
         assert platform_token in set_cookie_header
 
@@ -131,7 +131,7 @@ async def test_get_me_verifies_platform_jwt_locally_without_calling_manage():
         async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test",
-            cookies={settings.auth_cookie_name: platform_token},
+            cookies={auth_settings.auth_cookie_name: platform_token},
         ) as client:
             resp = await client.get("/api/v1/auth/me")
 
@@ -185,7 +185,7 @@ async def test_get_me_expired_platform_token_returns_401():
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
-        cookies={settings.auth_cookie_name: expired_token},
+        cookies={auth_settings.auth_cookie_name: expired_token},
     ) as client:
         resp = await client.get("/api/v1/auth/me")
 
@@ -217,7 +217,7 @@ async def test_logout_endpoint_clears_cookie():
     assert "message" in data
 
     set_cookie_header = resp.headers.get("set-cookie", "")
-    assert settings.auth_cookie_name in set_cookie_header
+    assert auth_settings.auth_cookie_name in set_cookie_header
     assert (
         "max-age=0" in set_cookie_header.lower()
         or "expires=" in set_cookie_header.lower()

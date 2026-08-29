@@ -3,6 +3,7 @@ from typing import Any
 import httpx
 from fastapi import HTTPException, status
 
+from core.config.manage_client import manage_settings
 from modules.identity.dtos.manage_dtos import (
     ManageUserDTO,
     ManageUsersResponseDTO,
@@ -14,23 +15,9 @@ class ManageClient:
 
     def __init__(
         self,
-        manage_server_url: str,
-        manage_api_token: str | None = None,
         timeout: float = 10.0,
     ):
-        self.manage_server_url = manage_server_url.rstrip("/")
-        self.manage_api_token = manage_api_token
         self.timeout = timeout
-
-    def _build_url(self, path: str) -> str:
-        """Construct full URL cleanly preventing duplicate /api/v1 paths."""
-        base = self.manage_server_url
-        clean_path = path.lstrip("/")
-
-        if base.endswith("/api/v1") and clean_path.startswith("api/v1/"):
-            clean_path = clean_path[len("api/v1/") :]
-
-        return f"{base}/{clean_path}"
 
     @staticmethod
     def _parse_user(item: dict[str, Any]) -> ManageUserDTO:
@@ -46,17 +33,14 @@ class ManageClient:
 
     async def list_users(
         self,
-        token: str | None = None,
         page: int = 1,
         page_size: int = 20,
         search: str | None = None,
     ) -> ManageUsersResponseDTO:
         """Fetch users from Manage Service GET /api/v1/users."""
-        url = self._build_url("/users")
-        auth_token = token or self.manage_api_token
         headers = {}
-        if auth_token:
-            headers["Authorization"] = f"Bearer {auth_token}"
+
+        headers["Authorization"] = f"Bearer {manage_settings.manage_api_token}"
         params: dict[str, Any] = {
             "page": page,
             "page_size": page_size,
@@ -66,7 +50,9 @@ class ManageClient:
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(url, headers=headers, params=params)
+                response = await client.get(
+                    manage_settings.user_endpoint, headers=headers, params=params
+                )
                 if response.status_code == 401:
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -87,46 +73,26 @@ class ManageClient:
                         ),
                     )
 
-                data = payload.get("data")
+                data: list[dict[str, Any]] = payload.get("data", [])
                 items: list[ManageUserDTO] = []
                 total = 0
 
-                if isinstance(data, list):
-                    # Direct list of user objects (when Manage server returns full unpaginated list)
+                all_items = [
+                    self._parse_user(item) for item in data if isinstance(item, dict)
+                ]
+
+                # In-memory search fallback if Manage server didn't filter
+                if search and search.strip():
+                    s = search.strip().lower()
                     all_items = [
-                        self._parse_user(item)
-                        for item in data
-                        if isinstance(item, dict)
+                        u
+                        for u in all_items
+                        if s in u.name.lower() or s in u.email.lower()
                     ]
 
-                    # In-memory search fallback if Manage server didn't filter
-                    if search and search.strip():
-                        s = search.strip().lower()
-                        all_items = [
-                            u
-                            for u in all_items
-                            if s in u.name.lower() or s in u.email.lower()
-                        ]
-
-                    total = len(all_items)
-                    # Slicing fallback for unpaginated direct list
-                    start_idx = (page - 1) * page_size
-                    items = all_items[start_idx : start_idx + page_size]
-
-                elif isinstance(data, dict):
-                    # Paginated dictionary response { items / users, total, page, page_size }
-                    raw_items = data.get("items") or data.get("users") or []
-                    items = [
-                        self._parse_user(item)
-                        for item in raw_items
-                        if isinstance(item, dict)
-                    ]
-                    total = data.get("total", len(items))
-
-                    # If server returned full list instead of paginated slice
-                    if len(items) > page_size and total == len(items):
-                        start_idx = (page - 1) * page_size
-                        items = items[start_idx : start_idx + page_size]
+                total = len(all_items)
+                start_idx = (page - 1) * page_size
+                items = all_items[start_idx : start_idx + page_size]
 
                 return ManageUsersResponseDTO(
                     items=items,
@@ -134,18 +100,18 @@ class ManageClient:
                     page=page,
                     page_size=page_size,
                 )
-        except httpx.ConnectError:
+        except httpx.ConnectError as exc:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"Không thể kết nối tới Manage Server tại {self.manage_server_url}. Vui lòng kiểm tra lại Manage Server.",
-            )
-        except httpx.TimeoutException:
+                detail=f"Không thể kết nối tới Manage Server tại {manage_settings.user_endpoint}. Vui lòng kiểm tra lại Manage Server.",
+            ) from exc
+        except httpx.TimeoutException as exc:
             raise HTTPException(
                 status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                detail=f"Yêu cầu tới Manage Server tại {self.manage_server_url} bị quá thời gian (timeout).",
-            )
+                detail=f"Yêu cầu tới Manage Server tại {manage_settings.user_endpoint} bị quá thời gian (timeout).",
+            ) from exc
         except httpx.HTTPStatusError as exc:
             raise HTTPException(
                 status_code=exc.response.status_code,
                 detail=f"Lỗi Manage Server: {exc.response.text}",
-            )
+            ) from exc

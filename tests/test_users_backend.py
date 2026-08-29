@@ -16,7 +16,7 @@ from modules.identity.use_cases.list_users import ListUsersUseCase
 
 @pytest.mark.asyncio
 async def test_list_users_use_case_merge_last_login():
-    """Test 1: Merge external Manage users with local last_login_at timestamps."""
+    """Test 1: Merge external Manage users with local last_login_at timestamps and sort DESC."""
     manage_client = AsyncMock(spec=ManageClient)
     manage_client.list_users.return_value = ManageUsersResponseDTO(
         items=[
@@ -36,33 +36,48 @@ async def test_list_users_use_case_merge_last_login():
                 avatar_url=None,
                 role_names=["ANNOTATOR"],
             ),
+            ManageUserDTO(
+                id="103",
+                name="Charlie",
+                email="charlie@dutai.io.vn",
+                status="ACTIVE",
+                avatar_url=None,
+                role_names=["ANNOTATOR"],
+            ),
         ],
-        total=2,
+        total=3,
         page=1,
         page_size=20,
     )
 
-    t1 = datetime(2026, 8, 20, 15, 30, 0, tzinfo=UTC)
+    t_earlier = datetime(2026, 8, 20, 10, 0, 0, tzinfo=UTC)
+    t_latest = datetime(2026, 8, 20, 18, 0, 0, tzinfo=UTC)
     repo = AsyncMock(spec=IUserLoginRepository)
-    repo.get_by_user_ids.return_value = {"101": t1}
+    repo.get_by_user_ids.return_value = {"101": t_earlier, "103": t_latest}
 
     use_case = ListUsersUseCase(manage_client=manage_client, login_repo=repo)
-    result = await use_case.execute(token="fake_token", page=1, page_size=20)
+    result = await use_case.execute(page=1, page_size=20)
 
-    assert result.total == 2
-    assert len(result.items) == 2
+    assert result.total == 3
+    assert len(result.items) == 3
 
-    # User 101 has logged in before
-    assert result.items[0].id == "101"
-    assert result.items[0].name == "Alice"
-    assert result.items[0].last_login_at == t1
+    # Sorted by last_login_at DESC:
+    # 1. Charlie (t_latest)
+    # 2. Alice (t_earlier)
+    # 3. Bob (None - never logged in)
+    assert result.items[0].id == "103"
+    assert result.items[0].name == "Charlie"
+    assert result.items[0].last_login_at == t_latest
 
-    # User 102 has never logged in -> last_login_at is None
-    assert result.items[1].id == "102"
-    assert result.items[1].name == "Bob"
-    assert result.items[1].last_login_at is None
+    assert result.items[1].id == "101"
+    assert result.items[1].name == "Alice"
+    assert result.items[1].last_login_at == t_earlier
 
-    repo.get_by_user_ids.assert_awaited_once_with(["101", "102"])
+    assert result.items[2].id == "102"
+    assert result.items[2].name == "Bob"
+    assert result.items[2].last_login_at is None
+
+    repo.get_by_user_ids.assert_awaited_once_with(["101", "102", "103"])
 
 
 @pytest.mark.asyncio
@@ -78,7 +93,7 @@ async def test_list_users_use_case_empty_users():
 
     repo = AsyncMock(spec=IUserLoginRepository)
     use_case = ListUsersUseCase(manage_client=manage_client, login_repo=repo)
-    result = await use_case.execute(token="fake_token")
+    result = await use_case.execute()
 
     assert result.total == 0
     assert result.items == []
@@ -97,7 +112,7 @@ async def test_list_users_use_case_manage_failure():
     use_case = ListUsersUseCase(manage_client=manage_client, login_repo=repo)
 
     with pytest.raises(HTTPException) as exc_info:
-        await use_case.execute(token="fake_token")
+        await use_case.execute()
 
     assert exc_info.value.status_code == 502
     assert "Manage Service unavailable" in exc_info.value.detail
@@ -119,14 +134,12 @@ async def test_list_users_use_case_pagination_and_search_forwarding():
     use_case = ListUsersUseCase(manage_client=manage_client, login_repo=repo)
 
     await use_case.execute(
-        token="token_xyz",
         page=2,
         page_size=10,
         search="alice",
     )
 
     manage_client.list_users.assert_awaited_once_with(
-        token="token_xyz",
         page=2,
         page_size=10,
         search="alice",
@@ -155,7 +168,6 @@ async def test_api_get_users_authenticated_success(monkeypatch):
 
     async def mock_list_users(
         self,
-        token: str | None = None,
         page: int = 1,
         page_size: int = 20,
         search: str | None = None,
@@ -187,30 +199,33 @@ async def test_api_get_users_authenticated_success(monkeypatch):
     monkeypatch.setattr(ManageClient, "list_users", mock_list_users)
     app.dependency_overrides[get_current_user] = lambda: mock_user
 
-    transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        res = await client.get(
-            "/api/v1/users?page=1&page_size=20",
-            headers={"Authorization": "Bearer mock_valid_token"},
-        )
-        assert res.status_code == 200
-        data = res.json()
-        assert data["total"] == 2
-        assert data["page"] == 1
-        assert data["page_size"] == 20
-        assert len(data["items"]) == 2
-        assert data["items"][0]["id"] == "101"
-        assert data["items"][0]["name"] == "Test Operator"
-        assert data["items"][1]["id"] == "102"
-        assert "last_login_at" in data["items"][0]
-
-    app.dependency_overrides.clear()
+    try:
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(
+            transport=transport, base_url="http://test"
+        ) as client:
+            res = await client.get(
+                "/api/v1/users?page=1&page_size=20",
+                headers={"Authorization": "Bearer mock_valid_token"},
+            )
+            assert res.status_code == 200
+            data = res.json()
+            assert data["total"] == 2
+            assert data["page"] == 1
+            assert data["page_size"] == 20
+            assert len(data["items"]) == 2
+            assert data["items"][0]["id"] == "101"
+            assert data["items"][0]["name"] == "Test Operator"
+            assert data["items"][1]["id"] == "102"
+            assert "last_login_at" in data["items"][0]
+    finally:
+        app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
 async def test_api_get_users_authenticated_via_cookie_success(monkeypatch):
     """Test 7: Authenticated request via HttpOnly cookie does NOT leak Platform token to ManageClient."""
-    from core.config import settings
+    from core.config.auth import auth_settings
     from core.security.jwt import create_access_token
 
     mock_user = AuthUser(
@@ -221,17 +236,12 @@ async def test_api_get_users_authenticated_via_cookie_success(monkeypatch):
         role_names=["ADMIN"],
     )
 
-    captured_token = "NOT_CALLED"
-
     async def mock_list_users(
         self,
-        token: str | None = None,
         page: int = 1,
         page_size: int = 20,
         search: str | None = None,
     ):
-        nonlocal captured_token
-        captured_token = token
         return ManageUsersResponseDTO(
             items=[],
             total=0,
@@ -244,15 +254,14 @@ async def test_api_get_users_authenticated_via_cookie_success(monkeypatch):
 
     platform_jwt = create_access_token({"sub": "101", "email": "operator@example.com"})
 
-    transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(
-        transport=transport,
-        base_url="http://test",
-        cookies={settings.auth_cookie_name: platform_jwt},
-    ) as client:
-        res = await client.get("/api/v1/users")
-        assert res.status_code == 200
-        # Crucial security boundary: Platform JWT must NOT be forwarded to Manage Server
-        assert captured_token is None or captured_token != platform_jwt
-
-    app.dependency_overrides.clear()
+    try:
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(
+            transport=transport,
+            base_url="http://test",
+            cookies={auth_settings.auth_cookie_name: platform_jwt},
+        ) as client:
+            res = await client.get("/api/v1/users")
+            assert res.status_code == 200
+    finally:
+        app.dependency_overrides.clear()

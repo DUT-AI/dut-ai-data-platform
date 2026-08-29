@@ -26,14 +26,8 @@ class LoginUseCase:
         )
         manage_access_token = manage_login_res.access_token
 
-        # 2. Resolve User Identity from Manage Server using temporary Manage token
-        # If this fails, an exception is raised and login stops immediately
         auth_user = await self.auth_client.get_me(manage_access_token)
 
-        # 3. Discard temporary Manage access token (never stored or leaked)
-        del manage_access_token
-
-        # 4. Record last_login_at in local PostgreSQL (Best-Effort)
         try:
             user_id = str(auth_user.id)
             now = datetime.now(UTC)

@@ -15,23 +15,6 @@ class AppSettings(BaseSettings):
         case_sensitive=False,
     )
 
-    # Security & JWT
-    jwt_secret_key: str = "change-this-to-a-very-secure-secret-key-in-production"
-    jwt_algorithm: str = "HS256"
-    jwt_expire_minutes: int = 1440
-
-    # Cookie Authentication
-    auth_cookie_name: str = "access_token"
-    auth_cookie_secure: bool = False
-    auth_cookie_samesite: str = "lax"
-    auth_cookie_max_age: int = 86400
-
-    # Auth & Manage Server
-    auth_server_url: str = "http://localhost:8000/api/v1"
-    manage_server_url: str = ""
-    manage_api_token: str | None = None
-    external_api_timeout: float = 10.0
-
     # Server configs
     api_host: str = "0.0.0.0"
     api_port: int = 8000

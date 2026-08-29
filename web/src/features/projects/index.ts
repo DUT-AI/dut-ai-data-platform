@@ -8,4 +8,5 @@ export * from "./components/project-detail-view";
 export * from "./components/project-overview-tab";
 export * from "./components/project-members-tab";
 export * from "./components/invite-member-modal";
+export * from "./components/role-permissions-modal";
 export * from "./components/project-settings-tab";

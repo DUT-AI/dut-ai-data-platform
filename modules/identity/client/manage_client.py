@@ -63,7 +63,11 @@ class ManageClient:
                 response.raise_for_status()
 
                 payload: dict[str, Any] = response.json()
-                if not payload.get("is_success") and "data" not in payload:
+                if (
+                    payload.get("is_success") is False
+                    or "data" not in payload
+                    or payload.get("data") is None
+                ):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=payload.get(

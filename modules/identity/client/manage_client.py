@@ -32,6 +32,18 @@ class ManageClient:
 
         return f"{base}/{clean_path}"
 
+    @staticmethod
+    def _parse_user(item: dict[str, Any]) -> ManageUserDTO:
+        return ManageUserDTO(
+            id=item.get("id") or item.get("user_id", ""),
+            name=item.get("name") or item.get("username", ""),
+            email=item.get("email", ""),
+            status=item.get("status", "ACTIVE"),
+            avatar_url=item.get("avatar_url"),
+            role_names=item.get("role_names")
+            or ([item["role"]] if "role" in item else []),
+        )
+
     async def list_users(
         self,
         token: str | None = None,
@@ -81,21 +93,11 @@ class ManageClient:
 
                 if isinstance(data, list):
                     # Direct list of user objects (when Manage server returns full unpaginated list)
-                    all_items: list[ManageUserDTO] = []
-                    for item in data:
-                        if isinstance(item, dict):
-                            all_items.append(
-                                ManageUserDTO(
-                                    id=item.get("id") or item.get("user_id", ""),
-                                    name=item.get("name") or item.get("username", ""),
-                                    email=item.get("email", ""),
-                                    status=item.get("status", "ACTIVE"),
-                                    avatar_url=item.get("avatar_url"),
-                                    role_names=item.get("role_names")
-                                    or ([item["role"]] if "role" in item else []),
-                                    raw_data=item,
-                                )
-                            )
+                    all_items = [
+                        self._parse_user(item)
+                        for item in data
+                        if isinstance(item, dict)
+                    ]
 
                     # In-memory search fallback if Manage server didn't filter
                     if search and search.strip():
@@ -103,37 +105,28 @@ class ManageClient:
                         all_items = [
                             u
                             for u in all_items
-                            if s in str(u.name).lower() or s in str(u.email).lower()
+                            if s in u.name.lower() or s in u.email.lower()
                         ]
 
                     total = len(all_items)
                     # Slicing fallback for unpaginated direct list
                     start_idx = (page - 1) * page_size
-                    end_idx = start_idx + page_size
-                    items = all_items[start_idx:end_idx]
+                    items = all_items[start_idx : start_idx + page_size]
+
                 elif isinstance(data, dict):
                     # Paginated dictionary response { items / users, total, page, page_size }
                     raw_items = data.get("items") or data.get("users") or []
-                    for item in raw_items:
-                        if isinstance(item, dict):
-                            items.append(
-                                ManageUserDTO(
-                                    id=item.get("id") or item.get("user_id", ""),
-                                    name=item.get("name") or item.get("username", ""),
-                                    email=item.get("email", ""),
-                                    status=item.get("status", "ACTIVE"),
-                                    avatar_url=item.get("avatar_url"),
-                                    role_names=item.get("role_names")
-                                    or ([item["role"]] if "role" in item else []),
-                                    raw_data=item,
-                                )
-                            )
+                    items = [
+                        self._parse_user(item)
+                        for item in raw_items
+                        if isinstance(item, dict)
+                    ]
                     total = data.get("total", len(items))
+
                     # If server returned full list instead of paginated slice
                     if len(items) > page_size and total == len(items):
                         start_idx = (page - 1) * page_size
-                        end_idx = start_idx + page_size
-                        items = items[start_idx:end_idx]
+                        items = items[start_idx : start_idx + page_size]
 
                 return ManageUsersResponseDTO(
                     items=items,

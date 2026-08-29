@@ -113,6 +113,7 @@ async def test_manage_client_list_users_list_envelope(monkeypatch):
 @pytest.mark.asyncio
 async def test_manage_client_list_users_direct_list_pagination_slicing(monkeypatch):
     """Test that when Manage server returns an unpaginated array of 25 items, ManageClient properly slices pages."""
+
     class MockResponse:
         status_code = 200
 
@@ -211,4 +212,3 @@ async def test_manage_client_error_envelope(monkeypatch):
 
     assert exc_info.value.status_code == 400
     assert "Manage service internal failure" in exc_info.value.detail
-

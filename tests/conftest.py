@@ -1,13 +1,16 @@
 from collections.abc import AsyncIterable
+
 import pytest_asyncio
 from dishka import Provider, Scope, make_async_container, provide
 from dishka.integrations.fastapi import setup_dishka
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.pool import StaticPool
 
 # Import all models to register onto Base.metadata
@@ -24,12 +27,11 @@ from modules.identity.di import IdentityProvider
 from modules.ontology.di import OntologyProvider
 from modules.project.di import ProjectProvider
 
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.compiler import compiles
 
 @compiles(JSONB, "sqlite")
 def compile_jsonb_sqlite(type_, compiler, **kw):
     return "JSON"
+
 
 # In-memory SQLite engine for tests with StaticPool
 test_engine = create_async_engine(

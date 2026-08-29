@@ -7,6 +7,7 @@ Kiểm thử đầy đủ các kịch bản phân quyền theo business rules:
 - Không thể xóa Owner (400 Bad Request)
 - Không thể mời trùng user đã tồn tại (409 Conflict)
 """
+
 import httpx
 import pytest
 
@@ -16,16 +17,32 @@ from modules.identity.domain.entities import AuthUser
 
 # ─── Mock users cho từng role ────────────────────────────────────────────────
 OWNER_USER = AuthUser(
-    id=101, name="Owner User", email="owner@dut.ai", status="ACTIVE", role_names=["USER"]
+    id=101,
+    name="Owner User",
+    email="owner@dut.ai",
+    status="ACTIVE",
+    role_names=["USER"],
 )
 ADMIN_USER = AuthUser(
-    id=102, name="Admin User", email="admin@dut.ai", status="ACTIVE", role_names=["USER"]
+    id=102,
+    name="Admin User",
+    email="admin@dut.ai",
+    status="ACTIVE",
+    role_names=["USER"],
 )
 ANNOTATOR_USER = AuthUser(
-    id=103, name="Annotator User", email="annotator@dut.ai", status="ACTIVE", role_names=["USER"]
+    id=103,
+    name="Annotator User",
+    email="annotator@dut.ai",
+    status="ACTIVE",
+    role_names=["USER"],
 )
 REVIEWER_USER = AuthUser(
-    id=104, name="Reviewer User", email="reviewer@dut.ai", status="ACTIVE", role_names=["USER"]
+    id=104,
+    name="Reviewer User",
+    email="reviewer@dut.ai",
+    status="ACTIVE",
+    role_names=["USER"],
 )
 
 
@@ -176,7 +193,9 @@ async def test_cannot_remove_project_owner():
         )
         assert remove_res.status_code == 400
         error_body = remove_res.json()
-        error_msg = error_body.get("error", {}).get("message", "") or error_body.get("detail", "")
+        error_msg = error_body.get("error", {}).get("message", "") or error_body.get(
+            "detail", ""
+        )
         assert "owner" in error_msg.lower()
 
 
@@ -262,5 +281,3 @@ async def test_auth_logout_endpoint():
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         res = await client.post("/api/v1/auth/logout")
         assert res.status_code == 200
-
-

@@ -1,5 +1,3 @@
-from typing import Any
-
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -14,7 +12,6 @@ class ManageUserDTO(BaseModel):
     status: str = "ACTIVE"
     avatar_url: str | None = None
     role_names: list[str] = Field(default_factory=list)
-    raw_data: dict[str, Any] | None = None
 
 
 class ManageUsersResponseDTO(BaseModel):

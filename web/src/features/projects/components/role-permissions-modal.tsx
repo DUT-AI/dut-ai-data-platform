@@ -234,7 +234,8 @@ export function RolePermissionsModal({
             Bảng Ma trận Phân quyền
           </DialogTitle>
           <DialogDescription className="text-sm text-slate-500">
-            Tổng hợp các vai trò trong dự án và quyền hạn tương ứng của từng vai trò.
+            Tổng hợp các vai trò trong dự án và quyền hạn tương ứng của từng vai
+            trò.
           </DialogDescription>
         </DialogHeader>
 
@@ -316,8 +317,8 @@ export function RolePermissionsModal({
 
         {/* Note footer */}
         <p className="text-xs text-slate-400 dark:text-slate-500">
-          * Owner là người tạo dự án và không thể bị xóa khỏi dự án.
-          Admin không thể lưu trữ (Archive) hoặc xóa Owner.
+          * Owner là người tạo dự án và không thể bị xóa khỏi dự án. Admin không
+          thể lưu trữ (Archive) hoặc xóa Owner.
         </p>
       </DialogContent>
     </Dialog>

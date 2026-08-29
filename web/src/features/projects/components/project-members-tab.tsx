@@ -42,7 +42,8 @@ const ROLE_CONFIG: Record<
     badgeClass:
       "bg-purple-500/10 text-purple-600 border border-purple-500/20 dark:text-purple-400",
     ringClass: "ring-purple-500/30",
-    avatarClass: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
+    avatarClass:
+      "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
   },
   admin: {
     label: "ADMIN",
@@ -50,7 +51,8 @@ const ROLE_CONFIG: Record<
     badgeClass:
       "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 dark:text-emerald-400",
     ringClass: "ring-emerald-500/30",
-    avatarClass: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+    avatarClass:
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
   },
   annotator: {
     label: "ANNOTATOR",
@@ -58,7 +60,8 @@ const ROLE_CONFIG: Record<
     badgeClass:
       "bg-blue-500/10 text-blue-600 border border-blue-500/20 dark:text-blue-400",
     ringClass: "ring-blue-500/30",
-    avatarClass: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    avatarClass:
+      "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
   },
   reviewer: {
     label: "REVIEWER",
@@ -66,7 +69,8 @@ const ROLE_CONFIG: Record<
     badgeClass:
       "bg-amber-500/10 text-amber-600 border border-amber-500/20 dark:text-amber-400",
     ringClass: "ring-amber-500/30",
-    avatarClass: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    avatarClass:
+      "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
   },
 };
 
@@ -86,7 +90,13 @@ function canManageMembers(role?: ProjectMemberRole): boolean {
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
-function MemberAvatar({ userId, role }: { userId: string; role: ProjectMemberRole }) {
+function MemberAvatar({
+  userId,
+  role,
+}: {
+  userId: string;
+  role: ProjectMemberRole;
+}) {
   const config = ROLE_CONFIG[role];
   return (
     <span
@@ -112,7 +122,10 @@ function RoleBadge({ role }: { role: ProjectMemberRole }) {
 function ActiveStatusIndicator() {
   return (
     <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+      <span
+        className="h-1.5 w-1.5 rounded-full bg-emerald-500"
+        aria-hidden="true"
+      />
       Hoạt động
     </span>
   );
@@ -258,7 +271,13 @@ function ConfirmRemoveDialog({
 }
 
 // ─── Empty state ─────────────────────────────────────────────────────────────
-function EmptyMembersState({ canManage, onInvite }: { canManage: boolean; onInvite: () => void }) {
+function EmptyMembersState({
+  canManage,
+  onInvite,
+}: {
+  canManage: boolean;
+  onInvite: () => void;
+}) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
@@ -283,7 +302,7 @@ function EmptyMembersState({ canManage, onInvite }: { canManage: boolean; onInvi
         </p>
         <p className="mt-0.5 text-xs text-slate-500">
           {canManage
-            ? "Bấm \"+ Mời thành viên\" để thêm người vào dự án."
+            ? 'Bấm "+ Mời thành viên" để thêm người vào dự án.'
             : "Dự án chưa có thành viên nào."}
         </p>
       </div>
@@ -303,7 +322,9 @@ export function ProjectMembersTab({
 }: ProjectMembersTabProps) {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isPermissionsOpen, setIsPermissionsOpen] = useState(false);
-  const [memberToRemove, setMemberToRemove] = useState<ProjectMember | null>(null);
+  const [memberToRemove, setMemberToRemove] = useState<ProjectMember | null>(
+    null
+  );
 
   const { user } = useAuth();
   const { data: members, isLoading } = useProjectMembersQuery(projectId);
@@ -311,8 +332,11 @@ export function ProjectMembersTab({
   const removeMemberMutation = useRemoveMemberMutation(projectId);
 
   // Tự động tìm role của người dùng đang đăng nhập trong project này
-  const memberRecord = members?.find((m) => String(m.user_id) === String(user?.id));
-  const effectiveRole = currentUserRole ?? memberRecord?.role ?? (user ? "owner" : "owner");
+  const memberRecord = members?.find(
+    (m) => String(m.user_id) === String(user?.id)
+  );
+  const effectiveRole =
+    currentUserRole ?? memberRecord?.role ?? (user ? "owner" : "owner");
   const canManage = canManageMembers(effectiveRole);
 
   const handleRoleChange = (memberId: string, newRole: ProjectMemberRole) => {
@@ -339,7 +363,8 @@ export function ProjectMembersTab({
                 </span>
               </CardTitle>
               <p className="mt-1 text-xs text-slate-500">
-                Quản lý danh sách người dùng và phân quyền hạn tương ứng trong dự án.
+                Quản lý danh sách người dùng và phân quyền hạn tương ứng trong
+                dự án.
               </p>
             </div>
 
@@ -372,7 +397,10 @@ export function ProjectMembersTab({
           <CardContent className="p-0">
             {/* Loading state */}
             {isLoading ? (
-              <div className="space-y-0" aria-label="Đang tải danh sách thành viên">
+              <div
+                className="space-y-0"
+                aria-label="Đang tải danh sách thành viên"
+              >
                 {[...Array(3)].map((_, i) => (
                   <div
                     key={i}
@@ -452,11 +480,14 @@ export function ProjectMembersTab({
                         {/* Joined at */}
                         <td className="px-6 py-3.5 text-xs text-slate-500">
                           {m.joined_at
-                            ? new Date(m.joined_at).toLocaleDateString("vi-VN", {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              })
+                            ? new Date(m.joined_at).toLocaleDateString(
+                                "vi-VN",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                }
+                              )
                             : "—"}
                         </td>
 

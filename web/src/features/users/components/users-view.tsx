@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Search, Users } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, Input } from "@/components/ui";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+} from "@/components/ui";
 import { useUsersQuery } from "../hooks/use-users";
 import { UserListTable } from "./user-list-table";
 
@@ -42,7 +48,8 @@ export function UsersView() {
             Người dùng
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Danh sách người dùng và thời điểm đăng nhập gần nhất vào Data Platform.
+            Danh sách người dùng và thời điểm đăng nhập gần nhất vào Data
+            Platform.
           </p>
         </div>
       </div>
@@ -53,7 +60,7 @@ export function UsersView() {
             Danh sách người dùng ({total})
           </CardTitle>
           <div className="relative w-full sm:w-72">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
               type="search"
               placeholder="Tìm theo tên hoặc email..."

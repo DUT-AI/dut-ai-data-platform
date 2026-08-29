@@ -49,7 +49,7 @@ export function UserListTable({
         {onRetry && (
           <button
             onClick={onRetry}
-            className="mt-3 inline-flex items-center rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-rose-700"
+            className="shadow-xs mt-3 inline-flex items-center rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700"
           >
             Thử lại
           </button>

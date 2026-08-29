@@ -118,7 +118,8 @@ export function InviteMemberModal({
   });
 
   const selectedRole = (form.watch("role") as InvitableRole) || "annotator";
-  const selectedPreview = ROLE_PREVIEWS[selectedRole] || ROLE_PREVIEWS.annotator;
+  const selectedPreview =
+    ROLE_PREVIEWS[selectedRole] || ROLE_PREVIEWS.annotator;
 
   const onSubmit = (values: InviteMemberFormValues) => {
     setErrorMsg(null);
@@ -151,7 +152,8 @@ export function InviteMemberModal({
         <DialogHeader>
           <DialogTitle>Thêm thành viên vào dự án</DialogTitle>
           <DialogDescription>
-            Nhập ID người dùng và chọn vai trò phù hợp để cấp quyền truy cập vào dự án.
+            Nhập ID người dùng và chọn vai trò phù hợp để cấp quyền truy cập vào
+            dự án.
           </DialogDescription>
         </DialogHeader>
 
@@ -188,7 +190,10 @@ export function InviteMemberModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    User ID <span className="text-rose-500" aria-label="bắt buộc">*</span>
+                    User ID{" "}
+                    <span className="text-rose-500" aria-label="bắt buộc">
+                      *
+                    </span>
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -209,7 +214,10 @@ export function InviteMemberModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Vai trò (Role) <span className="text-rose-500" aria-label="bắt buộc">*</span>
+                    Vai trò (Role){" "}
+                    <span className="text-rose-500" aria-label="bắt buộc">
+                      *
+                    </span>
                   </FormLabel>
                   <FormControl>
                     <select
@@ -218,8 +226,12 @@ export function InviteMemberModal({
                       className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
                     >
                       <option value="admin">Admin — Quản trị viên dự án</option>
-                      <option value="annotator">Annotator — Người thực hiện gán nhãn</option>
-                      <option value="reviewer">Reviewer — Người kiểm định & duyệt nhãn</option>
+                      <option value="annotator">
+                        Annotator — Người thực hiện gán nhãn
+                      </option>
+                      <option value="reviewer">
+                        Reviewer — Người kiểm định & duyệt nhãn
+                      </option>
                     </select>
                   </FormControl>
                   <FormMessage />
@@ -266,11 +278,10 @@ export function InviteMemberModal({
               >
                 Hủy
               </Button>
-              <Button
-                type="submit"
-                disabled={addMemberMutation.isPending}
-              >
-                {addMemberMutation.isPending ? "Đang thêm..." : "Thêm thành viên"}
+              <Button type="submit" disabled={addMemberMutation.isPending}>
+                {addMemberMutation.isPending
+                  ? "Đang thêm..."
+                  : "Thêm thành viên"}
               </Button>
             </DialogFooter>
           </form>

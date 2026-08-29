@@ -29,8 +29,6 @@ dev-ai-worker:
 dev-web:
 	cd ./$(FRONTEND_DIR) && pnpm dev
 
-web-dev: dev-web
-
 docker-label-studio:
 	docker compose up -d label-studio
 

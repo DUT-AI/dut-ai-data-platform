@@ -80,10 +80,11 @@ class ManageClient:
                 total = 0
 
                 if isinstance(data, list):
-                    # Direct list of user objects
+                    # Direct list of user objects (when Manage server returns full unpaginated list)
+                    all_items: list[ManageUserDTO] = []
                     for item in data:
                         if isinstance(item, dict):
-                            items.append(
+                            all_items.append(
                                 ManageUserDTO(
                                     id=item.get("id") or item.get("user_id", ""),
                                     name=item.get("name") or item.get("username", ""),
@@ -95,7 +96,21 @@ class ManageClient:
                                     raw_data=item,
                                 )
                             )
-                    total = len(items)
+
+                    # In-memory search fallback if Manage server didn't filter
+                    if search and search.strip():
+                        s = search.strip().lower()
+                        all_items = [
+                            u
+                            for u in all_items
+                            if s in str(u.name).lower() or s in str(u.email).lower()
+                        ]
+
+                    total = len(all_items)
+                    # Slicing fallback for unpaginated direct list
+                    start_idx = (page - 1) * page_size
+                    end_idx = start_idx + page_size
+                    items = all_items[start_idx:end_idx]
                 elif isinstance(data, dict):
                     # Paginated dictionary response { items / users, total, page, page_size }
                     raw_items = data.get("items") or data.get("users") or []
@@ -114,6 +129,11 @@ class ManageClient:
                                 )
                             )
                     total = data.get("total", len(items))
+                    # If server returned full list instead of paginated slice
+                    if len(items) > page_size and total == len(items):
+                        start_idx = (page - 1) * page_size
+                        end_idx = start_idx + page_size
+                        items = items[start_idx:end_idx]
 
                 return ManageUsersResponseDTO(
                     items=items,

@@ -15,7 +15,7 @@ class S3Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    minio_endpoint: str = "https://dataplatforms3.dutai.io.vn"
+    minio_endpoint: str = "http://localhost:9000"
     minio_access_key: str = ""
     minio_secret_key: str = ""
     minio_secure: bool = False

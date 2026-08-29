@@ -7,20 +7,20 @@ from modules.identity.client.auth_client import AuthClient
 
 @pytest.mark.asyncio
 async def test_auth_client_build_url():
-    client1 = AuthClient(auth_server_url="https://manage.dutai.io.vn/api/v1")
+    client1 = AuthClient(auth_server_url="https://auth.example.com/api/v1")
     assert (
         client1._build_url("/auth/login")
-        == "https://manage.dutai.io.vn/api/v1/auth/login"
+        == "https://auth.example.com/api/v1/auth/login"
     )
     assert (
         client1._build_url("api/v1/auth/login")
-        == "https://manage.dutai.io.vn/api/v1/auth/login"
+        == "https://auth.example.com/api/v1/auth/login"
     )
 
-    client2 = AuthClient(auth_server_url="https://manage.dutai.io.vn")
+    client2 = AuthClient(auth_server_url="https://auth.example.com")
     assert (
         client2._build_url("/api/v1/auth/login")
-        == "https://manage.dutai.io.vn/api/v1/auth/login"
+        == "https://auth.example.com/api/v1/auth/login"
     )
 
 
@@ -48,7 +48,7 @@ async def test_auth_client_login_success(monkeypatch):
 
     monkeypatch.setattr(httpx.AsyncClient, "post", mock_post)
 
-    client = AuthClient(auth_server_url="https://manage.dutai.io.vn/api/v1")
+    client = AuthClient(auth_server_url="https://auth.example.com/api/v1")
     token_resp = await client.login("test@dutai.io.vn", "password123")
 
     assert token_resp.access_token == "acc_123"
@@ -70,7 +70,7 @@ async def test_auth_client_login_invalid_credentials(monkeypatch):
 
     monkeypatch.setattr(httpx.AsyncClient, "post", mock_post)
 
-    client = AuthClient(auth_server_url="https://manage.dutai.io.vn/api/v1")
+    client = AuthClient(auth_server_url="https://auth.example.com/api/v1")
     with pytest.raises(HTTPException) as exc_info:
         await client.login("wrong@dutai.io.vn", "badpass")
 
@@ -104,7 +104,7 @@ async def test_auth_client_get_me_success(monkeypatch):
 
     monkeypatch.setattr(httpx.AsyncClient, "get", mock_get)
 
-    client = AuthClient(auth_server_url="https://manage.dutai.io.vn/api/v1")
+    client = AuthClient(auth_server_url="https://auth.example.com/api/v1")
     user = await client.get_me("dummy_token")
 
     assert user.id == 101
@@ -123,7 +123,7 @@ async def test_auth_client_get_me_expired_token(monkeypatch):
 
     monkeypatch.setattr(httpx.AsyncClient, "get", mock_get)
 
-    client = AuthClient(auth_server_url="https://manage.dutai.io.vn/api/v1")
+    client = AuthClient(auth_server_url="https://auth.example.com/api/v1")
     with pytest.raises(HTTPException) as exc_info:
         await client.get_me("expired_token")
 

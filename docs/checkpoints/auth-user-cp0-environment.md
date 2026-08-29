@@ -3,7 +3,7 @@
 ## 1. Environment Configured
 
 * **`.env` (Backend Root)**: Đã tạo và cấu hình đầy đủ kết nối tới PostgreSQL, MinIO, Label Studio, External Auth & Manage Server.
-  * `DATABASE_URL`: `postgresql+asyncpg://dutai:dutai@100.84.65.48:5432/data_platform_dev`
+  * `DATABASE_URL`: `<redacted_db_url>`
   * `MINIO_ENDPOINT`: `https://dataplatforms3.dutai.io.vn/`
   * `AUTH_SERVER_URL`: `https://manage.dutai.io.vn/api/v1`
   * `MANAGE_SERVER_URL`: `https://manage.dutai.io.vn/api/v1`
@@ -41,8 +41,8 @@
 ---
 
 ## 4. Database Connectivity
-
-* **Target Database**: `100.84.65.48:5432/data_platform_dev`
+ 
+* **Target Database**: `<redacted_db_host>/data_platform_dev`
 * **Test Method**: Khởi tạo `AsyncEngine` (asyncpg) và thực thi truy vấn `SELECT 1`.
 * **Result**: **SUCCESS** (`scalar() == 1`).
 
@@ -84,7 +84,7 @@
 | **Central Auth Login** | `https://manage.dutai.io.vn/api/v1/auth/login` | LIVE (HTTP 422 khi body rỗng) |
 | **Central Auth Get Me** | `https://manage.dutai.io.vn/api/v1/auth/me` | LIVE (HTTP 401 - Cần Bearer Token) |
 | **MinIO S3 Storage** | `https://dataplatforms3.dutai.io.vn/` | LIVE (List buckets OK) |
-| **PostgreSQL Database** | `100.84.65.48:5432/data_platform_dev` | LIVE (Async connection OK) |
+| **PostgreSQL Database** | `<redacted_db_host>/data_platform_dev` | LIVE (Async connection OK) |
 | **Domain cũ (.site)** | `https://manage.dutai.site/api/v1` | OBSOLETE / DEAD |
 
 ---

@@ -7,15 +7,15 @@ from modules.identity.client.manage_client import ManageClient
 
 @pytest.mark.asyncio
 async def test_manage_client_build_url():
-    client1 = ManageClient(manage_server_url="https://manage.dutai.io.vn/api/v1")
-    assert client1._build_url("/users") == "https://manage.dutai.io.vn/api/v1/users"
+    client1 = ManageClient(manage_server_url="https://manage.example.com/api/v1")
+    assert client1._build_url("/users") == "https://manage.example.com/api/v1/users"
     assert (
-        client1._build_url("api/v1/users") == "https://manage.dutai.io.vn/api/v1/users"
+        client1._build_url("api/v1/users") == "https://manage.example.com/api/v1/users"
     )
 
-    client2 = ManageClient(manage_server_url="https://manage.dutai.io.vn")
+    client2 = ManageClient(manage_server_url="https://manage.example.com")
     assert (
-        client2._build_url("/api/v1/users") == "https://manage.dutai.io.vn/api/v1/users"
+        client2._build_url("/api/v1/users") == "https://manage.example.com/api/v1/users"
     )
 
 
@@ -63,7 +63,7 @@ async def test_manage_client_list_users_paginated(monkeypatch):
 
     monkeypatch.setattr(httpx.AsyncClient, "get", mock_get)
 
-    client = ManageClient(manage_server_url="https://manage.dutai.io.vn/api/v1")
+    client = ManageClient(manage_server_url="https://manage.example.com/api/v1")
     res = await client.list_users(token="valid_token", page=1, page_size=20)
 
     assert res.total == 2
@@ -100,7 +100,7 @@ async def test_manage_client_list_users_list_envelope(monkeypatch):
 
     monkeypatch.setattr(httpx.AsyncClient, "get", mock_get)
 
-    client = ManageClient(manage_server_url="https://manage.dutai.io.vn/api/v1")
+    client = ManageClient(manage_server_url="https://manage.example.com/api/v1")
     res = await client.list_users(token="valid_token")
 
     assert res.total == 1
@@ -120,7 +120,7 @@ async def test_manage_client_unauthorized(monkeypatch):
 
     monkeypatch.setattr(httpx.AsyncClient, "get", mock_get)
 
-    client = ManageClient(manage_server_url="https://manage.dutai.io.vn/api/v1")
+    client = ManageClient(manage_server_url="https://manage.example.com/api/v1")
     with pytest.raises(HTTPException) as exc_info:
         await client.list_users(token="invalid_token")
 
@@ -134,7 +134,7 @@ async def test_manage_client_timeout(monkeypatch):
 
     monkeypatch.setattr(httpx.AsyncClient, "get", mock_get)
 
-    client = ManageClient(manage_server_url="https://manage.dutai.io.vn/api/v1")
+    client = ManageClient(manage_server_url="https://manage.example.com/api/v1")
     with pytest.raises(HTTPException) as exc_info:
         await client.list_users(token="token")
 

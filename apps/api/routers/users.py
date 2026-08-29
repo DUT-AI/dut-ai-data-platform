@@ -1,8 +1,9 @@
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.security import HTTPAuthorizationCredentials
 
 from apps.api.deps.auth import CurrentUser, bearer_scheme
+from core.config import settings
 from modules.identity.dtos.user_dtos import UsersListResponseDTO
 from modules.identity.use_cases.list_users import ListUsersUseCase
 
@@ -16,6 +17,7 @@ router = APIRouter(prefix="/api/v1/users", tags=["Users"])
 )
 @inject
 async def list_users(
+    request: Request,
     current_user: CurrentUser,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     use_case: FromDishka[ListUsersUseCase] = None,  # type: ignore
@@ -23,7 +25,9 @@ async def list_users(
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     search: str | None = Query(None, description="Search by name or email"),
 ) -> UsersListResponseDTO:
-    token = credentials.credentials if credentials else ""
+    token = request.cookies.get(settings.auth_cookie_name) or (
+        credentials.credentials if credentials else ""
+    )
     return await use_case.execute(
         token=token,
         page=page,

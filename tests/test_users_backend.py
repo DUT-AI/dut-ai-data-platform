@@ -201,3 +201,46 @@ async def test_api_get_users_authenticated_success(monkeypatch):
         assert "last_login_at" in data["items"][0]
 
     app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_api_get_users_authenticated_via_cookie_success(monkeypatch):
+    """Test 7: Authenticated request via HttpOnly cookie forwards token to ManageClient."""
+    from core.config import settings
+
+    mock_user = AuthUser(
+        id=101,
+        name="Test Operator",
+        email="operator@example.com",
+        status="ACTIVE",
+        role_names=["ADMIN"],
+    )
+
+    captured_token = None
+
+    async def mock_list_users(
+        self, token: str, page: int = 1, page_size: int = 20, search: str | None = None
+    ):
+        nonlocal captured_token
+        captured_token = token
+        return ManageUsersResponseDTO(
+            items=[],
+            total=0,
+            page=page,
+            page_size=page_size,
+        )
+
+    monkeypatch.setattr(ManageClient, "list_users", mock_list_users)
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(
+        transport=transport,
+        base_url="http://test",
+        cookies={settings.auth_cookie_name: "cookie_extracted_token"},
+    ) as client:
+        res = await client.get("/api/v1/users")
+        assert res.status_code == 200
+        assert captured_token == "cookie_extracted_token"
+
+    app.dependency_overrides.clear()

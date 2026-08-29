@@ -25,6 +25,7 @@ class IdentityProvider(Provider):
     def get_manage_client(self) -> ManageClient:
         return ManageClient(
             manage_server_url=settings.manage_server_url,
+            manage_api_token=settings.manage_api_token,
             timeout=settings.external_api_timeout,
         )
 

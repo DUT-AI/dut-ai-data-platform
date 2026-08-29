@@ -72,7 +72,15 @@ async def test_first_login_creates_last_login_record():
         LoginRequestDTO(email="test@dutai.io.vn", password="pass")
     )
 
-    assert res.access_token == "acc_tok_1"
+    from core.security.jwt import decode_access_token
+
+    # Crucial: Platform issues its own JWT and discards Manage token "acc_tok_1"
+    assert res.access_token != "acc_tok_1"
+    payload = decode_access_token(res.access_token)
+    assert payload["sub"] == "101"
+    assert payload["email"] == "test@dutai.io.vn"
+    assert payload["iss"] == "dut-ai-data-platform"
+
     auth_client.login.assert_awaited_once_with(
         email="test@dutai.io.vn", password="pass"
     )
@@ -138,8 +146,33 @@ async def test_failed_login_does_not_update_last_login():
 
 
 @pytest.mark.asyncio
+async def test_failed_me_verification_does_not_issue_token():
+    """Test 4: If Manage /me fails after login, no Platform token is issued and last_login is not updated."""
+    auth_client = AsyncMock(spec=AuthClient)
+    auth_client.login.return_value = TokenResponse(
+        access_token="acc_tok_ok",
+        refresh_token="ref_tok_ok",
+        token_type="bearer",
+    )
+    auth_client.get_me.side_effect = HTTPException(
+        status_code=401, detail="Manage session expired"
+    )
+
+    repo = InMemoryUserLoginRepository()
+    use_case = LoginUseCase(auth_client=auth_client, login_repo=repo)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await use_case.execute(
+            LoginRequestDTO(email="test@dutai.io.vn", password="pass")
+        )
+
+    assert exc_info.value.status_code == 401
+    assert len(repo.records) == 0
+
+
+@pytest.mark.asyncio
 async def test_db_failure_does_not_break_login():
-    """Test 4: Best-effort strategy ensures DB failure logs warning but login succeeds."""
+    """Test 5: Best-effort strategy ensures DB failure logs warning but login succeeds."""
     auth_client = AsyncMock(spec=AuthClient)
     auth_client.login.return_value = TokenResponse(
         access_token="acc_tok_ok",
@@ -163,8 +196,11 @@ async def test_db_failure_does_not_break_login():
         LoginRequestDTO(email="dberr@dutai.io.vn", password="pass")
     )
 
-    # Login must still succeed
-    assert res.access_token == "acc_tok_ok"
+    # Login must still succeed with Platform JWT
+    from core.security.jwt import decode_access_token
+
+    payload = decode_access_token(res.access_token)
+    assert payload["sub"] == "202"
     assert res.token_type == "bearer"
 
 

@@ -205,8 +205,9 @@ async def test_api_get_users_authenticated_success(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_api_get_users_authenticated_via_cookie_success(monkeypatch):
-    """Test 7: Authenticated request via HttpOnly cookie forwards token to ManageClient."""
+    """Test 7: Authenticated request via HttpOnly cookie does NOT leak Platform token to ManageClient."""
     from core.config import settings
+    from core.security.jwt import create_access_token
 
     mock_user = AuthUser(
         id=101,
@@ -216,10 +217,14 @@ async def test_api_get_users_authenticated_via_cookie_success(monkeypatch):
         role_names=["ADMIN"],
     )
 
-    captured_token = None
+    captured_token = "NOT_CALLED"
 
     async def mock_list_users(
-        self, token: str, page: int = 1, page_size: int = 20, search: str | None = None
+        self,
+        token: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+        search: str | None = None,
     ):
         nonlocal captured_token
         captured_token = token
@@ -233,14 +238,17 @@ async def test_api_get_users_authenticated_via_cookie_success(monkeypatch):
     monkeypatch.setattr(ManageClient, "list_users", mock_list_users)
     app.dependency_overrides[get_current_user] = lambda: mock_user
 
+    platform_jwt = create_access_token({"sub": "101", "email": "operator@example.com"})
+
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(
         transport=transport,
         base_url="http://test",
-        cookies={settings.auth_cookie_name: "cookie_extracted_token"},
+        cookies={settings.auth_cookie_name: platform_jwt},
     ) as client:
         res = await client.get("/api/v1/users")
         assert res.status_code == 200
-        assert captured_token == "cookie_extracted_token"
+        # Crucial security boundary: Platform JWT must NOT be forwarded to Manage Server
+        assert captured_token is None or captured_token != platform_jwt
 
     app.dependency_overrides.clear()

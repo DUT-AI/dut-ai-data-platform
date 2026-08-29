@@ -12,8 +12,14 @@ from modules.identity.dtos.manage_dtos import (
 class ManageClient:
     """HTTP Client to interact with external Manage Service API (Read-Only)."""
 
-    def __init__(self, manage_server_url: str, timeout: float = 10.0):
+    def __init__(
+        self,
+        manage_server_url: str,
+        manage_api_token: str | None = None,
+        timeout: float = 10.0,
+    ):
         self.manage_server_url = manage_server_url.rstrip("/")
+        self.manage_api_token = manage_api_token
         self.timeout = timeout
 
     def _build_url(self, path: str) -> str:
@@ -28,14 +34,17 @@ class ManageClient:
 
     async def list_users(
         self,
-        token: str,
+        token: str | None = None,
         page: int = 1,
         page_size: int = 20,
         search: str | None = None,
     ) -> ManageUsersResponseDTO:
         """Fetch users from Manage Service GET /api/v1/users."""
         url = self._build_url("/users")
-        headers = {"Authorization": f"Bearer {token}"}
+        auth_token = token or self.manage_api_token
+        headers = {}
+        if auth_token:
+            headers["Authorization"] = f"Bearer {auth_token}"
         params: dict[str, Any] = {
             "page": page,
             "page_size": page_size,

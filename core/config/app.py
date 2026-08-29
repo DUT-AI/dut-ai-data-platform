@@ -29,6 +29,7 @@ class AppSettings(BaseSettings):
     # Auth & Manage Server
     auth_server_url: str = "http://localhost:8000/api/v1"
     manage_server_url: str = "http://localhost:8000/api/v1"
+    manage_api_token: str | None = None
     external_api_timeout: float = 10.0
 
     # Server configs

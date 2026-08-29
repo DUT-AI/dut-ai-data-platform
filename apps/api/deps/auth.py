@@ -1,44 +1,66 @@
 from typing import Annotated
 
-from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from core.config import settings
-from modules.identity.client.auth_client import AuthClient
+from core.exceptions import UnauthorizedException
+from core.security.jwt import decode_access_token
 from modules.identity.domain.entities import AuthUser
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-@inject
 async def get_current_user(
     request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-    client: FromDishka[AuthClient] = None,  # type: ignore
 ) -> AuthUser:
-    """Verify user identity via AuthClient (DUT Central Auth is the single Source of Truth).
+    """Verify user identity via DUT AI Data Platform's own JWT token verified locally.
 
     Precedence:
     1. HttpOnly Cookie (`settings.auth_cookie_name`) - primary for browser clients.
     2. Authorization Bearer header - fallback for API clients / external integrations / test suites.
     """
-    token: str | None = request.cookies.get(settings.auth_cookie_name)
-    if not token and credentials and credentials.credentials:
-        token = credentials.credentials
+    platform_access_token: str | None = request.cookies.get(settings.auth_cookie_name)
+    if not platform_access_token and credentials and credentials.credentials:
+        platform_access_token = credentials.credentials
 
-    if not token:
+    if not platform_access_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Thiếu token xác thực (Cookie hoặc Authorization header)",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    auth_client = client or AuthClient(
-        auth_server_url=settings.auth_server_url,
-        timeout=settings.external_api_timeout,
+    try:
+        payload = decode_access_token(platform_access_token)
+    except UnauthorizedException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Token không hợp lệ hoặc đã hết hạn: {exc}",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+
+    user_id_raw = payload.get("sub")
+    if not user_id_raw:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token không chứa thông tin định danh người dùng (sub).",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        user_id = int(user_id_raw)
+    except (ValueError, TypeError):
+        user_id = user_id_raw
+
+    return AuthUser(
+        id=user_id,
+        email=payload.get("email", ""),
+        name=payload.get("name", ""),
+        role_names=payload.get("role_names", []),
+        status="ACTIVE",
     )
-    return await auth_client.get_me(token)
 
 
 CurrentUser = Annotated[AuthUser, Depends(get_current_user)]

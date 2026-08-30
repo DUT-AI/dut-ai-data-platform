@@ -7,6 +7,7 @@ import {
   ProjectMemberAddPayload,
   ProjectMemberRole,
   ProjectUpdatePayload,
+  TaskDefinition,
 } from "../types/project";
 
 export const projectApi = {
@@ -36,7 +37,17 @@ export const projectApi = {
   },
 
   archiveProject: async (id: string): Promise<Project> => {
-    const response = await api.delete<Project>(`/projects/${id}`);
+    const response = await api.post<Project>(`/projects/${id}/archive`);
+    return response.data;
+  },
+
+  restoreProject: async (id: string): Promise<Project> => {
+    const response = await api.post<Project>(`/projects/${id}/restore`);
+    return response.data;
+  },
+
+  getTaskDefinitions: async (): Promise<TaskDefinition[]> => {
+    const response = await api.get<TaskDefinition[]>("/task-definitions");
     return response.data;
   },
 

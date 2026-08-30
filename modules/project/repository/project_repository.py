@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from modules.project.domain.entities import ProjectEntity, ProjectMemberEntity
@@ -48,6 +48,49 @@ class SqlProjectRepository(IProjectRepository):
         models = result.scalars().all()
         return [model.to_entity() for model in models]
 
+    async def list_projects(
+        self,
+        *,
+        offset: int = 0,
+        limit: int = 20,
+        status: str | None = None,
+        task_definition_version_id: str | None = None,
+        search: str | None = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
+        accessible_project_ids: set[str] | None = None,
+        created_by: str | None = None,
+    ) -> Sequence[ProjectEntity]:
+        stmt = select(ProjectModel)
+        if accessible_project_ids is not None and created_by:
+            stmt = stmt.where(
+                or_(
+                    ProjectModel.id.in_(accessible_project_ids),
+                    ProjectModel.created_by == created_by,
+                )
+            )
+        if status:
+            stmt = stmt.where(ProjectModel.status == status)
+        if task_definition_version_id:
+            stmt = stmt.where(
+                ProjectModel.task_definition_version_id == task_definition_version_id
+            )
+        if search:
+            term = f"%{search.strip()}%"
+            stmt = stmt.where(
+                or_(ProjectModel.name.ilike(term), ProjectModel.description.ilike(term))
+            )
+        order_column = (
+            ProjectModel.updated_at
+            if sort_by == "updated_at"
+            else ProjectModel.created_at
+        )
+        stmt = stmt.order_by(
+            order_column.asc() if sort_order == "asc" else order_column.desc()
+        )
+        result = await self.session.execute(stmt.offset(offset).limit(limit))
+        return [model.to_entity() for model in result.scalars().all()]
+
     async def save(self, project: ProjectEntity) -> ProjectEntity:
         stmt = select(ProjectModel).where(ProjectModel.id == project.id)
         res = await self.session.execute(stmt)
@@ -56,7 +99,10 @@ class SqlProjectRepository(IProjectRepository):
             existing.name = project.name
             existing.description = project.description
             existing.status = project.status
-            existing.project_type = project.project_type
+            existing.task_definition_version_id = project.task_definition_version_id
+            existing.project_template_version_id = project.project_template_version_id
+            existing.created_by = project.created_by
+            existing.archived_at = project.archived_at
             await self.session.flush()
             await self.session.refresh(existing)
             return existing.to_entity()
@@ -126,7 +172,15 @@ class SqlProjectRepository(IProjectRepository):
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
-        return model.settings if model else None
+        if not model:
+            return None
+        return {
+            "annotation_provider_key": model.annotation_provider_key,
+            "storage_provider_key": model.storage_provider_key,
+            "default_workflow_ref": model.default_workflow_ref,
+            "settings": model.settings,
+            "settings_schema_version": model.settings_schema_version,
+        }
 
     async def save_configuration(self, project_id: str, settings: dict) -> dict:
         stmt = select(ProjectConfigurationModel).where(
@@ -135,9 +189,36 @@ class SqlProjectRepository(IProjectRepository):
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         if model:
-            model.settings = settings
+            model.settings = settings.get("settings", model.settings)
+            model.annotation_provider_key = settings.get(
+                "annotation_provider_key", model.annotation_provider_key
+            )
+            model.storage_provider_key = settings.get(
+                "storage_provider_key", model.storage_provider_key
+            )
+            model.default_workflow_ref = settings.get(
+                "default_workflow_ref", model.default_workflow_ref
+            )
+            model.settings_schema_version = settings.get(
+                "settings_schema_version", model.settings_schema_version
+            )
         else:
-            model = ProjectConfigurationModel(project_id=project_id, settings=settings)
+            model = ProjectConfigurationModel(
+                project_id=project_id,
+                settings=settings.get("settings", {}),
+                annotation_provider_key=settings.get(
+                    "annotation_provider_key", "label_studio"
+                ),
+                storage_provider_key=settings.get("storage_provider_key", "minio"),
+                default_workflow_ref=settings.get("default_workflow_ref"),
+                settings_schema_version=settings.get("settings_schema_version", "1.0"),
+            )
             self.session.add(model)
         await self.session.flush()
-        return model.settings
+        return {
+            "annotation_provider_key": model.annotation_provider_key,
+            "storage_provider_key": model.storage_provider_key,
+            "default_workflow_ref": model.default_workflow_ref,
+            "settings": model.settings,
+            "settings_schema_version": model.settings_schema_version,
+        }

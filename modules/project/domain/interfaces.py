@@ -20,6 +20,22 @@ class IProjectRepository(ABC):
         pass
 
     @abstractmethod
+    async def list_projects(
+        self,
+        *,
+        offset: int = 0,
+        limit: int = 20,
+        status: str | None = None,
+        task_definition_version_id: str | None = None,
+        search: str | None = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
+        accessible_project_ids: set[str] | None = None,
+        created_by: str | None = None,
+    ) -> Sequence[ProjectEntity]:
+        pass
+
+    @abstractmethod
     async def save(self, project: ProjectEntity) -> ProjectEntity:
         pass
 

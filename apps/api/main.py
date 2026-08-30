@@ -11,6 +11,7 @@ from apps.api.routers import (
     dataset_router,
     identity_router,
     ontology_router,
+    project_catalog_router,
     project_router,
 )
 from core.config import settings
@@ -44,6 +45,7 @@ app.add_middleware(
 # 5. Register Application Routers
 app.include_router(identity_router)
 app.include_router(project_router)
+app.include_router(project_catalog_router)
 app.include_router(ontology_router)
 app.include_router(dataset_router)
 app.include_router(annotation_router)

@@ -74,7 +74,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
             <div>
               <span className="text-xs text-slate-500">Chủ sở hữu (Owner)</span>
               <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                User #{project.owner_id}
+                User #{project.created_by}
               </p>
             </div>
             <div>

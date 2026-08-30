@@ -1,178 +1,213 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Check, Loader2 } from "lucide-react";
-import { useCreateProjectMutation } from "../hooks/use-projects";
-import { PROJECT_TYPE_OPTIONS, ProjectType } from "../types/project";
+import { useMemo, useState } from "react";
+import { Loader2, Plus } from "lucide-react";
 import {
+  Button,
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
-  Button,
+  DialogHeader,
+  DialogTitle,
   Input,
 } from "@/components/ui";
+import {
+  useCreateProjectMutation,
+  useTaskDefinitionsQuery,
+} from "../hooks/use-projects";
 
-interface CreateProjectModalProps {
+interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function CreateProjectModal({
-  open,
-  onOpenChange,
-}: CreateProjectModalProps) {
+export function CreateProjectModal({ open, onOpenChange }: Props) {
+  const { data: tasks = [], isLoading } = useTaskDefinitionsQuery();
+  const createMutation = useCreateProjectMutation();
+  const [category, setCategory] = useState("");
+  const [taskId, setTaskId] = useState("");
+  const [templateVersionId, setTemplateVersionId] = useState("");
+  const [provider, setProvider] = useState("label_studio");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [projectType, setProjectType] = useState<ProjectType>("detection");
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const createMutation = useCreateProjectMutation();
+  const categories = useMemo(
+    () => [...new Set(tasks.map((task) => task.category))],
+    [tasks]
+  );
+  const visibleTasks = category
+    ? tasks.filter((task) => task.category === category)
+    : tasks;
+  const task = tasks.find((item) => item.id === taskId);
+  const taskVersion = task?.versions[0];
+  const templates = task?.templates ?? [];
+  const templateVersion = templates
+    .flatMap((item) => item.versions)
+    .find((item) => item.id === templateVersionId);
+  const providers = templateVersion?.providers ?? [
+    "label_studio",
+    "cvat",
+    "doccano",
+  ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) {
-      setErrorMsg("Vui lòng nhập tên dự án.");
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setError(null);
+    if (!name.trim() || !taskVersion) {
+      setError("Vui lòng chọn bài toán và nhập tên Project.");
       return;
     }
-
-    setErrorMsg(null);
     try {
       await createMutation.mutateAsync({
         name: name.trim(),
         description: description.trim() || undefined,
-        project_type: projectType,
+        task_definition_version_id: taskVersion.id,
+        project_template_version_id: templateVersionId || undefined,
+        annotation_provider_key: provider,
+        storage_provider_key: "minio",
       });
-
-      // Reset & Close
       setName("");
       setDescription("");
-      setProjectType("detection");
       onOpenChange(false);
-    } catch (err: unknown) {
-      const msg =
-        err && typeof err === "object" && "message" in err
-          ? (err as { message: string }).message
-          : "Không thể tạo dự án. Vui lòng thử lại.";
-      setErrorMsg(msg);
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : "Không thể tạo Project."
+      );
     }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onClose={() => onOpenChange(false)}
-        className="sm:max-w-xl"
+        className="sm:max-w-2xl"
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-            <Plus className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            Tạo dự án AI mới
+          <DialogTitle className="flex items-center gap-2">
+            <Plus className="h-5 w-5" />
+            Create AI Project
           </DialogTitle>
           <DialogDescription>
-            Khởi tạo không gian gán nhãn và xử lý dữ liệu AI cho đội ngũ của
-            bạn.
+            Chọn Task, Template và provider tương thích trước khi tạo workspace.
           </DialogDescription>
         </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
-          {errorMsg && (
-            <div className="rounded-lg border border-rose-500/20 bg-rose-500/10 p-3 text-xs font-medium text-rose-600 dark:text-rose-400">
-              {errorMsg}
+        <form onSubmit={submit} className="space-y-4">
+          {error && (
+            <div className="rounded-md bg-rose-50 p-3 text-sm text-rose-700">
+              {error}
             </div>
           )}
-
-          {/* Tên dự án */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Tên dự án <span className="text-rose-500">*</span>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="space-y-1 text-xs font-semibold">
+              1. Category
+              <select
+                value={category}
+                onChange={(e) => {
+                  setCategory(e.target.value);
+                  setTaskId("");
+                }}
+                className="w-full rounded-md border p-2 text-sm"
+              >
+                <option value="">Tất cả</option>
+                {categories.map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </select>
             </label>
+            <label className="space-y-1 text-xs font-semibold">
+              2. Task Definition
+              <select
+                value={taskId}
+                onChange={(e) => {
+                  setTaskId(e.target.value);
+                  setTemplateVersionId("");
+                }}
+                className="w-full rounded-md border p-2 text-sm"
+                disabled={isLoading}
+              >
+                <option value="">Chọn bài toán</option>
+                {visibleTasks.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="space-y-1 text-xs font-semibold">
+              3. Project Template
+              <select
+                value={templateVersionId}
+                onChange={(e) => setTemplateVersionId(e.target.value)}
+                className="w-full rounded-md border p-2 text-sm"
+                disabled={!task}
+              >
+                <option value="">Blank project</option>
+                {templates.flatMap((item) =>
+                  item.versions.map((version) => (
+                    <option key={version.id} value={version.id}>
+                      {item.name} · {version.version}
+                    </option>
+                  ))
+                )}
+              </select>
+            </label>
+            <label className="space-y-1 text-xs font-semibold">
+              4. Annotation Provider
+              <select
+                value={provider}
+                onChange={(e) => setProvider(e.target.value)}
+                className="w-full rounded-md border p-2 text-sm"
+              >
+                {providers.map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <label className="block space-y-1 text-xs font-semibold">
+            5. Project name
             <Input
-              placeholder="VD: Dự án Nhận diện Biển số xe..."
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-800/50"
+              maxLength={255}
               required
             />
-          </div>
-
-          {/* Loại dự án AI */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Loại tác vụ AI / Gán nhãn <span className="text-rose-500">*</span>
-            </label>
-
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              {PROJECT_TYPE_OPTIONS.map((opt) => {
-                const isSelected = projectType === opt.value;
-                return (
-                  <button
-                    type="button"
-                    key={opt.value}
-                    onClick={() => setProjectType(opt.value)}
-                    className={`relative flex flex-col justify-between rounded-xl border p-3 text-left transition-all ${
-                      isSelected
-                        ? "border-blue-600 bg-blue-50/50 ring-2 ring-blue-600/20 dark:border-blue-500 dark:bg-blue-950/30"
-                        : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
-                    }`}
-                  >
-                    <div className="mb-1 flex w-full items-center justify-between">
-                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                        {opt.label}
-                      </span>
-                      {isSelected && (
-                        <div className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-white dark:bg-blue-500">
-                          <Check className="h-3 w-3" />
-                        </div>
-                      )}
-                    </div>
-                    <p className="line-clamp-2 text-[11px] text-slate-500 dark:text-slate-400">
-                      {opt.description}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Mô tả dự án */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Mô tả dự án (Tùy chọn)
-            </label>
+          </label>
+          <label className="block space-y-1 text-xs font-semibold">
+            Description
             <textarea
-              rows={3}
-              placeholder="Mô tả mục tiêu dự án, nguồn dữ liệu hoặc ghi chú..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-md border border-slate-200 bg-slate-50 p-2.5 text-xs text-slate-900 outline-none transition focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-600/20 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:border-blue-500"
+              maxLength={2000}
+              rows={3}
+              className="w-full rounded-md border p-2 text-sm"
             />
+          </label>
+          <div className="rounded-md bg-slate-50 p-3 text-xs text-slate-600">
+            6. Review: {task?.name ?? "Chưa chọn task"} ·{" "}
+            {templateVersionId ? "Template selected" : "Blank"} · {provider} ·
+            MinIO
           </div>
-
-          <DialogFooter className="mt-6">
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={createMutation.isPending}
             >
               Hủy
             </Button>
             <Button
               type="submit"
-              disabled={createMutation.isPending || !name.trim()}
-              className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500"
+              disabled={
+                createMutation.isPending || !taskVersion || !name.trim()
+              }
             >
-              {createMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang khởi tạo...
-                </>
-              ) : (
-                "Tạo dự án"
+              {createMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
+              Tạo Project
             </Button>
           </DialogFooter>
         </form>

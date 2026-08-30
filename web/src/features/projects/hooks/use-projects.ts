@@ -16,6 +16,7 @@ export const PROJECT_KEYS = {
   detail: (id: string) => [...PROJECT_KEYS.details(), id] as const,
   members: (id: string) => [...PROJECT_KEYS.detail(id), "members"] as const,
   config: (id: string) => [...PROJECT_KEYS.detail(id), "config"] as const,
+  catalog: () => [...PROJECT_KEYS.all, "catalog"] as const,
 };
 
 export function useProjectsQuery(page = 1, pageSize = 50) {
@@ -45,6 +46,13 @@ export function useCreateProjectMutation() {
   });
 }
 
+export function useTaskDefinitionsQuery() {
+  return useQuery({
+    queryKey: PROJECT_KEYS.catalog(),
+    queryFn: projectApi.getTaskDefinitions,
+  });
+}
+
 export function useUpdateProjectMutation(id: string) {
   const queryClient = useQueryClient();
 
@@ -63,6 +71,17 @@ export function useArchiveProjectMutation(id: string) {
 
   return useMutation({
     mutationFn: () => projectApi.archiveProject(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.detail(id) });
+      queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.lists() });
+    },
+  });
+}
+
+export function useRestoreProjectMutation(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => projectApi.restoreProject(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.detail(id) });
       queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.lists() });

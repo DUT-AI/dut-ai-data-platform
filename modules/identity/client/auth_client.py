@@ -19,7 +19,7 @@ class AuthClient:
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(auth_settings.get_me_url, headers=headers)
+                response = await client.get(auth_settings.me_url, headers=headers)
                 if response.status_code == 401:
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -46,12 +46,12 @@ class AuthClient:
         except httpx.ConnectError as exc:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"Không thể kết nối tới Auth Server tại {auth_settings.get_me_url}. Vui lòng kiểm tra lại Auth Server.",
+                detail=f"Không thể kết nối tới Auth Server tại {auth_settings.me_url}. Vui lòng kiểm tra lại Auth Server.",
             ) from exc
         except httpx.TimeoutException as exc:
             raise HTTPException(
                 status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                detail=f"Yêu cầu tới Auth Server tại {auth_settings.get_me_url} bị quá thời gian (timeout).",
+                detail=f"Yêu cầu tới Auth Server tại {auth_settings.me_url} bị quá thời gian (timeout).",
             ) from exc
         except httpx.HTTPStatusError as exc:
             raise HTTPException(
@@ -66,7 +66,7 @@ class AuthClient:
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.post(
-                    auth_settings.auth_server_url, json=payload
+                    auth_settings.login_url, json=payload
                 )
                 if response.status_code in (400, 401, 422):
                     res_err = response.json() if response.content else {}
@@ -95,12 +95,12 @@ class AuthClient:
         except httpx.ConnectError as exc:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"Không thể kết nối tới Auth Server tại {auth_settings.auth_server_url}. Vui lòng kiểm tra lại Auth Server.",
+                detail=f"Không thể kết nối tới Auth Server tại {auth_settings.login_url}. Vui lòng kiểm tra lại Auth Server.",
             ) from exc
         except httpx.TimeoutException as exc:
             raise HTTPException(
                 status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                detail=f"Yêu cầu tới Auth Server tại {auth_settings.auth_server_url} bị quá thời gian (timeout).",
+                detail=f"Yêu cầu tới Auth Server tại {auth_settings.login_url} bị quá thời gian (timeout).",
             ) from exc
         except httpx.HTTPStatusError as exc:
             raise HTTPException(

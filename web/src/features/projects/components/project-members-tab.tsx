@@ -81,8 +81,18 @@ const ASSIGNABLE_ROLES: Exclude<ProjectMemberRole, "owner">[] = [
 ];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-function getAvatarInitial(userId: string): string {
-  return `#${userId.slice(-2).toUpperCase()}`;
+function getAvatarInitial(name?: string | null, email?: string | null): string {
+  if (name && name.trim()) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  }
+  if (email && email.trim()) {
+    return email.slice(0, 2).toUpperCase();
+  }
+  return "U";
 }
 
 function canManageMembers(role?: ProjectMemberRole): boolean {
@@ -91,19 +101,33 @@ function canManageMembers(role?: ProjectMemberRole): boolean {
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 function MemberAvatar({
-  userId,
+  name,
+  email,
+  avatarUrl,
   role,
 }: {
-  userId: string;
+  name?: string | null;
+  email?: string | null;
+  avatarUrl?: string | null;
   role: ProjectMemberRole;
 }) {
   const config = ROLE_CONFIG[role];
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={avatarUrl}
+        alt={name || email || "Avatar"}
+        className={`inline-flex h-8 w-8 shrink-0 rounded-full object-cover ring-2 ${config.ringClass}`}
+      />
+    );
+  }
   return (
     <span
       className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-2 ${config.ringClass} ${config.avatarClass} text-xs font-bold`}
       aria-hidden="true"
     >
-      {getAvatarInitial(userId)}
+      {getAvatarInitial(name, email)}
     </span>
   );
 }
@@ -179,6 +203,7 @@ function InlineRoleSelect({
   onRoleChange: (memberId: string, newRole: ProjectMemberRole) => void;
   isUpdating: boolean;
 }) {
+  const displayName = member.user_name || member.user_email || "thành viên";
   return (
     <select
       value={member.role}
@@ -187,7 +212,7 @@ function InlineRoleSelect({
       }
       disabled={isUpdating}
       className="rounded border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium text-slate-700 transition-colors hover:border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-wait disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-      aria-label={`Vai trò của thành viên ${member.user_id}`}
+      aria-label={`Vai trò của ${displayName}`}
     >
       {ASSIGNABLE_ROLES.map((r) => (
         <option key={r} value={r}>
@@ -210,6 +235,7 @@ function ConfirmRemoveDialog({
   onCancel: () => void;
   isLoading: boolean;
 }) {
+  const displayName = member.user_name || member.user_email || "này";
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
@@ -240,9 +266,12 @@ function ConfirmRemoveDialog({
               className="mt-1 text-xs text-slate-500 dark:text-slate-400"
             >
               Bạn có chắc muốn xóa thành viên{" "}
-              <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
-                #{member.user_id}
-              </span>{" "}
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                {displayName}
+              </span>
+              {member.user_name && member.user_email ? (
+                <span className="text-slate-500"> ({member.user_email})</span>
+              ) : null}{" "}
               ra khỏi dự án? Thao tác này không thể hoàn tác.
             </p>
           </div>
@@ -425,7 +454,7 @@ export function ProjectMembersTab({
                   <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-900">
                     <tr>
                       <th scope="col" className="px-6 py-3">
-                        Thành viên (User ID)
+                        Thành viên
                       </th>
                       <th scope="col" className="px-6 py-3">
                         Vai trò (Role)
@@ -449,13 +478,25 @@ export function ProjectMembersTab({
                         key={m.id}
                         className="transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-900/40"
                       >
-                        {/* User ID + Avatar */}
+                        {/* Member Name + Email + Avatar */}
                         <td className="px-6 py-3.5">
                           <div className="flex items-center gap-3">
-                            <MemberAvatar userId={m.user_id} role={m.role} />
-                            <span className="font-mono text-xs font-semibold text-slate-800 dark:text-slate-200">
-                              #{m.user_id}
-                            </span>
+                            <MemberAvatar
+                              name={m.user_name}
+                              email={m.user_email}
+                              avatarUrl={m.user_avatar_url}
+                              role={m.role}
+                            />
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
+                                {m.user_name || m.user_email || "Thành viên"}
+                              </p>
+                              {m.user_email && m.user_name ? (
+                                <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                                  {m.user_email}
+                                </p>
+                              ) : null}
+                            </div>
                           </div>
                         </td>
 
@@ -500,7 +541,7 @@ export function ProjectMembersTab({
                                 onClick={() => setMemberToRemove(m)}
                                 disabled={removeMemberMutation.isPending}
                                 className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-rose-600 ring-1 ring-rose-500/30 transition-colors hover:bg-rose-50 hover:ring-rose-500/50 disabled:cursor-wait disabled:opacity-50 dark:text-rose-400 dark:ring-rose-500/20 dark:hover:bg-rose-900/20"
-                                aria-label={`Xóa thành viên #${m.user_id} khỏi dự án`}
+                                aria-label={`Xóa thành viên ${m.user_name || m.user_email || ""} khỏi dự án`}
                               >
                                 <TrashIcon className="h-3.5 w-3.5" />
                                 Xóa
@@ -527,6 +568,7 @@ export function ProjectMembersTab({
         projectId={projectId}
         isOpen={isInviteOpen}
         onClose={() => setIsInviteOpen(false)}
+        existingMemberUserIds={members?.map((m) => String(m.user_id)) ?? []}
       />
 
       {/* Role permissions modal */}

@@ -11,11 +11,8 @@ import {
   DialogTitle,
   Input,
 } from "@/components/ui";
-import { Category, PRESET_COLORS } from "../types/ontology";
-import {
-  useCreateCategoryMutation,
-  useUpdateCategoryMutation,
-} from "../hooks/use-ontologies";
+import { Category, PRESET_COLORS } from "../types";
+import { useCreateCategoryMutation, useUpdateCategoryMutation } from "../hooks";
 
 interface CategoryFormModalProps {
   versionId: string;

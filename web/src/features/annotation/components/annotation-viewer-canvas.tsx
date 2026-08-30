@@ -1,6 +1,6 @@
 "use client";
 
-import { AnnotationResult } from "../types/annotation";
+import { AnnotationResult } from "../types";
 
 interface AnnotationViewerCanvasProps {
   imageUrl?: string;

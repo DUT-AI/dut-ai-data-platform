@@ -15,18 +15,13 @@ class AppSettings(BaseSettings):
         case_sensitive=False,
     )
 
-    # Security & JWT
-    jwt_secret_key: str = "change-this-to-a-very-secure-secret-key-in-production"
-    jwt_algorithm: str = "HS256"
-    jwt_expire_minutes: int = 1440
-
-    # Auth Server
-    auth_server_url: str = "https://manage.dutai.site/api/v1"
-
     # Server configs
     api_host: str = "0.0.0.0"
     api_port: int = 8000
-    cors_origins: str = "http://localhost:3000,http://localhost:8000"
+    cors_origins: str = "http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000"
+
+    # Telemetry
+    otel_exporter_otlp_endpoint: str | None = None
 
     # Label Studio
     label_studio_url: str = "http://localhost:8080"

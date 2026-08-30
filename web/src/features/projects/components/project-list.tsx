@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { Plus, Search, FolderKanban, Filter, RefreshCw } from "lucide-react";
-import { useProjectsQuery } from "../hooks/use-projects";
-import { PROJECT_TYPE_OPTIONS } from "../types/project";
+import { useProjectsQuery } from "../hooks";
+import { PROJECT_TYPE_OPTIONS } from "../types";
 import { ProjectCard } from "./project-card";
 import { CreateProjectModal } from "./create-project-modal";
 import { Button, Input } from "@/components/ui";

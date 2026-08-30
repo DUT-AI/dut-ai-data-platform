@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Badge, Button } from "@/components/ui";
-import { Asset } from "../types/dataset";
-import { useRemoveVersionAssetMutation } from "../hooks/use-datasets";
+import { Asset } from "../types";
+import { useRemoveVersionAssetMutation } from "../hooks";
 import { AssetDetailModal } from "./asset-detail-modal";
 
 interface AssetListTableProps {

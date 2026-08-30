@@ -10,8 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui";
-import { Asset } from "../types/dataset";
-import { useAssetDownloadUrlQuery } from "../hooks/use-datasets";
+import { Asset } from "../types";
+import { useAssetDownloadUrlQuery } from "../hooks";
 
 interface AssetDetailModalProps {
   asset: Asset | null;

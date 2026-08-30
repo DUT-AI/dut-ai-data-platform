@@ -3,12 +3,9 @@ import {
   Project,
   ProjectConfig,
   ProjectCreatePayload,
-  ProjectMember,
-  ProjectMemberAddPayload,
-  ProjectMemberRole,
   ProjectUpdatePayload,
   TaskDefinition,
-} from "../types/project";
+} from "../types";
 
 export const projectApi = {
   getProjects: async (page = 1, pageSize = 50): Promise<Project[]> => {
@@ -49,38 +46,6 @@ export const projectApi = {
   getTaskDefinitions: async (): Promise<TaskDefinition[]> => {
     const response = await api.get<TaskDefinition[]>("/task-definitions");
     return response.data;
-  },
-
-  getProjectMembers: async (id: string): Promise<ProjectMember[]> => {
-    const response = await api.get<ProjectMember[]>(`/projects/${id}/members`);
-    return response.data;
-  },
-
-  addProjectMember: async (
-    id: string,
-    payload: ProjectMemberAddPayload
-  ): Promise<ProjectMember> => {
-    const response = await api.post<ProjectMember>(
-      `/projects/${id}/members`,
-      payload
-    );
-    return response.data;
-  },
-
-  updateProjectMember: async (
-    id: string,
-    memberId: string,
-    role: ProjectMemberRole
-  ): Promise<ProjectMember> => {
-    const response = await api.put<ProjectMember>(
-      `/projects/${id}/members/${memberId}`,
-      { role }
-    );
-    return response.data;
-  },
-
-  removeProjectMember: async (id: string, memberId: string): Promise<void> => {
-    await api.delete(`/projects/${id}/members/${memberId}`);
   },
 
   getProjectConfig: async (id: string): Promise<ProjectConfig> => {

@@ -1,89 +1,117 @@
-export type ProjectStatus = "active" | "archived";
-export type ProjectMemberRole = "owner" | "admin" | "annotator" | "reviewer";
+import { z } from "zod";
 
-export interface TaskDefinitionVersion {
-  id: string;
-  task_definition_id: string;
-  version: string;
-  input_schema: Record<string, unknown>;
-  capability_schema: Record<string, unknown>;
-  status: string;
-}
-export interface ProjectTemplateVersion {
-  id: string;
-  project_template_id: string;
-  version: string;
-  default_project_configuration: Record<string, unknown>;
-  status: string;
-  providers: string[];
-}
-export interface ProjectTemplate {
-  id: string;
-  key: string;
-  name: string;
-  description: string | null;
-  task_definition_id: string;
-  versions: ProjectTemplateVersion[];
-}
-export interface TaskDefinition {
-  id: string;
-  key: string;
-  name: string;
-  description: string | null;
-  category: string;
-  modality: string;
-  versions: TaskDefinitionVersion[];
-  templates: ProjectTemplate[];
-}
+export const projectTypeSchema = z.enum([
+  "detection",
+  "ocr",
+  "nlp",
+  "classification",
+  "segmentation",
+  "captioning",
+]);
+export type ProjectType = z.infer<typeof projectTypeSchema>;
 
-export interface Project {
-  id: string;
-  name: string;
-  description: string | null;
-  task_definition_version_id: string | null;
-  project_template_version_id: string | null;
-  created_by: string;
-  status: ProjectStatus;
-  created_at: string | null;
-  updated_at: string | null;
-  archived_at: string | null;
-  /** Legacy fields kept while the old member/project UI is being split out. */
-  project_type?: string;
-  owner_id?: string;
-}
+export const projectStatusSchema = z.enum(["active", "archived"]);
+export type ProjectStatus = z.infer<typeof projectStatusSchema>;
 
-export interface ProjectCreatePayload {
-  name: string;
-  description?: string;
-  task_definition_version_id: string;
-  project_template_version_id?: string;
-  annotation_provider_key: string;
-  storage_provider_key: string;
-}
-export interface ProjectUpdatePayload {
-  name?: string;
-  description?: string;
-}
-export interface ProjectMember {
-  id: string;
-  project_id: string;
-  user_id: string;
-  role: ProjectMemberRole;
-  status: string;
-  joined_at: string | null;
-}
-export interface ProjectMemberAddPayload {
-  user_id: string;
-  role: Exclude<ProjectMemberRole, "owner">;
-}
-export interface ProjectConfig {
-  project_id: string;
-  annotation_provider_key: string;
-  storage_provider_key: string;
-  default_workflow_ref: string | null;
-  settings: Record<string, unknown>;
-  settings_schema_version: string;
-}
+export const taskDefinitionVersionSchema = z.object({
+  id: z.string(),
+  task_definition_id: z.string(),
+  version: z.string(),
+  input_schema: z.record(z.string(), z.unknown()),
+  capability_schema: z.record(z.string(), z.unknown()),
+  constraints: z.record(z.string(), z.unknown()).optional(),
+  status: z.string(),
+  published_at: z.string().nullable().optional(),
+});
+export type TaskDefinitionVersion = z.infer<typeof taskDefinitionVersionSchema>;
+
+export const projectTemplateVersionSchema = z.object({
+  id: z.string(),
+  project_template_id: z.string(),
+  version: z.string(),
+  default_project_configuration: z.record(z.string(), z.unknown()),
+  ontology_template_ref: z.string().nullable().optional(),
+  status: z.string(),
+  providers: z.array(z.string()),
+  published_at: z.string().nullable().optional(),
+});
+export type ProjectTemplateVersion = z.infer<
+  typeof projectTemplateVersionSchema
+>;
+
+export const projectTemplateSchema = z.object({
+  id: z.string(),
+  key: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  task_definition_id: z.string(),
+  status: z.string().optional(),
+  versions: z.array(projectTemplateVersionSchema),
+});
+export type ProjectTemplate = z.infer<typeof projectTemplateSchema>;
+
+export const taskDefinitionSchema = z.object({
+  id: z.string(),
+  key: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  category: z.string(),
+  modality: z.string(),
+  status: z.string().optional(),
+  versions: z.array(taskDefinitionVersionSchema),
+  templates: z.array(projectTemplateSchema),
+});
+export type TaskDefinition = z.infer<typeof taskDefinitionSchema>;
+
+export const projectSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  task_definition_version_id: z.string().nullable(),
+  project_template_version_id: z.string().nullable(),
+  created_by: z.string(),
+  status: projectStatusSchema,
+  created_at: z.string().nullable(),
+  updated_at: z.string().nullable(),
+  archived_at: z.string().nullable(),
+  project_type: z.string().optional(),
+  owner_id: z.string().optional(),
+});
+export type Project = z.infer<typeof projectSchema>;
+
+export const createProjectSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập tên dự án")
+    .max(255, "Tên dự án không được vượt quá 255 ký tự"),
+  description: z
+    .string()
+    .max(2000, "Mô tả không được vượt quá 2000 ký tự")
+    .optional(),
+  task_definition_version_id: z.string().min(1),
+  project_template_version_id: z.string().optional(),
+  annotation_provider_key: z.string().min(1),
+  storage_provider_key: z.string().min(1),
+});
+export type ProjectCreatePayload = z.infer<typeof createProjectSchema>;
+export type CreateProjectFormValues = ProjectCreatePayload;
+
+export const updateProjectSchema = z.object({
+  name: z.string().trim().min(1).max(255).optional(),
+  description: z.string().max(2000).optional(),
+});
+export type ProjectUpdatePayload = z.infer<typeof updateProjectSchema>;
+
+export const projectConfigSchema = z.object({
+  project_id: z.string(),
+  annotation_provider_key: z.string(),
+  storage_provider_key: z.string(),
+  default_workflow_ref: z.string().nullable(),
+  settings: z.record(z.string(), z.unknown()),
+  settings_schema_version: z.string(),
+});
+export type ProjectConfig = z.infer<typeof projectConfigSchema>;
 
 export const PROJECT_TYPE_OPTIONS = [
   {

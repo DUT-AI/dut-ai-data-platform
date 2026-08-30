@@ -1,10 +1,15 @@
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, Response, status
 
 from apps.api.deps.auth import CurrentUser
+from core.config.auth import auth_settings
 from modules.identity.domain.entities import AuthUser
-from modules.identity.dtos.auth_dtos import LoginRequestDTO, LoginResponseDTO
-from modules.identity.use_cases import GetMeUseCase, LoginUseCase
+from modules.identity.dtos.auth_dtos import (
+    LoginRequestDTO,
+    LoginResponseDTO,
+    LogoutResponseDTO,
+)
+from modules.identity.use_cases import LoginUseCase
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 
@@ -18,9 +23,20 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 @inject
 async def login(
     payload: LoginRequestDTO,
+    response: Response,
     use_case: FromDishka[LoginUseCase],
-):
-    return await use_case.execute(payload)
+) -> LoginResponseDTO:
+    res = await use_case.execute(payload)
+    response.set_cookie(
+        key=auth_settings.auth_cookie_name,
+        value=res.access_token,
+        httponly=True,
+        secure=auth_settings.auth_cookie_secure,
+        samesite=auth_settings.auth_cookie_samesite,
+        max_age=auth_settings.auth_cookie_max_age,
+        path="/",
+    )
+    return res
 
 
 @router.get(
@@ -29,17 +45,25 @@ async def login(
     status_code=status.HTTP_200_OK,
     summary="Get current logged in user information",
 )
-@inject
 async def get_me(
     current_user: CurrentUser,
-    use_case: FromDishka[GetMeUseCase],
-    authorization: str | None = Header(default=None),
-):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing or invalid token",
-        )
+) -> AuthUser:
+    """Return current logged in user (validated exactly once via CurrentUser dependency)."""
+    return current_user
 
-    token = authorization.split(" ")[1]
-    return await use_case.execute(token)
+
+@router.post(
+    "/logout",
+    response_model=LogoutResponseDTO,
+    status_code=status.HTTP_200_OK,
+    summary="User Logout",
+)
+async def logout(response: Response) -> LogoutResponseDTO:
+    """Perform user session logout (clearing HttpOnly auth cookie)."""
+    response.delete_cookie(
+        key=auth_settings.auth_cookie_name,
+        path="/",
+        secure=auth_settings.auth_cookie_secure,
+        samesite=auth_settings.auth_cookie_samesite,
+    )
+    return LogoutResponseDTO()

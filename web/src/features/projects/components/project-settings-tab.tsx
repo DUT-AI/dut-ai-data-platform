@@ -9,12 +9,12 @@ import {
   CardTitle,
   Input,
 } from "@/components/ui";
-import { Project } from "../types/project";
+import { Project } from "../types";
 import {
   useProjectConfigQuery,
   useUpdateConfigMutation,
   useUpdateProjectMutation,
-} from "../hooks/use-projects";
+} from "../hooks";
 
 interface ProjectSettingsTabProps {
   project: Project;

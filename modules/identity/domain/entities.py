@@ -41,3 +41,13 @@ class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+
+
+@dataclass
+class UserLoginMetadataEntity:
+    """Domain entity representing a user's last login record in Data Platform."""
+
+    user_id: str
+    last_login_at: datetime
+    created_at: datetime | None = None
+    updated_at: datetime | None = None

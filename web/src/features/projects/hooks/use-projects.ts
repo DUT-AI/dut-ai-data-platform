@@ -1,11 +1,8 @@
+"use client";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { projectApi } from "../api/project-api";
-import {
-  ProjectCreatePayload,
-  ProjectMemberAddPayload,
-  ProjectMemberRole,
-  ProjectUpdatePayload,
-} from "../types/project";
+import { projectApi } from "../api";
+import { ProjectCreatePayload, ProjectUpdatePayload } from "../types";
 
 export const PROJECT_KEYS = {
   all: ["projects"] as const,
@@ -14,7 +11,6 @@ export const PROJECT_KEYS = {
     [...PROJECT_KEYS.lists(), { page, pageSize }] as const,
   details: () => [...PROJECT_KEYS.all, "detail"] as const,
   detail: (id: string) => [...PROJECT_KEYS.details(), id] as const,
-  members: (id: string) => [...PROJECT_KEYS.detail(id), "members"] as const,
   config: (id: string) => [...PROJECT_KEYS.detail(id), "config"] as const,
   catalog: () => [...PROJECT_KEYS.all, "catalog"] as const,
 };
@@ -85,55 +81,6 @@ export function useRestoreProjectMutation(id: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.detail(id) });
       queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.lists() });
-    },
-  });
-}
-
-export function useProjectMembersQuery(id: string) {
-  return useQuery({
-    queryKey: PROJECT_KEYS.members(id),
-    queryFn: () => projectApi.getProjectMembers(id),
-    enabled: Boolean(id),
-  });
-}
-
-export function useAddMemberMutation(id: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: ProjectMemberAddPayload) =>
-      projectApi.addProjectMember(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.members(id) });
-    },
-  });
-}
-
-export function useUpdateMemberRoleMutation(id: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      memberId,
-      role,
-    }: {
-      memberId: string;
-      role: ProjectMemberRole;
-    }) => projectApi.updateProjectMember(id, memberId, role),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.members(id) });
-    },
-  });
-}
-
-export function useRemoveMemberMutation(id: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (memberId: string) =>
-      projectApi.removeProjectMember(id, memberId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.members(id) });
     },
   });
 }

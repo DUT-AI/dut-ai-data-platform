@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  useUserQuery,
-  useLogoutMutation,
-} from "@/features/auth/hooks/use-auth-queries";
+import { useUserQuery, useLogoutMutation } from "@/features/auth";
 
 export function DashboardOverview() {
   const { data: user, isLoading } = useUserQuery();

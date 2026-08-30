@@ -12,10 +12,7 @@ import {
   DialogTitle,
   Input,
 } from "@/components/ui";
-import {
-  useCreateProjectMutation,
-  useTaskDefinitionsQuery,
-} from "../hooks/use-projects";
+import { useCreateProjectMutation, useTaskDefinitionsQuery } from "../hooks";
 
 interface Props {
   open: boolean;

@@ -1,5 +1,4 @@
 import axios from "axios";
-import { getAuthToken } from "./auth-token";
 
 export const api = axios.create({
   baseURL:
@@ -10,12 +9,20 @@ export const api = axios.create({
   },
 });
 
-api.interceptors.request.use((config) => {
-  const token = getAuthToken();
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      if (typeof window !== "undefined") {
+        const isLoginRequest = error.config?.url?.includes("/auth/login");
+        const isLoginPage = window.location.pathname === "/login";
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+        // Prevent redirect loop and allow login page to display bad credentials error
+        if (!isLoginRequest && !isLoginPage) {
+          window.location.href = "/login";
+        }
+      }
+    }
+    return Promise.reject(error);
   }
-
-  return config;
-});
+);

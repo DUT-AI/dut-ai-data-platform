@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 # Import all module models so Alembic registers them onto Base.metadata
 import modules.annotation.models
 import modules.dataset.models
+import modules.identity.models
 import modules.ontology.models
 import modules.project.models  # noqa: F401
 from core.config import db_settings

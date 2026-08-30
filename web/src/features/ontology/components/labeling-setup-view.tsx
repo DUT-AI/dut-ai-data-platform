@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button, Card } from "@/components/ui";
-import { useUpdateOntologyVersionMutation } from "../hooks/use-ontologies";
+import { useUpdateOntologyVersionMutation } from "../hooks";
 
 // Color presets for visual labels
 const PRESET_COLORS = [

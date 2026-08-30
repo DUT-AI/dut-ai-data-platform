@@ -1,6 +1,6 @@
-export * from "./types/project";
-export * from "./api/project-api";
-export * from "./hooks/use-projects";
+export * from "./types";
+export * from "./api";
+export * from "./hooks";
 export * from "./components/project-card";
 export * from "./components/create-project-modal";
 export * from "./components/project-list";
@@ -8,4 +8,5 @@ export * from "./components/project-detail-view";
 export * from "./components/project-overview-tab";
 export * from "./components/project-members-tab";
 export * from "./components/invite-member-modal";
+export * from "./components/role-permissions-modal";
 export * from "./components/project-settings-tab";

@@ -9,8 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui";
-import { Attribute, Category } from "../types/ontology";
-import { useDeleteAttributeMutation } from "../hooks/use-ontologies";
+import { Attribute, Category } from "../types";
+import { useDeleteAttributeMutation } from "../hooks";
 import { AttributeFormModal } from "./attribute-form-modal";
 
 interface AttributeEditorProps {

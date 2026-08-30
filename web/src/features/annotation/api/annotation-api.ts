@@ -4,7 +4,7 @@ import {
   AnnotationRevision,
   CreateAnnotationRequest,
   CreateRevisionRequest,
-} from "../types/annotation";
+} from "../types";
 
 export async function listAssetAnnotations(
   assetId: string

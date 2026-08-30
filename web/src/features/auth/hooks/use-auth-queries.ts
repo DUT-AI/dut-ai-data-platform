@@ -1,8 +1,9 @@
+"use client";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { authService } from "../services/auth-service";
-import type { LoginInput } from "../schemas/login-schema";
-import { clearAuthToken, setAuthToken } from "@/lib/auth-token";
+import { authService } from "../services";
+import type { LoginInput } from "../types";
 
 export const AUTH_QUERY_KEY = ["auth", "me"] as const;
 
@@ -21,10 +22,7 @@ export function useLoginMutation() {
 
   return useMutation({
     mutationFn: (data: LoginInput) => authService.login(data),
-    onSuccess: async (res) => {
-      if (res.access_token) {
-        setAuthToken(res.access_token);
-      }
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
       router.push("/dashboard");
     },
@@ -38,13 +36,11 @@ export function useLogoutMutation() {
   return useMutation({
     mutationFn: () => authService.logout(),
     onSuccess: async () => {
-      clearAuthToken();
       queryClient.setQueryData(AUTH_QUERY_KEY, null);
       await queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
       router.push("/login");
     },
     onError: async () => {
-      clearAuthToken();
       queryClient.setQueryData(AUTH_QUERY_KEY, null);
       router.push("/login");
     },

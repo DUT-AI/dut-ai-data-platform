@@ -64,9 +64,9 @@ export function UserSearchSelect({
 
   // Derive current selected user based on value and query items/state
   const currentUser = value
-    ? (selectedUser && String(selectedUser.id) === String(value)
-        ? selectedUser
-        : users.find((u) => String(u.id) === String(value)) || null)
+    ? selectedUser && String(selectedUser.id) === String(value)
+      ? selectedUser
+      : users.find((u) => String(u.id) === String(value)) || null
     : null;
 
   // Close dropdown on outside click

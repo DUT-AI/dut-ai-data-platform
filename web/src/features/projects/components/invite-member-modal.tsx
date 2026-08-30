@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
@@ -11,7 +11,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Input,
   Form,
   FormField,
   FormItem,
@@ -121,7 +120,8 @@ export function InviteMemberModal({
     },
   });
 
-  const selectedRole = (form.watch("role") as InvitableRole) || "annotator";
+  const watchedRole = useWatch({ control: form.control, name: "role" });
+  const selectedRole = (watchedRole as InvitableRole) || "annotator";
   const selectedPreview =
     ROLE_PREVIEWS[selectedRole] || ROLE_PREVIEWS.annotator;
 

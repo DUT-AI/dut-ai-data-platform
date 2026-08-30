@@ -50,7 +50,11 @@ export function UserSearchSelect({
   }, [searchTerm]);
 
   // Query users from /api/v1/users
-  const { data: usersData, isLoading, isFetching } = useUsersQuery({
+  const {
+    data: usersData,
+    isLoading,
+    isFetching,
+  } = useUsersQuery({
     search: debouncedSearch || undefined,
     pageSize: 30,
     page: 1,
@@ -58,17 +62,12 @@ export function UserSearchSelect({
 
   const users = usersData?.items || [];
 
-  // Update selectedUser if value matches an item in query results
-  useEffect(() => {
-    if (value) {
-      const found = users.find((u) => String(u.id) === String(value));
-      if (found) {
-        setSelectedUser(found);
-      }
-    } else {
-      setSelectedUser(null);
-    }
-  }, [value, users]);
+  // Derive current selected user based on value and query items/state
+  const currentUser = value
+    ? (selectedUser && String(selectedUser.id) === String(value)
+        ? selectedUser
+        : users.find((u) => String(u.id) === String(value)) || null)
+    : null;
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -107,27 +106,27 @@ export function UserSearchSelect({
   return (
     <div ref={containerRef} className="relative w-full space-y-1.5">
       {/* Selected User View */}
-      {selectedUser ? (
+      {currentUser ? (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50/50 p-2.5 transition-all dark:border-blue-900/50 dark:bg-blue-950/20">
           <div className="flex min-w-0 items-center gap-3">
-            {selectedUser.avatar_url ? (
+            {currentUser.avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={selectedUser.avatar_url}
-                alt={selectedUser.name || selectedUser.email}
+                src={currentUser.avatar_url}
+                alt={currentUser.name || currentUser.email}
                 className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-blue-500/20"
               />
             ) : (
               <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-sm">
-                {getUserInitials(selectedUser.name, selectedUser.email)}
+                {getUserInitials(currentUser.name, currentUser.email)}
               </span>
             )}
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {selectedUser.name || "Người dùng"}
+                {currentUser.name || "Người dùng"}
               </p>
               <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                {selectedUser.email}
+                {currentUser.email}
               </p>
             </div>
           </div>
@@ -177,7 +176,7 @@ export function UserSearchSelect({
             }}
             onFocus={() => setIsOpen(true)}
             placeholder="Tìm theo email hoặc họ tên..."
-            className={`w-full rounded-lg border bg-white py-2 pl-9 pr-8 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 dark:bg-slate-900 dark:text-slate-100 ${
+            className={`w-full rounded-lg border bg-white py-2 pl-9 pr-8 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus:outline-none focus:ring-2 dark:bg-slate-900 dark:text-slate-100 ${
               error
                 ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20"
                 : "border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 dark:border-slate-800"
@@ -221,7 +220,7 @@ export function UserSearchSelect({
       )}
 
       {/* Dropdown listbox */}
-      {isOpen && !selectedUser && (
+      {isOpen && !currentUser && (
         <div
           id="user-search-listbox"
           role="listbox"

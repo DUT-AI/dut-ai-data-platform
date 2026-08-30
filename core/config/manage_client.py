@@ -16,9 +16,25 @@ class ManageSettings(BaseSettings):
     )
 
     # Auth Server
-    user_endpoint: str = "http://localhost:8000/api/v1/auth/users"
+    user_endpoint: str = ""
     manage_api_token: str = ""
+    auth_api_key: str = ""
     api_timeout: float = 10.0
+
+    @property
+    def token(self) -> str:
+        return self.manage_api_token or self.auth_api_key
+
+    @property
+    def users_url(self) -> str:
+        if self.user_endpoint:
+            return self.user_endpoint
+        from core.config.auth import auth_settings
+
+        base = auth_settings.auth_server_url.rstrip("/")
+        if "/auth" in base:
+            base = base.split("/auth")[0]
+        return f"{base}/users"
 
 
 manage_settings = ManageSettings()

@@ -59,6 +59,9 @@ class ProjectMemberResponseDTO(BaseModel):
     id: str
     project_id: str
     user_id: str
+    user_name: str | None = None
+    user_email: str | None = None
+    user_avatar_url: str | None = None
     role: str
     status: str
     joined_at: datetime | None = None

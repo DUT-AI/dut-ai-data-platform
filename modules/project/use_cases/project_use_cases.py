@@ -109,9 +109,21 @@ class ArchiveProjectUseCase:
         return ProjectResponseDTO.model_validate(saved)
 
 
+import logging
+
+from modules.identity.client.manage_client import ManageClient
+
+logger = logging.getLogger(__name__)
+
+
 class AddProjectMemberUseCase:
-    def __init__(self, repo: IProjectRepository) -> None:
+    def __init__(
+        self,
+        repo: IProjectRepository,
+        manage_client: ManageClient,
+    ) -> None:
         self.repo = repo
+        self.manage_client = manage_client
 
     async def execute(
         self, project_id: str, data: ProjectMemberAddDTO
@@ -127,16 +139,60 @@ class AddProjectMemberUseCase:
             status="active",
         )
         saved = await self.repo.add_member(member)
-        return ProjectMemberResponseDTO.model_validate(saved)
+        dto = ProjectMemberResponseDTO.model_validate(saved)
+
+        if self.manage_client:
+            try:
+                users_resp = await self.manage_client.list_users(page=1, page_size=100)
+                for u in users_resp.items:
+                    if str(u.id) == str(dto.user_id):
+                        dto.user_name = u.name
+                        dto.user_email = u.email
+                        dto.user_avatar_url = u.avatar_url
+                        break
+            except Exception as exc:
+                logger.warning(
+                    "Failed to enrich added member '%s' with ManageClient: %s",
+                    dto.user_id,
+                    exc,
+                )
+
+        return dto
 
 
 class ListProjectMembersUseCase:
-    def __init__(self, repo: IProjectRepository) -> None:
+    def __init__(
+        self,
+        repo: IProjectRepository,
+        manage_client: ManageClient,
+    ) -> None:
         self.repo = repo
+        self.manage_client = manage_client
 
     async def execute(self, project_id: str) -> list[ProjectMemberResponseDTO]:
         members = await self.repo.list_members(project_id)
-        return [ProjectMemberResponseDTO.model_validate(m) for m in members]
+        dtos = [ProjectMemberResponseDTO.model_validate(m) for m in members]
+
+        if not dtos:
+            return []
+
+        if self.manage_client:
+            try:
+                users_resp = await self.manage_client.list_users(page=1, page_size=100)
+                users_map = {str(u.id): u for u in users_resp.items}
+                for dto in dtos:
+                    user_info = users_map.get(str(dto.user_id))
+                    if user_info:
+                        dto.user_name = user_info.name
+                        dto.user_email = user_info.email
+                        dto.user_avatar_url = user_info.avatar_url
+            except Exception as exc:
+                logger.warning(
+                    "Failed to fetch user profiles for project members from ManageClient: %s",
+                    exc,
+                )
+
+        return dtos
 
 
 class UpdateProjectMemberUseCase:

@@ -40,7 +40,8 @@ class ManageClient:
         """Fetch users from Manage Service GET /api/v1/users."""
         headers = {}
 
-        headers["Authorization"] = f"Bearer {manage_settings.manage_api_token}"
+        if manage_settings.token:
+            headers["Authorization"] = f"Bearer {manage_settings.token}"
         params: dict[str, Any] = {
             "page": page,
             "page_size": page_size,
@@ -51,7 +52,7 @@ class ManageClient:
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(
-                    manage_settings.user_endpoint, headers=headers, params=params
+                    manage_settings.users_url, headers=headers, params=params
                 )
                 if response.status_code == 401:
                     raise HTTPException(
@@ -103,12 +104,12 @@ class ManageClient:
         except httpx.ConnectError as exc:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"Không thể kết nối tới Manage Server tại {manage_settings.user_endpoint}. Vui lòng kiểm tra lại Manage Server.",
+                detail=f"Không thể kết nối tới Manage Server tại {manage_settings.users_url}. Vui lòng kiểm tra lại Manage Server.",
             ) from exc
         except httpx.TimeoutException as exc:
             raise HTTPException(
                 status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                detail=f"Yêu cầu tới Manage Server tại {manage_settings.user_endpoint} bị quá thời gian (timeout).",
+                detail=f"Yêu cầu tới Manage Server tại {manage_settings.users_url} bị quá thời gian (timeout).",
             ) from exc
         except httpx.HTTPStatusError as exc:
             raise HTTPException(

@@ -29,8 +29,28 @@ class AuthSettings(BaseSettings):
 
     # Auth Server
     auth_server_url: str = "http://localhost:8000/api/v1/auth/login"
-    get_me_url: str = "http://localhost:8000/api/v1/auth/me"
+    get_me_url: str = ""
     api_time_out: float = 10.0
+
+    @property
+    def login_url(self) -> str:
+        url = self.auth_server_url.rstrip("/")
+        if url.endswith("/auth/login") or url.endswith("/login"):
+            return url
+        return f"{url}/auth/login"
+
+    @property
+    def me_url(self) -> str:
+        if self.get_me_url:
+            return self.get_me_url
+        url = self.auth_server_url.rstrip("/")
+        if url.endswith("/auth/login"):
+            base = url[: -len("/login")]
+            return f"{base}/me"
+        if url.endswith("/login"):
+            base = url[: -len("/login")]
+            return f"{base}/me"
+        return f"{url}/auth/me"
 
 
 auth_settings = AuthSettings()

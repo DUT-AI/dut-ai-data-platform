@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
@@ -11,7 +11,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Input,
   Form,
   FormField,
   FormItem,
@@ -26,10 +25,13 @@ import {
 } from "../types";
 import { useAddMemberMutation } from "../hooks";
 
+import { UserSearchSelect } from "./user-search-select";
+
 interface InviteMemberModalProps {
   projectId: string;
   isOpen: boolean;
   onClose: () => void;
+  existingMemberUserIds?: string[];
 }
 
 type InvitableRole = Exclude<ProjectMemberRole, "owner">;
@@ -105,6 +107,7 @@ export function InviteMemberModal({
   projectId,
   isOpen,
   onClose,
+  existingMemberUserIds = [],
 }: InviteMemberModalProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const addMemberMutation = useAddMemberMutation(projectId);
@@ -117,7 +120,8 @@ export function InviteMemberModal({
     },
   });
 
-  const selectedRole = (form.watch("role") as InvitableRole) || "annotator";
+  const watchedRole = useWatch({ control: form.control, name: "role" });
+  const selectedRole = (watchedRole as InvitableRole) || "annotator";
   const selectedPreview =
     ROLE_PREVIEWS[selectedRole] || ROLE_PREVIEWS.annotator;
 
@@ -152,8 +156,8 @@ export function InviteMemberModal({
         <DialogHeader>
           <DialogTitle>Thêm thành viên vào dự án</DialogTitle>
           <DialogDescription>
-            Nhập ID người dùng và chọn vai trò phù hợp để cấp quyền truy cập vào
-            dự án.
+            Tìm kiếm người dùng theo email hoặc họ tên và chọn vai trò phù hợp
+            để cấp quyền truy cập vào dự án.
           </DialogDescription>
         </DialogHeader>
 
@@ -183,23 +187,25 @@ export function InviteMemberModal({
               </div>
             )}
 
-            {/* User ID input */}
+            {/* Searchable User selection */}
             <FormField
               control={form.control}
               name="user_id"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>
-                    User ID{" "}
+                    Người dùng{" "}
                     <span className="text-rose-500" aria-label="bắt buộc">
                       *
                     </span>
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="VD: 101, 202"
+                    <UserSearchSelect
+                      value={field.value}
+                      onChange={(selectedId) => field.onChange(selectedId)}
+                      existingMemberUserIds={existingMemberUserIds}
                       disabled={addMemberMutation.isPending}
+                      error={fieldState.error?.message}
                     />
                   </FormControl>
                   <FormMessage />

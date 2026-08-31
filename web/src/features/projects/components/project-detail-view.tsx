@@ -6,6 +6,7 @@ import { Badge, Button } from "@/components/ui";
 import { useProjectQuery } from "../hooks";
 import { PROJECT_TYPE_OPTIONS } from "../types";
 import { ProjectOverviewTab } from "./project-overview-tab";
+import { ProjectMembersTab } from "./project-members-tab";
 import { ProjectSettingsTab } from "./project-settings-tab";
 import { OntologyListView } from "@/features/ontology";
 import { DatasetListView } from "@/features/dataset";
@@ -14,7 +15,7 @@ interface ProjectDetailViewProps {
   projectId: string;
 }
 
-type TabType = "overview" | "datasets" | "ontologies" | "settings";
+type TabType = "overview" | "datasets" | "ontologies" | "members" | "settings";
 
 export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
   const [activeTab, setActiveTab] = useState<TabType>("overview");
@@ -123,6 +124,16 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
             Ontologies (Bộ Nhãn)
           </button>
           <button
+            onClick={() => setActiveTab("members")}
+            className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
+              activeTab === "members"
+                ? "border-primary-500 text-primary-600 dark:text-primary-400"
+                : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-300"
+            }`}
+          >
+            Thành viên (Members)
+          </button>
+          <button
             onClick={() => setActiveTab("settings")}
             className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
               activeTab === "settings"
@@ -139,6 +150,7 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
       {activeTab === "overview" && <ProjectOverviewTab project={project} />}
       {activeTab === "datasets" && <DatasetListView projectId={projectId} />}
       {activeTab === "ontologies" && <OntologyListView projectId={projectId} />}
+      {activeTab === "members" && <ProjectMembersTab projectId={projectId} />}
       {activeTab === "settings" && <ProjectSettingsTab project={project} />}
     </div>
   );

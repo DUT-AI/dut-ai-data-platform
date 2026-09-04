@@ -15,6 +15,19 @@ __pycache__/
 node_modules/
 .next/
 out/
+next-env.d.ts
+*.tsbuildinfo
+.turbo/
+
+# Python caches & tests
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# IDE & Editor
+.idea/
+.vscode/
 
 # System & OS
 .DS_Store

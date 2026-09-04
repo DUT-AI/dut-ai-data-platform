@@ -184,10 +184,14 @@ export function CreateProjectModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      className="w-[95vw] max-w-6xl"
+    >
       <DialogContent
         onClose={() => onOpenChange(false)}
-        className="flex h-[88vh] max-h-[850px] w-[95vw] max-w-6xl flex-col gap-0 overflow-hidden p-0"
+        className="flex h-[88vh] max-h-[850px] w-full flex-col gap-0 overflow-hidden p-0"
       >
         <Form {...form}>
           <form

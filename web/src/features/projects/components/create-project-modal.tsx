@@ -12,10 +12,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useCreateProjectMutation, useTaskDefinitionsQuery } from "../hooks";
-import {
-  createProjectSchema,
-  CreateProjectFormValues,
-} from "../types";
+import { createProjectSchema, CreateProjectFormValues } from "../types";
 import {
   Dialog,
   DialogContent,
@@ -44,7 +41,8 @@ export function CreateProjectModal({
   const [activeTab, setActiveTab] = useState<TabType>("name");
 
   // Catalog data from backend
-  const { data: tasks = [], isLoading: isTasksLoading } = useTaskDefinitionsQuery();
+  const { data: tasks = [], isLoading: isTasksLoading } =
+    useTaskDefinitionsQuery();
 
   // Template selection state
   const [selectedGroup, setSelectedGroup] = useState<string>(
@@ -53,7 +51,8 @@ export function CreateProjectModal({
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
     "semantic-segmentation-with-polygons"
   );
-  const [selectedProvider, setSelectedProvider] = useState<string>("label_studio");
+  const [selectedProvider, setSelectedProvider] =
+    useState<string>("label_studio");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const createMutation = useCreateProjectMutation();
@@ -75,11 +74,17 @@ export function CreateProjectModal({
     // 1. Determine task key by group & template id
     let taskKey = "cv.object_detection";
     if (selectedGroup === "Computer Vision") {
-      if (selectedTemplateId.includes("segmentation") || selectedTemplateId.includes("polygon")) {
+      if (
+        selectedTemplateId.includes("segmentation") ||
+        selectedTemplateId.includes("polygon")
+      ) {
         taskKey = "cv.semantic_segmentation";
       } else if (selectedTemplateId.includes("classification")) {
         taskKey = "cv.image_classification";
-      } else if (selectedTemplateId.includes("ocr") || selectedTemplateId.includes("text-extraction")) {
+      } else if (
+        selectedTemplateId.includes("ocr") ||
+        selectedTemplateId.includes("text-extraction")
+      ) {
         taskKey = "cv.ocr";
       } else {
         taskKey = "cv.object_detection";
@@ -89,7 +94,11 @@ export function CreateProjectModal({
       selectedGroup === "Generative AI" ||
       selectedGroup === "Conversational AI"
     ) {
-      if (selectedTemplateId.includes("entity") || selectedTemplateId.includes("ner") || selectedTemplateId.includes("span")) {
+      if (
+        selectedTemplateId.includes("entity") ||
+        selectedTemplateId.includes("ner") ||
+        selectedTemplateId.includes("span")
+      ) {
         taskKey = "nlp.named_entity_recognition";
       } else {
         taskKey = "nlp.text_classification";
@@ -109,16 +118,25 @@ export function CreateProjectModal({
       task: foundTask,
       taskVersionId: taskVersion?.id || "",
       templateVersionId: templateVersion?.id || "",
-      availableProviders: templateVersion?.providers || ["label_studio", "cvat"],
+      availableProviders: templateVersion?.providers || [
+        "label_studio",
+        "cvat",
+      ],
     };
   }, [selectedGroup, selectedTemplateId, tasks]);
 
   // Sync mapped values to form
   useEffect(() => {
     if (matchedTaskInfo.taskVersionId) {
-      form.setValue("task_definition_version_id", matchedTaskInfo.taskVersionId);
+      form.setValue(
+        "task_definition_version_id",
+        matchedTaskInfo.taskVersionId
+      );
       if (matchedTaskInfo.templateVersionId) {
-        form.setValue("project_template_version_id", matchedTaskInfo.templateVersionId);
+        form.setValue(
+          "project_template_version_id",
+          matchedTaskInfo.templateVersionId
+        );
       }
       form.setValue("annotation_provider_key", selectedProvider);
       form.setValue("storage_provider_key", "minio");
@@ -139,13 +157,17 @@ export function CreateProjectModal({
         task_definition_version_id:
           values.task_definition_version_id || matchedTaskInfo.taskVersionId,
         project_template_version_id:
-          values.project_template_version_id || matchedTaskInfo.templateVersionId || undefined,
+          values.project_template_version_id ||
+          matchedTaskInfo.templateVersionId ||
+          undefined,
         annotation_provider_key: selectedProvider || "label_studio",
         storage_provider_key: "minio",
       };
 
       if (!payload.task_definition_version_id) {
-        setErrorMsg("Vui lòng đợi danh mục bài toán tải xong hoặc chọn lại bài toán.");
+        setErrorMsg(
+          "Vui lòng đợi danh mục bài toán tải xong hoặc chọn lại bài toán."
+        );
         return;
       }
 
@@ -288,7 +310,10 @@ export function CreateProjectModal({
                     </label>
                     <div className="flex flex-wrap gap-3">
                       {[
-                        { key: "label_studio", label: "Label Studio (Default)" },
+                        {
+                          key: "label_studio",
+                          label: "Label Studio (Default)",
+                        },
                         { key: "cvat", label: "CVAT (Computer Vision)" },
                         { key: "doccano", label: "Doccano (NLP)" },
                       ].map((p) => {
@@ -342,7 +367,7 @@ export function CreateProjectModal({
                               onClick={() => setSelectedGroup(group)}
                               className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-xs font-medium transition ${
                                 isActive
-                                  ? "bg-blue-600 font-semibold text-white shadow-xs"
+                                  ? "shadow-xs bg-blue-600 font-semibold text-white"
                                   : "text-slate-700 hover:bg-slate-200/60 dark:text-slate-300 dark:hover:bg-slate-800/60"
                               }`}
                             >
@@ -367,7 +392,8 @@ export function CreateProjectModal({
                           {selectedGroup}
                         </h3>
                         <p className="text-xs text-slate-500">
-                          Chọn cấu hình gán nhãn mẫu phù hợp với dữ liệu của bạn.
+                          Chọn cấu hình gán nhãn mẫu phù hợp với dữ liệu của
+                          bạn.
                         </p>
                       </div>
                       {matchedTaskInfo.task && (
@@ -394,7 +420,7 @@ export function CreateProjectModal({
                           >
                             {/* Selected Checkmark Badge */}
                             {isSelected && (
-                              <div className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white shadow-xs">
+                              <div className="shadow-xs absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white">
                                 <Check className="h-3.5 w-3.5" />
                               </div>
                             )}
@@ -407,7 +433,8 @@ export function CreateProjectModal({
                                   alt={tpl.title}
                                   className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                                   onError={(e) => {
-                                    (e.target as HTMLElement).style.display = "none";
+                                    (e.target as HTMLElement).style.display =
+                                      "none";
                                   }}
                                 />
                               ) : (

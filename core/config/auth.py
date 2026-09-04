@@ -35,7 +35,7 @@ class AuthSettings(BaseSettings):
     @property
     def login_url(self) -> str:
         url = self.auth_server_url.rstrip("/")
-        if url.endswith("/auth/login") or url.endswith("/login"):
+        if url.endswith(("/auth/login", "/login")):
             return url
         return f"{url}/auth/login"
 

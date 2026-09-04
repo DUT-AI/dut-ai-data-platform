@@ -53,7 +53,10 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 "border-slate-200 bg-slate-100 text-slate-700"
               }
             >
-              {typeOption?.label ?? project.project_type}
+              {typeOption?.label ??
+                (project.task_definition_version_id
+                  ? `Task ${project.task_definition_version_id.slice(0, 8)}`
+                  : "Legacy project")}
             </Badge>
           </div>
 

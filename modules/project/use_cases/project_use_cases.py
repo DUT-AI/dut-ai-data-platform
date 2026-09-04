@@ -88,6 +88,13 @@ class CreateProjectUseCase:
             created_by=owner_id,
         )
         saved = await self.repo.save(project)
+        owner_member = ProjectMemberEntity(
+            project_id=saved.id,
+            user_id=owner_id,
+            role="owner",
+            status="active",
+        )
+        await self.repo.add_member(owner_member)
         await self.repo.save_configuration(
             saved.id,
             {

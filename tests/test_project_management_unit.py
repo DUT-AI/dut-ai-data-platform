@@ -86,7 +86,7 @@ async def test_create_project_rejects_incompatible_provider() -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_project_publishes_contract_without_creating_member() -> None:
+async def test_create_project_publishes_contract_and_creates_owner_member() -> None:
     repo = AsyncMock()
     catalog = AsyncMock()
     events = InMemoryProjectEventPublisher()
@@ -104,7 +104,7 @@ async def test_create_project_publishes_contract_without_creating_member() -> No
     )
     assert result.created_by == "u1"
     assert events.events[0].event_type == "ProjectCreated"
-    repo.add_member.assert_not_awaited()
+    repo.add_member.assert_awaited_once()
 
 
 @pytest.mark.asyncio

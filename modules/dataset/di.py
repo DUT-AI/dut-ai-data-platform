@@ -6,12 +6,14 @@ from modules.dataset.repository.dataset_repository import SqlDatasetRepository
 from modules.dataset.use_cases import (
     CreateDatasetUseCase,
     CreateDatasetVersionUseCase,
+    FinalizeAssetImportUseCase,
     GetAssetDetailUseCase,
     GetAssetDownloadUrlUseCase,
     GetDatasetDetailUseCase,
     GetDatasetVersionDetailUseCase,
     ListProjectDatasetsUseCase,
     ListVersionAssetsUseCase,
+    PrepareAssetUploadUseCase,
     PublishDatasetVersionUseCase,
     RemoveVersionAssetUseCase,
     UploadVersionAssetsUseCase,
@@ -34,6 +36,8 @@ class DatasetProvider(Provider):
     get_dataset_version_detail_uc = provide(GetDatasetVersionDetailUseCase)
     publish_dataset_version_uc = provide(PublishDatasetVersionUseCase)
     upload_version_assets_uc = provide(UploadVersionAssetsUseCase)
+    prepare_asset_upload_uc = provide(PrepareAssetUploadUseCase)
+    finalize_asset_import_uc = provide(FinalizeAssetImportUseCase)
     remove_version_asset_uc = provide(RemoveVersionAssetUseCase)
     list_version_assets_uc = provide(ListVersionAssetsUseCase)
     get_asset_detail_uc = provide(GetAssetDetailUseCase)

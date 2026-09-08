@@ -21,6 +21,11 @@ from modules.dataset.dtos.dataset_dtos import (
     DatasetResponseDTO,
     DatasetVersionCreateDTO,
     DatasetVersionResponseDTO,
+    FinalizeAssetImportRequestDTO,
+    FinalizeAssetImportResponseDTO,
+    PrepareUploadRequestDTO,
+    PrepareUploadResponseDTO,
+    PresignedUploadUrlItemDTO,
 )
 from modules.dataset.services.metadata_extractor import AssetMetadataExtractor
 
@@ -290,4 +295,116 @@ class GetAssetDownloadUrlUseCase:
             filename=asset.filename,
             download_url=download_url,
             expires_in_seconds=expires_in_seconds,
+        )
+
+
+class PrepareAssetUploadUseCase:
+    def __init__(
+        self, repo: IDatasetRepository, storage_provider: IStorageProvider
+    ) -> None:
+        self.repo = repo
+        self.storage_provider = storage_provider
+
+    async def execute(
+        self,
+        version_id: str,
+        payload: PrepareUploadRequestDTO,
+        expires_in_seconds: int = 3600,
+    ) -> PrepareUploadResponseDTO:
+        version = await self.repo.get_version_by_id(version_id)
+        if not version:
+            raise NotFoundException(f"Dataset Version '{version_id}' not found.")
+
+        if version.status != "draft":
+            raise BadRequestException(
+                f"Cannot upload assets to version '{version_id}' with status '{version.status}'. Only draft versions allow asset uploads."
+            )
+
+        dataset = await self.repo.get_dataset_by_id(version.dataset_id)
+        if not dataset:
+            raise NotFoundException(f"Parent dataset '{version.dataset_id}' not found.")
+
+        project_id = dataset.project_id
+        bucket = s3_settings.default_bucket
+        items: list[PresignedUploadUrlItemDTO] = []
+
+        for f in payload.files:
+            asset_id = generate_ulid()
+            storage_key = f"project-{project_id}/assets/{asset_id}/{f.filename}"
+            upload_url = await self.storage_provider.get_presigned_upload_url(
+                bucket=bucket,
+                key=storage_key,
+                content_type=f.content_type,
+                expires=expires_in_seconds,
+            )
+            items.append(
+                PresignedUploadUrlItemDTO(
+                    filename=f.filename,
+                    asset_id=asset_id,
+                    storage_key=storage_key,
+                    upload_url=upload_url,
+                    expires_in_seconds=expires_in_seconds,
+                )
+            )
+
+        return PrepareUploadResponseDTO(items=items)
+
+
+class FinalizeAssetImportUseCase:
+    def __init__(
+        self, repo: IDatasetRepository, storage_provider: IStorageProvider
+    ) -> None:
+        self.repo = repo
+        self.storage_provider = storage_provider
+
+    async def execute(
+        self,
+        version_id: str,
+        payload: FinalizeAssetImportRequestDTO,
+        created_by: str | None = None,
+    ) -> FinalizeAssetImportResponseDTO:
+        version = await self.repo.get_version_by_id(version_id)
+        if not version:
+            raise NotFoundException(f"Dataset Version '{version_id}' not found.")
+
+        if version.status != "draft":
+            raise BadRequestException(
+                f"Cannot finalize assets for version '{version_id}' with status '{version.status}'. Only draft versions allow asset imports."
+            )
+
+        dataset = await self.repo.get_dataset_by_id(version.dataset_id)
+        if not dataset:
+            raise NotFoundException(f"Parent dataset '{version.dataset_id}' not found.")
+
+        project_id = dataset.project_id
+        bucket = s3_settings.default_bucket
+        imported_assets: list[AssetEntity] = []
+
+        for item in payload.items:
+            clean_key = item.storage_key.lstrip("/")
+            uri = f"/{bucket}/{clean_key}"
+
+            # Spec Rule v1: NO content deduplication in v1! Each import creates a unique AssetId.
+            new_asset = AssetEntity(
+                id=item.asset_id,
+                project_id=project_id,
+                filename=item.filename,
+                uri=uri,
+                mime_type=item.mime_type,
+                file_size=item.file_size,
+                sha256=item.sha256,
+                metadata=item.metadata,
+                data_format=item.data_format,
+                status="READY",
+                provenance=item.provenance,
+                created_by=created_by,
+            )
+            saved_asset = await self.repo.save_asset(new_asset)
+            await self.repo.add_asset_to_version(version_id, saved_asset.id)
+            imported_assets.append(saved_asset)
+
+        return FinalizeAssetImportResponseDTO(
+            imported_assets=[
+                AssetResponseDTO.model_validate(a) for a in imported_assets
+            ]
         )

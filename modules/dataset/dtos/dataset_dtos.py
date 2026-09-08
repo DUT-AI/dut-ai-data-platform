@@ -91,3 +91,44 @@ class AssetDownloadUrlResponseDTO(BaseModel):
     filename: str
     download_url: str
     expires_in_seconds: int
+
+
+class PrepareUploadItemDTO(BaseModel):
+    filename: str = Field(..., min_length=1, max_length=255)
+    content_type: str | None = None
+
+
+class PrepareUploadRequestDTO(BaseModel):
+    files: list[PrepareUploadItemDTO] = Field(..., min_length=1)
+
+
+class PresignedUploadUrlItemDTO(BaseModel):
+    filename: str
+    asset_id: str
+    storage_key: str
+    upload_url: str
+    expires_in_seconds: int
+
+
+class PrepareUploadResponseDTO(BaseModel):
+    items: list[PresignedUploadUrlItemDTO]
+
+
+class FinalizeAssetImportItemDTO(BaseModel):
+    asset_id: str
+    filename: str
+    storage_key: str
+    sha256: str
+    file_size: int = Field(..., ge=0)
+    mime_type: str
+    metadata: dict[str, Any] | None = None
+    data_format: str | None = None
+    provenance: dict[str, Any] | None = None
+
+
+class FinalizeAssetImportRequestDTO(BaseModel):
+    items: list[FinalizeAssetImportItemDTO] = Field(..., min_length=1)
+
+
+class FinalizeAssetImportResponseDTO(BaseModel):
+    imported_assets: list[AssetResponseDTO]

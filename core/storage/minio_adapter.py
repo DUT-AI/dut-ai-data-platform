@@ -1,5 +1,5 @@
 import asyncio
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
 import boto3
 from botocore.client import Config
@@ -65,6 +65,24 @@ class MinIOStorageAdapter(IStorageProvider):
             lambda: self.client.generate_presigned_url(
                 ClientMethod="get_object",
                 Params={"Bucket": bucket, "Key": clean_key},
+                ExpiresIn=expires,
+            ),
+        )
+        return str(url)
+
+    async def get_presigned_upload_url(
+        self, bucket: str, key: str, content_type: str | None = None, expires: int = 3600
+    ) -> str:
+        clean_key = key.lstrip("/")
+        params: dict[str, Any] = {"Bucket": bucket, "Key": clean_key}
+        if content_type:
+            params["ContentType"] = content_type
+        loop = asyncio.get_running_loop()
+        url = await loop.run_in_executor(
+            None,
+            lambda: self.client.generate_presigned_url(
+                ClientMethod="put_object",
+                Params=params,
                 ExpiresIn=expires,
             ),
         )

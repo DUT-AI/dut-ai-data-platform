@@ -11,16 +11,22 @@ from modules.dataset.dtos.dataset_dtos import (
     DatasetResponseDTO,
     DatasetVersionCreateDTO,
     DatasetVersionResponseDTO,
+    FinalizeAssetImportRequestDTO,
+    FinalizeAssetImportResponseDTO,
+    PrepareUploadRequestDTO,
+    PrepareUploadResponseDTO,
 )
 from modules.dataset.use_cases import (
     CreateDatasetUseCase,
     CreateDatasetVersionUseCase,
+    FinalizeAssetImportUseCase,
     GetAssetDetailUseCase,
     GetAssetDownloadUrlUseCase,
     GetDatasetDetailUseCase,
     GetDatasetVersionDetailUseCase,
     ListProjectDatasetsUseCase,
     ListVersionAssetsUseCase,
+    PrepareAssetUploadUseCase,
     PublishDatasetVersionUseCase,
     RemoveVersionAssetUseCase,
     UploadVersionAssetsUseCase,
@@ -124,10 +130,45 @@ async def list_version_assets(
 
 
 @router.post(
+    "/api/v1/dataset-versions/{version_id}/prepare-upload",
+    response_model=PrepareUploadResponseDTO,
+    status_code=status.HTTP_200_OK,
+    summary="Get presigned S3 upload URLs for assets (Spec v1)",
+)
+@inject
+async def prepare_asset_upload(
+    version_id: str,
+    payload: PrepareUploadRequestDTO,
+    current_user: CurrentUser,
+    use_case: FromDishka[PrepareAssetUploadUseCase],
+):
+    return await use_case.execute(version_id, payload)
+
+
+@router.post(
+    "/api/v1/dataset-versions/{version_id}/finalize-import",
+    response_model=FinalizeAssetImportResponseDTO,
+    status_code=status.HTTP_201_CREATED,
+    summary="Finalize asset import after S3 presigned upload (Spec v1)",
+)
+@inject
+async def finalize_asset_import(
+    version_id: str,
+    payload: FinalizeAssetImportRequestDTO,
+    current_user: CurrentUser,
+    use_case: FromDishka[FinalizeAssetImportUseCase],
+):
+    return await use_case.execute(
+        version_id, payload, created_by=str(current_user.id)
+    )
+
+
+@router.post(
     "/api/v1/dataset-versions/{version_id}/assets",
     response_model=BatchUploadResultDTO,
     status_code=status.HTTP_201_CREATED,
-    summary="Batch upload assets to a draft dataset version",
+    summary="Batch upload assets directly (Deprecated - Use prepare-upload & finalize-import)",
+    deprecated=True,
 )
 @inject
 async def upload_version_assets(

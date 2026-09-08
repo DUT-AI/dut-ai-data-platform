@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from modules.dataset.domain.interfaces import IDatasetRepository
 from modules.dataset.repository.dataset_repository import SqlDatasetRepository
 from modules.dataset.use_cases import (
+    ArchiveDatasetUseCase,
     CreateDatasetUseCase,
     CreateDatasetVersionUseCase,
     FinalizeAssetImportUseCase,
@@ -17,6 +18,7 @@ from modules.dataset.use_cases import (
     PrepareAssetUploadUseCase,
     PublishDatasetVersionUseCase,
     RemoveVersionAssetUseCase,
+    RetireAssetUseCase,
     UploadVersionAssetsUseCase,
 )
 
@@ -31,6 +33,7 @@ class DatasetProvider(Provider):
         return SqlDatasetRepository(session)
 
     create_dataset_uc = provide(CreateDatasetUseCase)
+    archive_dataset_uc = provide(ArchiveDatasetUseCase)
     list_project_datasets_uc = provide(ListProjectDatasetsUseCase)
     get_dataset_detail_uc = provide(GetDatasetDetailUseCase)
     create_dataset_version_uc = provide(CreateDatasetVersionUseCase)
@@ -40,6 +43,7 @@ class DatasetProvider(Provider):
     prepare_asset_upload_uc = provide(PrepareAssetUploadUseCase)
     finalize_asset_import_uc = provide(FinalizeAssetImportUseCase)
     remove_version_asset_uc = provide(RemoveVersionAssetUseCase)
+    retire_asset_uc = provide(RetireAssetUseCase)
     list_version_assets_uc = provide(ListVersionAssetsUseCase)
     list_version_assets_cursor_uc = provide(ListVersionAssetsCursorUseCase)
     get_asset_detail_uc = provide(GetAssetDetailUseCase)

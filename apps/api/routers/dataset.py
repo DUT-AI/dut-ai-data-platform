@@ -18,6 +18,7 @@ from modules.dataset.dtos.dataset_dtos import (
     PrepareUploadResponseDTO,
 )
 from modules.dataset.use_cases import (
+    ArchiveDatasetUseCase,
     CreateDatasetUseCase,
     CreateDatasetVersionUseCase,
     FinalizeAssetImportUseCase,
@@ -31,6 +32,7 @@ from modules.dataset.use_cases import (
     PrepareAssetUploadUseCase,
     PublishDatasetVersionUseCase,
     RemoveVersionAssetUseCase,
+    RetireAssetUseCase,
     UploadVersionAssetsUseCase,
 )
 
@@ -260,3 +262,31 @@ async def get_asset_download_url(
     expires_in_seconds: int = Query(3600, ge=60, le=86400),
 ):
     return await use_case.execute(asset_id, expires_in_seconds=expires_in_seconds)
+
+
+@router.put(
+    "/api/v1/datasets/{dataset_id}/archive",
+    response_model=DatasetResponseDTO,
+    summary="Archive a dataset (prevents creating new versions)",
+)
+@inject
+async def archive_dataset(
+    dataset_id: str,
+    current_user: CurrentUser,
+    use_case: FromDishka[ArchiveDatasetUseCase],
+):
+    return await use_case.execute(dataset_id)
+
+
+@router.put(
+    "/api/v1/assets/{asset_id}/retire",
+    response_model=AssetResponseDTO,
+    summary="Retire an asset (if no protected references exist)",
+)
+@inject
+async def retire_asset(
+    asset_id: str,
+    current_user: CurrentUser,
+    use_case: FromDishka[RetireAssetUseCase],
+):
+    return await use_case.execute(asset_id)

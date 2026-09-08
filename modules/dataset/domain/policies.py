@@ -56,3 +56,21 @@ class DatasetVersionPolicy:
         )
 
         return hashlib.sha256(canonical_content.encode("utf-8")).hexdigest()
+
+
+class AssetDeletionPolicy:
+    """Domain Policy enforcing rules on Asset lifecycle and deletion safety."""
+
+    @staticmethod
+    def ensure_can_retire(asset: AssetEntity, version_link_count: int) -> None:
+        """Validate if an asset can transition to RETIRED state.
+
+        An asset cannot be retired if it still has protected references in dataset versions.
+        """
+        if asset.status == "DELETED":
+            raise BadRequestException(f"Cannot retire asset '{asset.id}' with status 'DELETED'.")
+
+        if version_link_count > 0:
+            raise BadRequestException(
+                f"Cannot retire asset '{asset.id}'. It is still linked to {version_link_count} dataset version(s)."
+            )

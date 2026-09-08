@@ -13,7 +13,7 @@ from modules.dataset.domain.entities import (
     DatasetVersionEntity,
 )
 from modules.dataset.domain.interfaces import IDatasetRepository
-from modules.dataset.domain.policies import DatasetVersionPolicy
+from modules.dataset.domain.policies import AssetDeletionPolicy, DatasetVersionPolicy
 from modules.dataset.dtos.dataset_dtos import (
     AssetDownloadUrlResponseDTO,
     AssetResponseDTO,
@@ -92,6 +92,11 @@ class CreateDatasetVersionUseCase:
         if not dataset:
             raise NotFoundException(f"Dataset '{dataset_id}' not found.")
 
+        if dataset.status != "active":
+            raise BadRequestException(
+                f"Cannot create version for dataset '{dataset_id}' with status '{dataset.status}'."
+            )
+
         new_version = DatasetVersionEntity(
             dataset_id=dataset_id,
             version=payload.version,
@@ -99,6 +104,22 @@ class CreateDatasetVersionUseCase:
         )
         saved = await self.repo.save_version(new_version)
         return DatasetVersionResponseDTO.model_validate(saved)
+
+
+class ArchiveDatasetUseCase:
+    def __init__(self, repo: IDatasetRepository) -> None:
+        self.repo = repo
+
+    async def execute(self, dataset_id: str) -> DatasetResponseDTO:
+        dataset = await self.repo.get_dataset_by_id(dataset_id)
+        if not dataset:
+            raise NotFoundException(f"Dataset '{dataset_id}' not found.")
+
+        if dataset.status != "archived":
+            dataset.status = "archived"
+            dataset = await self.repo.save_dataset(dataset)
+
+        return DatasetResponseDTO.model_validate(dataset)
 
 
 class GetDatasetVersionDetailUseCase:
@@ -454,3 +475,25 @@ class FinalizeAssetImportUseCase:
                 AssetResponseDTO.model_validate(a) for a in imported_assets
             ]
         )
+
+
+class RetireAssetUseCase:
+    def __init__(self, repo: IDatasetRepository) -> None:
+        self.repo = repo
+
+    async def execute(self, asset_id: str) -> AssetResponseDTO:
+        asset = await self.repo.get_asset_by_id(asset_id)
+        if not asset:
+            raise NotFoundException(f"Asset '{asset_id}' not found.")
+
+        if asset.status == "RETIRED":
+            return AssetResponseDTO.model_validate(asset)
+
+        link_count = await self.repo.count_active_version_links_by_asset(asset_id)
+        AssetDeletionPolicy.ensure_can_retire(asset, link_count)
+
+        asset.status = "RETIRED"
+        asset.retired_at = now_utc()
+        saved_asset = await self.repo.save_asset(asset)
+
+        return AssetResponseDTO.model_validate(saved_asset)

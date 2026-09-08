@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from sqlalchemy import delete, inspect, select
+from sqlalchemy import delete, func, inspect, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -419,3 +419,10 @@ class SqlDatasetRepository(IDatasetRepository):
         res = await self.session.execute(stmt)
         model = res.scalar_one_or_none()
         return _map_version_asset_to_entity(model) if model else None
+
+    async def count_active_version_links_by_asset(self, asset_id: str) -> int:
+        stmt = select(func.count(DatasetVersionAssetModel.id)).where(
+            DatasetVersionAssetModel.asset_id == asset_id
+        )
+        res = await self.session.execute(stmt)
+        return int(res.scalar() or 0)

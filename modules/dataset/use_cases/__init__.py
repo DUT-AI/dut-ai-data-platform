@@ -1,4 +1,5 @@
 from modules.dataset.use_cases.dataset_use_cases import (
+    ArchiveDatasetUseCase,
     CreateDatasetUseCase,
     CreateDatasetVersionUseCase,
     FinalizeAssetImportUseCase,
@@ -12,10 +13,12 @@ from modules.dataset.use_cases.dataset_use_cases import (
     PrepareAssetUploadUseCase,
     PublishDatasetVersionUseCase,
     RemoveVersionAssetUseCase,
+    RetireAssetUseCase,
     UploadVersionAssetsUseCase,
 )
 
 __all__ = [
+    "ArchiveDatasetUseCase",
     "CreateDatasetUseCase",
     "CreateDatasetVersionUseCase",
     "FinalizeAssetImportUseCase",
@@ -29,5 +32,6 @@ __all__ = [
     "PrepareAssetUploadUseCase",
     "PublishDatasetVersionUseCase",
     "RemoveVersionAssetUseCase",
+    "RetireAssetUseCase",
     "UploadVersionAssetsUseCase",
 ]

@@ -13,10 +13,12 @@ from modules.dataset.domain.entities import (
     DatasetVersionEntity,
 )
 from modules.dataset.domain.interfaces import IDatasetRepository
+from modules.dataset.domain.policies import DatasetVersionPolicy
 from modules.dataset.dtos.dataset_dtos import (
     AssetDownloadUrlResponseDTO,
     AssetResponseDTO,
     BatchUploadResultDTO,
+    CursorPageAssetResponseDTO,
     DatasetCreateDTO,
     DatasetResponseDTO,
     DatasetVersionCreateDTO,
@@ -118,13 +120,37 @@ class PublishDatasetVersionUseCase:
         version = await self.repo.get_version_by_id(version_id)
         if not version:
             raise NotFoundException(f"Dataset version '{version_id}' not found.")
-        if version.status == "published":
-            raise BadRequestException("Version is already published.")
+
+        dataset = await self.repo.get_dataset_by_id(version.dataset_id)
+        if not dataset:
+            raise NotFoundException(f"Parent dataset '{version.dataset_id}' not found.")
+
+        # Enforce domain policy preconditions
+        DatasetVersionPolicy.ensure_can_publish(dataset, version)
+
+        # Retrieve all member assets to calculate canonical manifest hash
+        assets = await self.repo.get_all_assets_by_version(version_id)
+
+        manifest_hash = DatasetVersionPolicy.compute_manifest_hash(
+            version, assets, version.version_config
+        )
 
         version.status = "published"
         version.published_at = now_utc()
-        saved = await self.repo.save_version(version)
-        return DatasetVersionResponseDTO.model_validate(saved)
+        version.manifest_hash = manifest_hash
+        version.asset_count = len(assets)
+
+        saved_ver = await self.repo.save_version(version)
+
+        # Update dataset latest published version number
+        current_num = dataset.latest_published_version_number or 0
+        dataset.latest_published_version_number = max(
+            current_num + 1, version.version_number or 1
+        )
+        await self.repo.save_dataset(dataset)
+
+        saved_ver.assets = list(assets)
+        return DatasetVersionResponseDTO.model_validate(saved_ver)
 
 
 class UploadVersionAssetsUseCase:
@@ -247,6 +273,26 @@ class ListVersionAssetsUseCase:
             version_id, limit=limit, offset=offset
         )
         return [AssetResponseDTO.model_validate(a) for a in assets]
+
+
+class ListVersionAssetsCursorUseCase:
+    def __init__(self, repo: IDatasetRepository) -> None:
+        self.repo = repo
+
+    async def execute(
+        self, version_id: str, limit: int = 100, cursor_id: str | None = None
+    ) -> CursorPageAssetResponseDTO:
+        version = await self.repo.get_version_by_id(version_id)
+        if not version:
+            raise NotFoundException(f"Dataset Version '{version_id}' not found.")
+
+        assets, next_cursor = await self.repo.list_assets_by_version_cursor(
+            version_id, limit=limit, cursor_id=cursor_id
+        )
+        return CursorPageAssetResponseDTO(
+            items=[AssetResponseDTO.model_validate(a) for a in assets],
+            next_cursor=next_cursor,
+        )
 
 
 class GetAssetDetailUseCase:

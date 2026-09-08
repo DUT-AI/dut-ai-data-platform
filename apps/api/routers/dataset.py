@@ -7,6 +7,7 @@ from modules.dataset.dtos.dataset_dtos import (
     AssetDownloadUrlResponseDTO,
     AssetResponseDTO,
     BatchUploadResultDTO,
+    CursorPageAssetResponseDTO,
     DatasetCreateDTO,
     DatasetResponseDTO,
     DatasetVersionCreateDTO,
@@ -25,6 +26,7 @@ from modules.dataset.use_cases import (
     GetDatasetDetailUseCase,
     GetDatasetVersionDetailUseCase,
     ListProjectDatasetsUseCase,
+    ListVersionAssetsCursorUseCase,
     ListVersionAssetsUseCase,
     PrepareAssetUploadUseCase,
     PublishDatasetVersionUseCase,
@@ -116,7 +118,7 @@ async def get_dataset_version_detail(
 @router.get(
     "/api/v1/dataset-versions/{version_id}/assets",
     response_model=list[AssetResponseDTO],
-    summary="List all assets belonging to a dataset version",
+    summary="List all assets belonging to a dataset version (Offset-based)",
 )
 @inject
 async def list_version_assets(
@@ -127,6 +129,22 @@ async def list_version_assets(
     offset: int = Query(0, ge=0),
 ):
     return await use_case.execute(version_id, limit=limit, offset=offset)
+
+
+@router.get(
+    "/api/v1/dataset-versions/{version_id}/assets/cursor",
+    response_model=CursorPageAssetResponseDTO,
+    summary="List assets belonging to a dataset version using Cursor Pagination (Spec v1)",
+)
+@inject
+async def list_version_assets_cursor(
+    version_id: str,
+    current_user: CurrentUser,
+    use_case: FromDishka[ListVersionAssetsCursorUseCase],
+    limit: int = Query(100, ge=1, le=500),
+    cursor: str | None = Query(None, description="Last Asset ID for next page"),
+):
+    return await use_case.execute(version_id, limit=limit, cursor_id=cursor)
 
 
 @router.post(

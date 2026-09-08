@@ -366,6 +366,49 @@ class SqlDatasetRepository(IDatasetRepository):
         models = res.scalars().all()
         return [_map_asset_to_entity(m) for m in models]
 
+    async def list_assets_by_version_cursor(
+        self, version_id: str, limit: int = 100, cursor_id: str | None = None
+    ) -> tuple[Sequence[AssetEntity], str | None]:
+        stmt = (
+            select(AssetModel)
+            .join(
+                DatasetVersionAssetModel,
+                DatasetVersionAssetModel.asset_id == AssetModel.id,
+            )
+            .where(DatasetVersionAssetModel.dataset_version_id == version_id)
+        )
+
+        if cursor_id:
+            stmt = stmt.where(AssetModel.id > cursor_id)
+
+        stmt = stmt.order_by(AssetModel.id.asc()).limit(limit + 1)
+
+        res = await self.session.execute(stmt)
+        models = list(res.scalars().all())
+
+        next_cursor: str | None = None
+        if len(models) > limit:
+            next_cursor = models[limit - 1].id
+            models = models[:limit]
+
+        return [_map_asset_to_entity(m) for m in models], next_cursor
+
+    async def get_all_assets_by_version(
+        self, version_id: str
+    ) -> Sequence[AssetEntity]:
+        stmt = (
+            select(AssetModel)
+            .join(
+                DatasetVersionAssetModel,
+                DatasetVersionAssetModel.asset_id == AssetModel.id,
+            )
+            .where(DatasetVersionAssetModel.dataset_version_id == version_id)
+            .order_by(AssetModel.id.asc())
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        return [_map_asset_to_entity(m) for m in models]
+
     async def get_version_asset_link(
         self, version_id: str, asset_id: str
     ) -> DatasetVersionAssetEntity | None:

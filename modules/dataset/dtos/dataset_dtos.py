@@ -132,3 +132,8 @@ class FinalizeAssetImportRequestDTO(BaseModel):
 
 class FinalizeAssetImportResponseDTO(BaseModel):
     imported_assets: list[AssetResponseDTO]
+
+
+class CursorPageAssetResponseDTO(BaseModel):
+    items: list[AssetResponseDTO]
+    next_cursor: str | None = None

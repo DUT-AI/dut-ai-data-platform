@@ -1,83 +1,96 @@
-from abc import ABC, abstractmethod
 from collections.abc import Sequence
+from typing import Protocol
 
 from modules.ontology.domain.entities import (
-    AttributeEntity,
     CategoryEntity,
+    InputDefinitionEntity,
     OntologyEntity,
+    OntologyInputEntity,
+    OntologyOutputEntity,
     OntologyVersionEntity,
+    OntologyVersionInputEntity,
+    OntologyVersionOutputEntity,
+    OutputDefinitionEntity,
 )
 
 
-class IOntologyRepository(ABC):
-    @abstractmethod
-    async def save_ontology(self, ontology: OntologyEntity) -> OntologyEntity:
-        pass
+class IOntologyRepository(Protocol):
+    async def add(self, entity: OntologyEntity) -> OntologyEntity: ...
+    async def get(self, entity_id: str) -> OntologyEntity | None: ...
+    async def list_by_project(self, project_id: str) -> Sequence[OntologyEntity]: ...
+    async def update(self, entity: OntologyEntity) -> OntologyEntity: ...
+    async def delete(self, entity_id: str) -> bool: ...
+    async def has_published_version(self, entity_id: str) -> bool: ...
+    async def get_version_by_id(
+        self, version_id: str
+    ) -> OntologyVersionEntity | None: ...
 
-    @abstractmethod
-    async def get_ontology_by_id(self, ontology_id: str) -> OntologyEntity | None:
-        pass
 
-    @abstractmethod
-    async def list_ontologies_by_project(
-        self, project_id: str
-    ) -> Sequence[OntologyEntity]:
-        pass
+class IInputDefinitionRepository(Protocol):
+    async def add(self, entity: InputDefinitionEntity) -> InputDefinitionEntity: ...
+    async def get(self, entity_id: str) -> InputDefinitionEntity | None: ...
+    async def list(self) -> Sequence[InputDefinitionEntity]: ...
+    async def update(self, entity: InputDefinitionEntity) -> InputDefinitionEntity: ...
+    async def delete(self, entity_id: str) -> bool: ...
+    async def is_used(self, entity_id: str) -> bool: ...
 
-    @abstractmethod
-    async def save_version(
-        self, version: OntologyVersionEntity
-    ) -> OntologyVersionEntity:
-        pass
 
-    @abstractmethod
-    async def get_version_by_id(self, version_id: str) -> OntologyVersionEntity | None:
-        pass
+class IOutputDefinitionRepository(Protocol):
+    async def add(self, entity: OutputDefinitionEntity) -> OutputDefinitionEntity: ...
+    async def get(self, entity_id: str) -> OutputDefinitionEntity | None: ...
+    async def list(self) -> Sequence[OutputDefinitionEntity]: ...
+    async def update(
+        self, entity: OutputDefinitionEntity
+    ) -> OutputDefinitionEntity: ...
+    async def delete(self, entity_id: str) -> bool: ...
+    async def is_used(self, entity_id: str) -> bool: ...
 
-    @abstractmethod
-    async def list_versions_by_ontology(
+
+class IOntologyInputRepository(Protocol):
+    async def add(self, entity: OntologyInputEntity) -> OntologyInputEntity: ...
+    async def get(self, entity_id: str) -> OntologyInputEntity | None: ...
+    async def list_by_ontology(
         self, ontology_id: str
-    ) -> Sequence[OntologyVersionEntity]:
-        pass
+    ) -> Sequence[OntologyInputEntity]: ...
+    async def update(self, entity: OntologyInputEntity) -> OntologyInputEntity: ...
+    async def delete(self, entity_id: str) -> bool: ...
+    async def is_locked(self, entity_id: str) -> bool: ...
 
-    @abstractmethod
-    async def save_category(self, category: CategoryEntity) -> CategoryEntity:
-        pass
 
-    @abstractmethod
-    async def get_category_by_id(self, category_id: str) -> CategoryEntity | None:
-        pass
+class IOntologyOutputRepository(Protocol):
+    async def add(self, entity: OntologyOutputEntity) -> OntologyOutputEntity: ...
+    async def get(self, entity_id: str) -> OntologyOutputEntity | None: ...
+    async def list_by_ontology(
+        self, ontology_id: str
+    ) -> Sequence[OntologyOutputEntity]: ...
+    async def update(self, entity: OntologyOutputEntity) -> OntologyOutputEntity: ...
+    async def delete(self, entity_id: str) -> bool: ...
+    async def is_locked(self, entity_id: str) -> bool: ...
 
-    @abstractmethod
-    async def get_category_by_name(
-        self, version_id: str, name: str
-    ) -> CategoryEntity | None:
-        pass
 
-    @abstractmethod
-    async def delete_category(self, category_id: str) -> bool:
-        pass
+class ICategoryRepository(Protocol):
+    async def add(self, entity: CategoryEntity) -> CategoryEntity: ...
+    async def get(self, entity_id: str) -> CategoryEntity | None: ...
+    async def list_by_ontology(self, ontology_id: str) -> Sequence[CategoryEntity]: ...
+    async def get_by_key(self, ontology_id: str, key: str) -> CategoryEntity | None: ...
+    async def update(self, entity: CategoryEntity) -> CategoryEntity: ...
+    async def delete(self, entity_id: str) -> bool: ...
+    async def is_locked(self, entity_id: str) -> bool: ...
 
-    @abstractmethod
-    async def save_attribute(self, attribute: AttributeEntity) -> AttributeEntity:
-        pass
 
-    @abstractmethod
-    async def get_attribute_by_id(self, attribute_id: str) -> AttributeEntity | None:
-        pass
-
-    @abstractmethod
-    async def get_attribute_by_name(
-        self, category_id: str, name: str
-    ) -> AttributeEntity | None:
-        pass
-
-    @abstractmethod
-    async def delete_attribute(self, attribute_id: str) -> bool:
-        pass
-
-    @abstractmethod
-    async def clone_version(
-        self, source_version_id: str, new_version_name: str
-    ) -> OntologyVersionEntity:
-        pass
+class IOntologyVersionRepository(Protocol):
+    async def add(self, entity: OntologyVersionEntity) -> OntologyVersionEntity: ...
+    async def get(self, entity_id: str) -> OntologyVersionEntity | None: ...
+    async def list_by_ontology(
+        self, ontology_id: str
+    ) -> Sequence[OntologyVersionEntity]: ...
+    async def update(self, entity: OntologyVersionEntity) -> OntologyVersionEntity: ...
+    async def replace_composition(
+        self,
+        version_id: str,
+        inputs: Sequence[OntologyVersionInputEntity],
+        outputs: Sequence[OntologyVersionOutputEntity],
+    ) -> OntologyVersionEntity: ...
+    async def delete(self, entity_id: str) -> bool: ...
+    async def next_version_no(self, ontology_id: str) -> int: ...
+    async def get_draft(self, ontology_id: str) -> OntologyVersionEntity | None: ...

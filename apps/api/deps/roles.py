@@ -9,6 +9,26 @@ from modules.identity.domain.entities import AuthUser
 from modules.project.domain.interfaces import IProjectRepository
 
 
+def require_system_role(*allowed_roles: str) -> Callable[..., Any]:
+    """Require at least one platform-level role from the JWT claims."""
+
+    allowed = {role.lower() for role in allowed_roles}
+
+    async def dependency(
+        current_user: AuthUser = Depends(get_current_user),
+    ) -> str:
+        roles = {role.lower() for role in current_user.role_names}
+        matched = roles & allowed
+        if not matched:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Yêu cầu quyền hệ thống: {', '.join(sorted(allowed))}.",
+            )
+        return min(matched)
+
+    return dependency
+
+
 def require_project_role(*allowed_roles: str) -> Callable[..., Any]:
     """Dependency factory that checks if current user has the required project role."""
 

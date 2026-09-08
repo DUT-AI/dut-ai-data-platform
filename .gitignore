@@ -28,7 +28,9 @@ htmlcov/
 # IDE & Editor
 .idea/
 .vscode/
+/.ask/
 
 # System & OS
 .DS_Store
 *.log
+tmp/

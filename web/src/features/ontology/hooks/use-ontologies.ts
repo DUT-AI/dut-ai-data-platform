@@ -1,194 +1,263 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ontologyApi } from "../api";
-import {
-  AttributeCreatePayload,
-  AttributeUpdatePayload,
-  CategoryCreatePayload,
-  CategoryUpdatePayload,
-  OntologyCreatePayload,
-} from "../types";
+import { createCategoryNodeFromForm, createDraftVersion, createInputNodeFromForm, createOntologyFromForm, createOutputNodeFromForm, exportVersionSchema, loadCategoryNodes, loadInputNodes, loadInputTypeOptions, loadOntologyVersions, loadOntologyWorkspace, loadOutputNodes, loadOutputTypeOptions, loadProjectOntologies, loadVersionWorkspace, publishDraftVersion, removeCategoryNode, removeDraftVersion, removeInputNode, removeOntology, removeOutputNode, renameDraftVersion, saveVersionGraph, updateCategoryNodeFromForm, updateInputNodeFromForm, updateOntologyFromForm, updateOutputNodeFromForm, validateDraftVersion } from "../api";
+import type { CategoryForm, InputDefinition, InputNodeForm, OntologyCompositionPayload, OntologyCreatePayload, OutputDefinition, OutputNodeForm } from "../types";
 
 export const ONTOLOGY_KEYS = {
-  all: ["ontologies"] as const,
-  projectLists: (projectId: string) =>
-    [...ONTOLOGY_KEYS.all, "project", projectId] as const,
-  versionDetail: (versionId: string) =>
-    [...ONTOLOGY_KEYS.all, "version", versionId] as const,
+  project: (projectId: string) => ["ontologies", projectId] as const,
+  detail: (projectId: string, ontologyId: string) =>
+    ["ontology", projectId, ontologyId] as const,
+  definitions: ["ontology-definitions"] as const,
+  nodes: (projectId: string, ontologyId: string) =>
+    ["ontology-nodes", projectId, ontologyId] as const,
+  versions: (projectId: string, ontologyId: string) =>
+    ["ontology-versions", projectId, ontologyId] as const,
+  version: (projectId: string, ontologyId: string, versionId: string) =>
+    ["ontology-version", projectId, ontologyId, versionId] as const,
 };
 
 export function useProjectOntologiesQuery(projectId: string) {
   return useQuery({
-    queryKey: ONTOLOGY_KEYS.projectLists(projectId),
-    queryFn: () => ontologyApi.getProjectOntologies(projectId),
+    queryKey: ONTOLOGY_KEYS.project(projectId),
+    queryFn: () => loadProjectOntologies(projectId),
     enabled: Boolean(projectId),
   });
 }
 
-export function useOntologyVersionQuery(versionId: string) {
-  return useQuery({
-    queryKey: ONTOLOGY_KEYS.versionDetail(versionId),
-    queryFn: () => ontologyApi.getOntologyVersion(versionId),
-    enabled: Boolean(versionId),
-  });
+export function useOntologyWorkspace(
+  projectId: string,
+  ontologyId: string,
+  versionId: string
+) {
+  return {
+    ontology: useQuery({
+      queryKey: ONTOLOGY_KEYS.detail(projectId, ontologyId),
+      queryFn: () => loadOntologyWorkspace(projectId, ontologyId),
+      enabled: Boolean(ontologyId),
+    }),
+    inputDefinitions: useQuery({
+      queryKey: [...ONTOLOGY_KEYS.definitions, "inputs"],
+      queryFn: loadInputTypeOptions,
+    }),
+    outputDefinitions: useQuery({
+      queryKey: [...ONTOLOGY_KEYS.definitions, "outputs"],
+      queryFn: loadOutputTypeOptions,
+    }),
+    inputs: useQuery({
+      queryKey: [...ONTOLOGY_KEYS.nodes(projectId, ontologyId), "inputs"],
+      queryFn: () => loadInputNodes(projectId, ontologyId),
+      enabled: Boolean(ontologyId),
+    }),
+    outputs: useQuery({
+      queryKey: [...ONTOLOGY_KEYS.nodes(projectId, ontologyId), "outputs"],
+      queryFn: () => loadOutputNodes(projectId, ontologyId),
+      enabled: Boolean(ontologyId),
+    }),
+    categories: useQuery({
+      queryKey: [...ONTOLOGY_KEYS.nodes(projectId, ontologyId), "categories"],
+      queryFn: () => loadCategoryNodes(projectId, ontologyId),
+      enabled: Boolean(ontologyId),
+    }),
+    versions: useQuery({
+      queryKey: ONTOLOGY_KEYS.versions(projectId, ontologyId),
+      queryFn: () => loadOntologyVersions(projectId, ontologyId),
+      enabled: Boolean(ontologyId),
+    }),
+    version: useQuery({
+      queryKey: ONTOLOGY_KEYS.version(projectId, ontologyId, versionId),
+      queryFn: () => loadVersionWorkspace(projectId, ontologyId, versionId),
+      enabled: Boolean(versionId),
+    }),
+  };
+}
+
+function useRefresh(
+  projectId: string,
+  ontologyId?: string,
+  versionId?: string
+) {
+  const queryClient = useQueryClient();
+  return async (): Promise<void> => {
+    await queryClient.invalidateQueries({
+      queryKey: ONTOLOGY_KEYS.project(projectId),
+    });
+    if (ontologyId) {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ONTOLOGY_KEYS.detail(projectId, ontologyId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ONTOLOGY_KEYS.nodes(projectId, ontologyId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ONTOLOGY_KEYS.versions(projectId, ontologyId),
+        }),
+      ]);
+    }
+    if (ontologyId && versionId) {
+      await queryClient.invalidateQueries({
+        queryKey: ONTOLOGY_KEYS.version(projectId, ontologyId, versionId),
+      });
+    }
+  };
 }
 
 export function useCreateOntologyMutation(projectId: string) {
-  const queryClient = useQueryClient();
-
+  const refresh = useRefresh(projectId);
   return useMutation({
     mutationFn: (payload: OntologyCreatePayload) =>
-      ontologyApi.createOntology(projectId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ONTOLOGY_KEYS.projectLists(projectId),
-      });
-    },
+      createOntologyFromForm(projectId, payload),
+    onSuccess: refresh,
   });
 }
 
-export function usePublishVersionMutation(
-  versionId: string,
-  projectId: string
+export function useUpdateOntologyMutation(
+  projectId: string,
+  ontologyId: string
 ) {
-  const queryClient = useQueryClient();
-
+  const refresh = useRefresh(projectId, ontologyId);
   return useMutation({
-    mutationFn: () => ontologyApi.publishOntologyVersion(versionId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ONTOLOGY_KEYS.versionDetail(versionId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: ONTOLOGY_KEYS.projectLists(projectId),
-      });
-    },
+    mutationFn: (payload: Partial<OntologyCreatePayload>) =>
+      updateOntologyFromForm(projectId, ontologyId, payload),
+    onSuccess: refresh,
   });
 }
 
-export function useCloneVersionMutation(versionId: string, projectId: string) {
-  const queryClient = useQueryClient();
-
+export function useDeleteOntologyMutation(
+  projectId: string,
+  ontologyId: string
+) {
+  const refresh = useRefresh(projectId, ontologyId);
   return useMutation({
-    mutationFn: (newVersion: string) =>
-      ontologyApi.cloneOntologyVersion(versionId, newVersion),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ONTOLOGY_KEYS.projectLists(projectId),
-      });
-    },
+    mutationFn: () => removeOntology(projectId, ontologyId),
+    onSuccess: refresh,
   });
 }
 
-export function useCreateCategoryMutation(versionId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: CategoryCreatePayload) =>
-      ontologyApi.createCategory(versionId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ONTOLOGY_KEYS.versionDetail(versionId),
-      });
-    },
-  });
+export function useInputMutations(projectId: string, ontologyId: string) {
+  const refresh = useRefresh(projectId, ontologyId);
+  return {
+    create: useMutation({
+      mutationFn: ({
+        form,
+        definition,
+      }: {
+        form: InputNodeForm;
+        definition: InputDefinition;
+      }) => createInputNodeFromForm(projectId, ontologyId, form, definition),
+      onSuccess: refresh,
+    }),
+    update: useMutation({
+      mutationFn: ({
+        id,
+        form,
+        definition,
+      }: {
+        id: string;
+        form: InputNodeForm;
+        definition: InputDefinition;
+      }) =>
+        updateInputNodeFromForm(projectId, ontologyId, id, form, definition),
+      onSuccess: refresh,
+    }),
+    remove: useMutation({
+      mutationFn: (id: string) => removeInputNode(projectId, ontologyId, id),
+      onSuccess: refresh,
+    }),
+  };
 }
 
-export function useUpdateCategoryMutation(versionId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      categoryId,
-      payload,
-    }: {
-      categoryId: string;
-      payload: CategoryUpdatePayload;
-    }) => ontologyApi.updateCategory(categoryId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ONTOLOGY_KEYS.versionDetail(versionId),
-      });
-    },
-  });
+export function useOutputMutations(projectId: string, ontologyId: string) {
+  const refresh = useRefresh(projectId, ontologyId);
+  return {
+    create: useMutation({
+      mutationFn: ({
+        form,
+        definition,
+      }: {
+        form: OutputNodeForm;
+        definition: OutputDefinition;
+      }) => createOutputNodeFromForm(projectId, ontologyId, form, definition),
+      onSuccess: refresh,
+    }),
+    update: useMutation({
+      mutationFn: ({
+        id,
+        form,
+        definition,
+      }: {
+        id: string;
+        form: OutputNodeForm;
+        definition: OutputDefinition;
+      }) =>
+        updateOutputNodeFromForm(projectId, ontologyId, id, form, definition),
+      onSuccess: refresh,
+    }),
+    remove: useMutation({
+      mutationFn: (id: string) => removeOutputNode(projectId, ontologyId, id),
+      onSuccess: refresh,
+    }),
+  };
 }
 
-export function useDeleteCategoryMutation(versionId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (categoryId: string) => ontologyApi.deleteCategory(categoryId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ONTOLOGY_KEYS.versionDetail(versionId),
-      });
-    },
-  });
+export function useCategoryMutations(projectId: string, ontologyId: string) {
+  const refresh = useRefresh(projectId, ontologyId);
+  return {
+    create: useMutation({
+      mutationFn: (form: CategoryForm) =>
+        createCategoryNodeFromForm(projectId, ontologyId, form),
+      onSuccess: refresh,
+    }),
+    update: useMutation({
+      mutationFn: ({ id, form }: { id: string; form: CategoryForm }) =>
+        updateCategoryNodeFromForm(projectId, ontologyId, id, form),
+      onSuccess: refresh,
+    }),
+    remove: useMutation({
+      mutationFn: (id: string) => removeCategoryNode(projectId, ontologyId, id),
+      onSuccess: refresh,
+    }),
+  };
 }
 
-export function useCreateAttributeMutation(versionId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      categoryId,
-      payload,
-    }: {
-      categoryId: string;
-      payload: AttributeCreatePayload;
-    }) => ontologyApi.createAttribute(categoryId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ONTOLOGY_KEYS.versionDetail(versionId),
-      });
-    },
-  });
-}
-
-export function useUpdateAttributeMutation(versionId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      attributeId,
-      payload,
-    }: {
-      attributeId: string;
-      payload: AttributeUpdatePayload;
-    }) => ontologyApi.updateAttribute(attributeId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ONTOLOGY_KEYS.versionDetail(versionId),
-      });
-    },
-  });
-}
-
-export function useDeleteAttributeMutation(versionId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (attributeId: string) =>
-      ontologyApi.deleteAttribute(attributeId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ONTOLOGY_KEYS.versionDetail(versionId),
-      });
-    },
-  });
-}
-
-export function useUpdateOntologyVersionMutation(versionId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: { raw_label_config: string | null }) =>
-      ontologyApi.updateOntologyVersion(versionId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ONTOLOGY_KEYS.versionDetail(versionId),
-      });
-    },
-  });
+export function useVersionMutations(
+  projectId: string,
+  ontologyId: string,
+  versionId: string
+) {
+  const refresh = useRefresh(projectId, ontologyId, versionId);
+  return {
+    create: useMutation({
+      mutationFn: (payload: {
+        name?: string;
+        based_on_version_id?: string | null;
+      }) => createDraftVersion(projectId, ontologyId, payload),
+      onSuccess: refresh,
+    }),
+    update: useMutation({
+      mutationFn: (name: string) =>
+        renameDraftVersion(projectId, ontologyId, versionId, name),
+      onSuccess: refresh,
+    }),
+    remove: useMutation({
+      mutationFn: () => removeDraftVersion(projectId, ontologyId, versionId),
+      onSuccess: refresh,
+    }),
+    compose: useMutation({
+      mutationFn: (payload: OntologyCompositionPayload) =>
+        saveVersionGraph(projectId, ontologyId, versionId, payload),
+      onSuccess: refresh,
+    }),
+    validate: useMutation({
+      mutationFn: () => validateDraftVersion(projectId, ontologyId, versionId),
+    }),
+    publish: useMutation({
+      mutationFn: () => publishDraftVersion(projectId, ontologyId, versionId),
+      onSuccess: refresh,
+    }),
+    exportSchema: useMutation({
+      mutationFn: () => exportVersionSchema(projectId, ontologyId, versionId),
+    }),
+  };
 }

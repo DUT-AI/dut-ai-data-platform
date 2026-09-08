@@ -1,13 +1,25 @@
 from modules.ontology.models.ontology import (
-    AttributeModel,
     CategoryModel,
+    InputDefinitionModel,
+    OntologyInputModel,
     OntologyModel,
+    OntologyOutputModel,
+    OntologyVersionInputModel,
     OntologyVersionModel,
+    OntologyVersionOutputCategoryModel,
+    OntologyVersionOutputModel,
+    OutputDefinitionModel,
 )
 
 __all__ = [
-    "AttributeModel",
     "CategoryModel",
+    "InputDefinitionModel",
+    "OntologyInputModel",
     "OntologyModel",
+    "OntologyOutputModel",
+    "OntologyVersionInputModel",
     "OntologyVersionModel",
+    "OntologyVersionOutputCategoryModel",
+    "OntologyVersionOutputModel",
+    "OutputDefinitionModel",
 ]

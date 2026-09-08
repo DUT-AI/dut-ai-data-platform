@@ -36,6 +36,7 @@ class CreateDatasetUseCase:
             project_id=project_id,
             name=payload.name,
             description=payload.description,
+            tags=payload.tags or [],
         )
         saved = await self.repo.save_dataset(dataset)
 
@@ -43,6 +44,8 @@ class CreateDatasetUseCase:
         initial_version = DatasetVersionEntity(
             dataset_id=saved.id,
             version="v1.0.0",
+            version_number=1,
+            version_label="v1.0.0",
             status="draft",
         )
         saved_ver = await self.repo.save_version(initial_version)

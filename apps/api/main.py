@@ -5,7 +5,7 @@ from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from apps.api.di import setup_di
-from apps.api.health import check_database, check_minio, check_redis
+from apps.api.health import check_database, check_minio, check_rabbitmq, check_redis
 from apps.api.routers import (
     annotation_router,
     dataset_router,
@@ -75,24 +75,27 @@ async def health_check():
 
 @app.get("/ready", tags=["health"])
 async def readiness_check(response: Response):
-    """Readiness probe checking live status of PostgreSQL, Redis, and MinIO."""
+    """Readiness probe checking live status of PostgreSQL, Redis, RabbitMQ, and MinIO."""
     (
         (db_ok, db_msg),
         (redis_ok, redis_msg),
+        (rabbitmq_ok, rabbitmq_msg),
         (minio_ok, minio_msg),
     ) = await asyncio.gather(
         check_database(),
         check_redis(),
+        check_rabbitmq(),
         check_minio(),
     )
 
     services_status = {
         "database": db_msg,
         "redis": redis_msg,
+        "rabbitmq": rabbitmq_msg,
         "minio": minio_msg,
     }
 
-    all_ready = db_ok and redis_ok and minio_ok
+    all_ready = db_ok and redis_ok and rabbitmq_ok and minio_ok
 
     if not all_ready:
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE

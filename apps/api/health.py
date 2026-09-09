@@ -1,9 +1,10 @@
 import asyncio
 
+import aio_pika
 import redis.asyncio as aioredis
 from sqlalchemy import text
 
-from core.config import redis_settings, s3_settings
+from core.config import rabbitmq_settings, redis_settings, s3_settings
 from core.database.session import AsyncSessionLocal
 from core.storage.minio_adapter import MinIOStorageAdapter
 
@@ -29,6 +30,19 @@ async def check_redis() -> tuple[bool, str]:
         if pong:
             return True, "ok"
         return False, "error: ping failed"
+    except Exception as e:
+        return False, f"error: {e}"
+
+
+async def check_rabbitmq() -> tuple[bool, str]:
+    """Asynchronously test RabbitMQ AMQP connection."""
+    try:
+        connection = await asyncio.wait_for(
+            aio_pika.connect_robust(rabbitmq_settings.rabbitmq_url),
+            timeout=3.0,
+        )
+        await connection.close()
+        return True, "ok"
     except Exception as e:
         return False, f"error: {e}"
 

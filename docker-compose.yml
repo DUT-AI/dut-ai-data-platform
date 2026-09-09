@@ -35,6 +35,27 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: data-platform-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-guest}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - platform-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
   minio:
     image: minio/minio:latest
     container_name: data-platform-minio
@@ -117,6 +138,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
       minio:
         condition: service_healthy
       createbuckets:
@@ -136,6 +159,28 @@ services:
       db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  ai_worker:
+    build:
+      context: .
+      dockerfile: apps/ai_worker/Dockerfile
+    container_name: data-platform-ai-worker
+    restart: always
+    env_file:
+      - ./.env
+    networks:
+      - platform-net
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       minio:
         condition: service_healthy
@@ -160,5 +205,6 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  rabbitmq_data:
   minio_data:
   label_studio_data:

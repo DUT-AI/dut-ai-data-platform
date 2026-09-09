@@ -15,6 +15,8 @@ from modules.dataset.dtos.dataset_dtos import (
     DatasetVersionResponseDTO,
     FinalizeAssetImportRequestDTO,
     FinalizeAssetImportResponseDTO,
+    InheritDatasetVersionRequestDTO,
+    InheritDatasetVersionResponseDTO,
     PrepareUploadRequestDTO,
     PrepareUploadResponseDTO,
 )
@@ -27,6 +29,7 @@ from modules.dataset.use_cases import (
     GetAssetDownloadUrlUseCase,
     GetDatasetDetailUseCase,
     GetDatasetVersionDetailUseCase,
+    InheritDatasetVersionUseCase,
     ListProjectDatasetsUseCase,
     ListVersionAssetsCursorUseCase,
     ListVersionAssetsUseCase,
@@ -132,6 +135,22 @@ async def get_dataset_version_detail(
     use_case: FromDishka[GetDatasetVersionDetailUseCase],
 ):
     return await use_case.execute(version_id)
+
+
+@router.post(
+    "/api/v1/dataset-versions/{version_id}/inherit",
+    response_model=InheritDatasetVersionResponseDTO,
+    status_code=status.HTTP_200_OK,
+    summary="Inherit assets from another version in the same dataset",
+)
+@inject
+async def inherit_dataset_version(
+    version_id: str,
+    payload: InheritDatasetVersionRequestDTO,
+    current_user: CurrentUser,
+    use_case: FromDishka[InheritDatasetVersionUseCase],
+):
+    return await use_case.execute(version_id, payload)
 
 
 @router.get(

@@ -569,4 +569,78 @@ async def test_upload_version_assets_corrupted_image_fails():
     assert "bị hỏng hoặc không đúng định dạng" in str(exc_info.value)
 
 
+@pytest.mark.asyncio
+async def test_inherit_dataset_version_empty_target_success():
+    from modules.dataset.dtos.dataset_dtos import InheritDatasetVersionRequestDTO
+    from modules.dataset.use_cases import InheritDatasetVersionUseCase
+
+    repo = AsyncMock()
+
+    target_ver = MagicMock(id="ver_target", dataset_id="ds_100", status="draft", asset_count=2)
+    source_ver = MagicMock(id="ver_source", dataset_id="ds_100", status="published", asset_count=2)
+
+    repo.get_version_by_id = AsyncMock(side_effect=lambda vid: target_ver if vid == "ver_target" else source_ver)
+
+    ast1 = MagicMock(id="ast_01")
+    ast2 = MagicMock(id="ast_02")
+    repo.get_all_assets_by_version = AsyncMock(side_effect=lambda vid: [ast1, ast2] if vid == "ver_source" else [])
+    repo.add_asset_to_version = AsyncMock()
+
+    use_case = InheritDatasetVersionUseCase(repo=repo)
+    res = await use_case.execute("ver_target", InheritDatasetVersionRequestDTO(source_version_id="ver_source"))
+
+    assert res.added_assets_count == 2
+    assert res.reused_assets_count == 0
+    assert repo.add_asset_to_version.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_inherit_dataset_version_non_empty_target_deduplicates():
+    from modules.dataset.dtos.dataset_dtos import InheritDatasetVersionRequestDTO
+    from modules.dataset.use_cases import InheritDatasetVersionUseCase
+
+    repo = AsyncMock()
+
+    target_ver = MagicMock(id="ver_target", dataset_id="ds_100", status="draft", asset_count=3)
+    source_ver = MagicMock(id="ver_source", dataset_id="ds_100", status="published", asset_count=3)
+
+    repo.get_version_by_id = AsyncMock(side_effect=lambda vid: target_ver if vid == "ver_target" else source_ver)
+
+    ast1 = MagicMock(id="ast_01")
+    ast2 = MagicMock(id="ast_02")
+    ast3 = MagicMock(id="ast_03")
+
+    # Target already has ast1 and ast2
+    repo.get_all_assets_by_version = AsyncMock(
+        side_effect=lambda vid: [ast1, ast2, ast3] if vid == "ver_source" else [ast1, ast2]
+    )
+    repo.add_asset_to_version = AsyncMock()
+
+    use_case = InheritDatasetVersionUseCase(repo=repo)
+    res = await use_case.execute("ver_target", InheritDatasetVersionRequestDTO(source_version_id="ver_source"))
+
+    assert res.added_assets_count == 1
+    assert res.reused_assets_count == 2
+    repo.add_asset_to_version.assert_called_once_with("ver_target", "ast_03")
+
+
+@pytest.mark.asyncio
+async def test_inherit_published_target_version_fails():
+    from modules.dataset.dtos.dataset_dtos import InheritDatasetVersionRequestDTO
+    from modules.dataset.use_cases import InheritDatasetVersionUseCase
+
+    repo = AsyncMock()
+
+    target_ver = MagicMock(id="ver_target", dataset_id="ds_100", status="published")
+    repo.get_version_by_id = AsyncMock(return_value=target_ver)
+
+    use_case = InheritDatasetVersionUseCase(repo=repo)
+
+    with pytest.raises(BadRequestException) as exc:
+        await use_case.execute("ver_target", InheritDatasetVersionRequestDTO(source_version_id="ver_source"))
+
+    assert "Only draft versions allow asset inheritance" in str(exc.value)
+
+
+
 

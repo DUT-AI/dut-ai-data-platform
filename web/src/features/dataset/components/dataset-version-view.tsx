@@ -22,6 +22,7 @@ import {
   useVersionAssetsQuery,
 } from "../hooks";
 import { UploadDropzoneModal } from "./upload-dropzone-modal";
+import { InheritVersionModal } from "./inherit-version-modal";
 import { AssetGalleryGrid } from "./asset-gallery-grid";
 import { AssetListTable } from "./asset-list-table";
 import { AnnotationStatsBar } from "@/features/annotation";
@@ -42,6 +43,7 @@ export function DatasetVersionView({
   );
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isInheritOpen, setIsInheritOpen] = useState(false);
   const [isEditDatasetOpen, setIsEditDatasetOpen] = useState(false);
   const [editName, setEditName] = useState(dataset.name);
   const [editDescription, setEditDescription] = useState(dataset.description || "");
@@ -231,6 +233,15 @@ export function DatasetVersionView({
                 <Button
                   size="sm"
                   variant="outline"
+                  onClick={() => setIsInheritOpen(true)}
+                  className="border-slate-700 text-slate-200 hover:bg-slate-800"
+                >
+                  🔄 Kế thừa phiên bản
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={() => setIsUploadOpen(true)}
                   className="border-slate-700 text-slate-200 hover:bg-slate-800"
                 >
@@ -286,6 +297,19 @@ export function DatasetVersionView({
         versionId={activeVersionId}
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
+      />
+
+      <InheritVersionModal
+        versionId={activeVersionId}
+        currentVersionString={
+          versionDetail?.version ||
+          versions.find((v) => v.id === activeVersionId)?.version ||
+          ""
+        }
+        datasetVersions={versions}
+        isOpen={isInheritOpen}
+        onClose={() => setIsInheritOpen(false)}
+        projectId={projectId}
       />
 
       {/* Edit Dataset Modal */}

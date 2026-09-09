@@ -13,6 +13,7 @@ from modules.dataset.use_cases import (
     GetAssetDownloadUrlUseCase,
     GetDatasetDetailUseCase,
     GetDatasetVersionDetailUseCase,
+    InheritDatasetVersionUseCase,
     ListProjectDatasetsUseCase,
     ListVersionAssetsCursorUseCase,
     ListVersionAssetsUseCase,
@@ -46,6 +47,7 @@ class DatasetProvider(Provider):
     create_dataset_version_uc = provide(CreateDatasetVersionUseCase)
     get_dataset_version_detail_uc = provide(GetDatasetVersionDetailUseCase)
     publish_dataset_version_uc = provide(PublishDatasetVersionUseCase)
+    inherit_dataset_version_uc = provide(InheritDatasetVersionUseCase)
     upload_version_assets_uc = provide(UploadVersionAssetsUseCase)
     prepare_asset_upload_uc = provide(PrepareAssetUploadUseCase)
     finalize_asset_import_uc = provide(FinalizeAssetImportUseCase)

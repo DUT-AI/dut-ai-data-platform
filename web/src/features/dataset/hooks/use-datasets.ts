@@ -165,3 +165,28 @@ export function useAssetDownloadUrlQuery(assetId: string) {
     enabled: Boolean(assetId),
   });
 }
+
+export function useInheritDatasetVersionMutation(
+  versionId: string,
+  projectId?: string
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (sourceVersionId: string) =>
+      datasetApi.inheritDatasetVersion(versionId, sourceVersionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: DATASET_KEYS.versionAssets(versionId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: DATASET_KEYS.versionDetail(versionId),
+      });
+      if (projectId) {
+        queryClient.invalidateQueries({
+          queryKey: DATASET_KEYS.projectLists(projectId),
+        });
+      }
+    },
+  });
+}

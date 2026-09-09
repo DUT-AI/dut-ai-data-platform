@@ -3,7 +3,7 @@ import asyncio
 from loguru import logger
 
 from core.config import redis_settings
-from core.database.session import async_session_maker
+from core.database.session import AsyncSessionLocal
 from core.events.processor import OutboxProcessor
 
 
@@ -21,7 +21,7 @@ async def worker_loop():
 
     while True:
         try:
-            async with async_session_maker() as session:
+            async with AsyncSessionLocal() as session:
                 processed_count = await processor.process_pending_batch(
                     session, limit=50
                 )

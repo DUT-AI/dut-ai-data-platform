@@ -6,4 +6,5 @@ export * from "./components/dataset-version-view";
 export * from "./components/asset-gallery-grid";
 export * from "./components/asset-list-table";
 export * from "./components/upload-dropzone-modal";
+export * from "./components/inherit-version-modal";
 export * from "./components/asset-detail-modal";

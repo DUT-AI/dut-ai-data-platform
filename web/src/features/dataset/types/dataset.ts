@@ -69,3 +69,15 @@ export interface AssetDownloadUrlResponse {
   download_url: string;
   expires_in_seconds: number;
 }
+
+export interface InheritDatasetVersionRequest {
+  source_version_id: string;
+}
+
+export interface InheritDatasetVersionResponse {
+  target_version_id: string;
+  source_version_id: string;
+  added_assets_count: number;
+  reused_assets_count: number;
+  total_assets_count: number;
+}

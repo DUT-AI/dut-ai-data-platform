@@ -143,3 +143,16 @@ class FinalizeAssetImportResponseDTO(BaseModel):
 class CursorPageAssetResponseDTO(BaseModel):
     items: list[AssetResponseDTO]
     next_cursor: str | None = None
+
+
+class InheritDatasetVersionRequestDTO(BaseModel):
+    source_version_id: str = Field(..., min_length=1)
+
+
+class InheritDatasetVersionResponseDTO(BaseModel):
+    target_version_id: str
+    source_version_id: str
+    added_assets_count: int
+    reused_assets_count: int
+    total_assets_count: int
+

@@ -34,18 +34,27 @@ class AssetMetadataExtractor:
 
         fname_lower = filename.lower()
 
-        # 2. Image Metadata Extraction (Pillow)
-        if mime_type.startswith("image/"):
+        # 2. Image Metadata Extraction & Validation (Pillow)
+        if mime_type.startswith("image/") or fname_lower.endswith(
+            (".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff")
+        ):
             try:
                 from PIL import Image
 
+                with Image.open(io.BytesIO(content)) as img:
+                    img.verify()
                 with Image.open(io.BytesIO(content)) as img:
                     metadata["width"] = img.width
                     metadata["height"] = img.height
                     metadata["format"] = img.format
                     metadata["mode"] = img.mode
             except Exception as e:
-                logger.debug(f"Failed to extract image metadata for {filename}: {e}")
+                logger.warning(
+                    f"Corrupted or invalid image file detected ({filename}): {e}"
+                )
+                raise ValueError(
+                    f"Tập tin hình ảnh '{filename}' bị hỏng hoặc không đúng định dạng."
+                ) from e
 
         # 3. Audio Metadata Extraction (WAV / Standard Wave)
         elif mime_type.startswith("audio/"):

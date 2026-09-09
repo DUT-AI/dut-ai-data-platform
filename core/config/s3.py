@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
@@ -16,8 +17,12 @@ class S3Settings(BaseSettings):
     )
 
     minio_endpoint: str = "http://localhost:9000"
-    minio_access_key: str = ""
-    minio_secret_key: str = ""
+    minio_access_key: str = Field(
+        "", validation_alias=AliasChoices("minio_access_key", "minio_root_user")
+    )
+    minio_secret_key: str = Field(
+        "", validation_alias=AliasChoices("minio_secret_key", "minio_root_password")
+    )
     minio_secure: bool = False
     default_bucket: str = "ai-data-platform"
     minio_public_endpoint: str | None = None

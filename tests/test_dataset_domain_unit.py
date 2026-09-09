@@ -548,3 +548,25 @@ async def test_update_dataset_use_case_success():
     repo.save_dataset.assert_called_once()
 
 
+@pytest.mark.asyncio
+async def test_upload_version_assets_corrupted_image_fails():
+    from modules.dataset.use_cases import UploadVersionAssetsUseCase
+
+    repo = AsyncMock()
+    mock_version = MagicMock(status="draft", dataset_id="ds_100")
+    mock_dataset = MagicMock(project_id="proj_001")
+    repo.get_version_by_id = AsyncMock(return_value=mock_version)
+    repo.get_dataset_by_id = AsyncMock(return_value=mock_dataset)
+
+    storage = AsyncMock()
+    use_case = UploadVersionAssetsUseCase(repo=repo, storage_provider=storage)
+
+    corrupted_files = [("corrupted.jpg", b"Invalid image content data", "image/jpeg")]
+
+    with pytest.raises(BadRequestException) as exc_info:
+        await use_case.execute("ver_100", corrupted_files)
+
+    assert "bị hỏng hoặc không đúng định dạng" in str(exc_info.value)
+
+
+

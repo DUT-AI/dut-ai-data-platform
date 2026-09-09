@@ -46,14 +46,48 @@ function UploadDropzoneContent({
     null
   );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [corruptedFileNames, setCorruptedFileNames] = useState<Set<string>>(
+    new Set()
+  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadVersionAssetsMutation(versionId);
 
-  const handleFileSelect = (files: FileList | null) => {
+  const validateImageFile = (file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const isImg =
+        file.type.startsWith("image/") ||
+        /\.(jpg|jpeg|png|gif|webp|bmp|tiff)$/i.test(file.name);
+      if (!isImg) {
+        resolve(true);
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve(true);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(false);
+      };
+      img.src = url;
+    });
+  };
+
+  const handleFileSelect = async (files: FileList | null) => {
     if (!files) return;
     const newFiles = Array.from(files);
     setSelectedFiles((prev) => [...prev, ...newFiles]);
+
+    // Check images in background
+    for (const f of newFiles) {
+      const isValid = await validateImageFile(f);
+      if (!isValid) {
+        setCorruptedFileNames((prev) => new Set(prev).add(f.name));
+      }
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -63,6 +97,14 @@ function UploadDropzoneContent({
   };
 
   const handleRemoveFile = (index: number) => {
+    const fileToRemove = selectedFiles[index];
+    if (fileToRemove) {
+      setCorruptedFileNames((prev) => {
+        const next = new Set(prev);
+        next.delete(fileToRemove.name);
+        return next;
+      });
+    }
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -77,6 +119,13 @@ function UploadDropzoneContent({
   const handleUploadSubmit = () => {
     if (selectedFiles.length === 0) return;
 
+    if (corruptedFileNames.size > 0) {
+      setErrorMsg(
+        `Có ${corruptedFileNames.size} tập tin ảnh bị hỏng (${Array.from(corruptedFileNames).join(", ")}). Vui lòng xóa tệp bị hỏng trước khi tải lên.`
+      );
+      return;
+    }
+
     setErrorMsg(null);
     const formData = new FormData();
     selectedFiles.forEach((file) => {
@@ -87,11 +136,25 @@ function UploadDropzoneContent({
       onSuccess: (res: BatchUploadResult) => {
         setResultReport(res);
         setSelectedFiles([]);
+        setCorruptedFileNames(new Set());
       },
       onError: (err: unknown) => {
-        const msg =
-          (err as { response?: { data?: { detail?: string } } })?.response?.data
-            ?.detail || "Tải tập tin thất bại.";
+        const detail = (
+          err as {
+            response?: {
+              data?: {
+                detail?: string | Array<{ msg: string }>;
+              };
+            };
+          }
+        )?.response?.data?.detail;
+
+        let msg = "Tải tập tin thất bại.";
+        if (typeof detail === "string") {
+          msg = detail;
+        } else if (Array.isArray(detail)) {
+          msg = detail.map((d) => d.msg).join("; ");
+        }
         setErrorMsg(msg);
       },
     });
@@ -198,27 +261,39 @@ function UploadDropzoneContent({
                 </div>
 
                 <div className="max-h-48 space-y-1.5 overflow-y-auto rounded-md border border-slate-100 p-2 pr-1 dark:border-slate-800">
-                  {selectedFiles.map((f, idx) => (
-                    <div
-                      key={`${f.name}-${idx}`}
-                      className="flex items-center justify-between rounded border border-slate-200 bg-slate-50 p-2 text-xs dark:border-slate-800 dark:bg-slate-900"
-                    >
-                      <div className="flex items-center gap-2 overflow-hidden">
-                        <span className="truncate font-mono text-slate-700 dark:text-slate-300">
-                          {f.name}
-                        </span>
-                        <span className="shrink-0 text-slate-400">
-                          ({formatSize(f.size)})
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => handleRemoveFile(idx)}
-                        className="ml-2 text-slate-400 hover:text-rose-500"
+                  {selectedFiles.map((f, idx) => {
+                    const isCorrupted = corruptedFileNames.has(f.name);
+                    return (
+                      <div
+                        key={`${f.name}-${idx}`}
+                        className={`flex items-center justify-between rounded border p-2 text-xs transition-colors ${
+                          isCorrupted
+                            ? "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                            : "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
+                        }`}
                       >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <span className="truncate font-mono font-medium">
+                            {f.name}
+                          </span>
+                          <span className="shrink-0 text-slate-400">
+                            ({formatSize(f.size)})
+                          </span>
+                          {isCorrupted && (
+                            <span className="shrink-0 rounded bg-rose-500/20 px-1.5 py-0.5 font-sans text-[10px] font-semibold text-rose-600 dark:text-rose-400">
+                              ⚠️ Ảnh bị hỏng
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleRemoveFile(idx)}
+                          className="ml-2 text-slate-400 hover:text-rose-500"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

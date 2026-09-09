@@ -265,6 +265,13 @@ class UploadVersionAssetsUseCase:
             if not filename or len(content) == 0:
                 continue
 
+            try:
+                final_mime_type, metadata = AssetMetadataExtractor.extract_metadata(
+                    filename, content, mime_type
+                )
+            except ValueError as e:
+                raise BadRequestException(str(e)) from e
+
             sha256_hash = AssetMetadataExtractor.calculate_sha256(content)
 
             # Deduplication Check
@@ -277,9 +284,6 @@ class UploadVersionAssetsUseCase:
                 reused_count += 1
             else:
                 asset_id = generate_ulid()
-                final_mime_type, metadata = AssetMetadataExtractor.extract_metadata(
-                    filename, content, mime_type
-                )
                 storage_key = f"project-{project_id}/assets/{asset_id}/{filename}"
                 bucket = s3_settings.default_bucket
 

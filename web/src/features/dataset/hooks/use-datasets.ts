@@ -2,7 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { datasetApi } from "../api";
-import { DatasetCreatePayload, DatasetVersionCreatePayload } from "../types";
+import {
+  DatasetCreatePayload,
+  DatasetUpdatePayload,
+  DatasetVersionCreatePayload,
+} from "../types";
 
 export const DATASET_KEYS = {
   all: ["datasets"] as const,
@@ -57,6 +61,23 @@ export function useCreateDatasetMutation(projectId: string) {
     mutationFn: (payload: DatasetCreatePayload) =>
       datasetApi.createDataset(projectId, payload),
     onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: DATASET_KEYS.projectLists(projectId),
+      });
+    },
+  });
+}
+
+export function useUpdateDatasetMutation(datasetId: string, projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: DatasetUpdatePayload) =>
+      datasetApi.updateDataset(datasetId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: DATASET_KEYS.detail(datasetId),
+      });
       queryClient.invalidateQueries({
         queryKey: DATASET_KEYS.projectLists(projectId),
       });

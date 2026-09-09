@@ -33,7 +33,7 @@ docker-label-studio:
 	docker compose up -d label-studio
 
 docker-up:
-	docker compose up -d
+	docker compose up -d --build
 
 docker-down:
 	docker compose down

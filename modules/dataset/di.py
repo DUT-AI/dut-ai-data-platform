@@ -20,6 +20,7 @@ from modules.dataset.use_cases import (
     PublishDatasetVersionUseCase,
     RemoveVersionAssetUseCase,
     RetireAssetUseCase,
+    UpdateDatasetUseCase,
     UploadVersionAssetsUseCase,
 )
 
@@ -34,10 +35,11 @@ class DatasetProvider(Provider):
         return SqlDatasetRepository(session)
 
     @provide
-    def get_outbox_repository(self, session: AsyncSession) -> IOutboxRepository:
+    def get_outbox_repository(self, session: AsyncSession) -> IOutboxRepository | None:
         return SqlOutboxRepository(session)
 
     create_dataset_uc = provide(CreateDatasetUseCase)
+    update_dataset_uc = provide(UpdateDatasetUseCase)
     archive_dataset_uc = provide(ArchiveDatasetUseCase)
     list_project_datasets_uc = provide(ListProjectDatasetsUseCase)
     get_dataset_detail_uc = provide(GetDatasetDetailUseCase)

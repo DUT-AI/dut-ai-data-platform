@@ -1,12 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Badge, Button, Card } from "@/components/ui";
-import { Dataset } from "../types";
+import React, { useMemo, useState } from "react";
+import {
+  Badge,
+  Button,
+  Card,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+} from "@/components/ui";
+import { Dataset, DatasetVersion } from "../types";
 import {
   useCreateDatasetVersionMutation,
   useDatasetVersionQuery,
   usePublishDatasetVersionMutation,
+  useUpdateDatasetMutation,
   useVersionAssetsQuery,
 } from "../hooks";
 import { UploadDropzoneModal } from "./upload-dropzone-modal";
@@ -30,6 +42,9 @@ export function DatasetVersionView({
   );
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isEditDatasetOpen, setIsEditDatasetOpen] = useState(false);
+  const [editName, setEditName] = useState(dataset.name);
+  const [editDescription, setEditDescription] = useState(dataset.description || "");
 
   const activeVersionId = selectedVersionId || versions[0]?.id || "";
 
@@ -48,7 +63,7 @@ export function DatasetVersionView({
     const ontologyVersions = firstOntology.versions || [];
     // Ưu tiên bản published hoặc bản đầu tiên
     const activeVer =
-      ontologyVersions.find((v) => v.status === "published") ||
+      ontologyVersions.find((v: { status: string; id: string }) => v.status === "published") ||
       ontologyVersions[0];
     return activeVer?.id;
   }, [ontologies]);
@@ -57,10 +72,28 @@ export function DatasetVersionView({
     dataset.id,
     projectId
   );
+  const updateDatasetMutation = useUpdateDatasetMutation(
+    dataset.id,
+    projectId
+  );
   const publishMutation = usePublishDatasetVersionMutation(
     activeVersionId,
     projectId
   );
+
+  const handleEditDatasetSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editName.trim()) return;
+
+    updateDatasetMutation.mutate(
+      { name: editName.trim(), description: editDescription.trim() || undefined },
+      {
+        onSuccess: () => {
+          setIsEditDatasetOpen(false);
+        },
+      }
+    );
+  };
 
   const handleCreateVersion = () => {
     const nextVerStr = `v1.${versions.length}.0`;
@@ -72,7 +105,7 @@ export function DatasetVersionView({
       createVersionMutation.mutate(
         { version: newVer.trim() },
         {
-          onSuccess: (created) => {
+          onSuccess: (created: { id: string }) => {
             setSelectedVersionId(created.id);
           },
         }
@@ -102,7 +135,33 @@ export function DatasetVersionView({
               <span className="text-xs font-medium text-slate-400">
                 Dataset
               </span>
-              <h2 className="text-lg font-bold">{dataset.name}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold">{dataset.name}</h2>
+                <button
+                  onClick={() => {
+                    setEditName(dataset.name);
+                    setEditDescription(dataset.description || "");
+                    setIsEditDatasetOpen(true);
+                  }}
+                  title="Đổi tên / Chỉnh sửa Dataset"
+                  className="flex items-center gap-1.5 rounded-md border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-xs font-medium text-slate-200 shadow-sm transition-colors hover:border-slate-600 hover:bg-slate-700 hover:text-white"
+                >
+                  <svg
+                    className="h-3.5 w-3.5 text-slate-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                    />
+                  </svg>
+                  <span>Sửa Dataset ✏️</span>
+                </button>
+              </div>
             </div>
 
             {/* Version Selector Dropdown */}
@@ -113,7 +172,7 @@ export function DatasetVersionView({
                 onChange={(e) => setSelectedVersionId(e.target.value)}
                 className="focus:ring-primary-500 rounded border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2"
               >
-                {versions.map((v) => (
+                {versions.map((v: DatasetVersion) => (
                   <option key={v.id} value={v.id}>
                     {v.version} ({v.status.toUpperCase()}) - {v.asset_count}{" "}
                     assets
@@ -228,6 +287,62 @@ export function DatasetVersionView({
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
       />
+
+      {/* Edit Dataset Modal */}
+      <Dialog
+        open={isEditDatasetOpen}
+        onOpenChange={(open) => !open && setIsEditDatasetOpen(false)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa bộ Dữ liệu (Dataset)</DialogTitle>
+            <DialogDescription>
+              Cập nhật tên hiển thị và mô tả cho bộ dữ liệu này.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleEditDatasetSubmit} className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                Tên Dataset <span className="text-rose-500">*</span>
+              </label>
+              <Input
+                placeholder="Nhập tên Dataset..."
+                value={editName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                Mô tả
+              </label>
+              <textarea
+                placeholder="Nhập mô tả Dataset..."
+                value={editDescription}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditDescription(e.target.value)}
+                rows={3}
+                className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              />
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditDatasetOpen(false)}
+                disabled={updateDatasetMutation.isPending}
+              >
+                Hủy
+              </Button>
+              <Button type="submit" isLoading={updateDatasetMutation.isPending}>
+                Lưu thay đổi
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

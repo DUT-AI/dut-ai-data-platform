@@ -10,6 +10,7 @@ from modules.dataset.dtos.dataset_dtos import (
     CursorPageAssetResponseDTO,
     DatasetCreateDTO,
     DatasetResponseDTO,
+    DatasetUpdateDTO,
     DatasetVersionCreateDTO,
     DatasetVersionResponseDTO,
     FinalizeAssetImportRequestDTO,
@@ -33,6 +34,7 @@ from modules.dataset.use_cases import (
     PublishDatasetVersionUseCase,
     RemoveVersionAssetUseCase,
     RetireAssetUseCase,
+    UpdateDatasetUseCase,
     UploadVersionAssetsUseCase,
 )
 
@@ -85,6 +87,21 @@ async def get_dataset_detail(
     use_case: FromDishka[GetDatasetDetailUseCase],
 ):
     return await use_case.execute(dataset_id)
+
+
+@router.patch(
+    "/api/v1/datasets/{dataset_id}",
+    response_model=DatasetResponseDTO,
+    summary="Update dataset metadata (name, description, tags)",
+)
+@inject
+async def update_dataset(
+    dataset_id: str,
+    payload: DatasetUpdateDTO,
+    current_user: CurrentUser,
+    use_case: FromDishka[UpdateDatasetUseCase],
+):
+    return await use_case.execute(dataset_id, payload)
 
 
 @router.post(

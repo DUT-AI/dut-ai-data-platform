@@ -14,6 +14,7 @@ from modules.dataset.use_cases.dataset_use_cases import (
     PublishDatasetVersionUseCase,
     RemoveVersionAssetUseCase,
     RetireAssetUseCase,
+    UpdateDatasetUseCase,
     UploadVersionAssetsUseCase,
 )
 
@@ -33,5 +34,6 @@ __all__ = [
     "PublishDatasetVersionUseCase",
     "RemoveVersionAssetUseCase",
     "RetireAssetUseCase",
+    "UpdateDatasetUseCase",
     "UploadVersionAssetsUseCase",
 ]

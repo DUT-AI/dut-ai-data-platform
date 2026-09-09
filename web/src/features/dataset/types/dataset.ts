@@ -48,6 +48,11 @@ export interface DatasetCreatePayload {
   description?: string;
 }
 
+export interface DatasetUpdatePayload {
+  name?: string;
+  description?: string;
+}
+
 export interface DatasetVersionCreatePayload {
   version: string;
 }

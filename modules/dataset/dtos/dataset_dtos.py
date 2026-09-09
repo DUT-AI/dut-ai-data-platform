@@ -13,6 +13,12 @@ class DatasetCreateDTO(BaseModel):
     tags: list[str] | None = None
 
 
+class DatasetUpdateDTO(BaseModel):
+    name: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = None
+    tags: list[str] | None = None
+
+
 class AssetResponseDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

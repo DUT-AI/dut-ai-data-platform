@@ -27,6 +27,7 @@ from modules.dataset.dtos.dataset_dtos import (
     CursorPageAssetResponseDTO,
     DatasetCreateDTO,
     DatasetResponseDTO,
+    DatasetUpdateDTO,
     DatasetVersionCreateDTO,
     DatasetVersionResponseDTO,
     FinalizeAssetImportRequestDTO,
@@ -40,7 +41,7 @@ from modules.dataset.services.metadata_extractor import AssetMetadataExtractor
 
 class CreateDatasetUseCase:
     def __init__(
-        self, repo: IDatasetRepository, outbox_repo: IOutboxRepository = None
+        self, repo: IDatasetRepository, outbox_repo: IOutboxRepository | None = None
     ) -> None:
         self.repo = repo
         self.outbox_repo = outbox_repo
@@ -141,6 +142,31 @@ class ArchiveDatasetUseCase:
         return DatasetResponseDTO.model_validate(dataset)
 
 
+class UpdateDatasetUseCase:
+    def __init__(self, repo: IDatasetRepository) -> None:
+        self.repo = repo
+
+    async def execute(
+        self, dataset_id: str, payload: DatasetUpdateDTO
+    ) -> DatasetResponseDTO:
+        dataset = await self.repo.get_dataset_by_id(dataset_id)
+        if not dataset:
+            raise NotFoundException(f"Dataset '{dataset_id}' not found.")
+
+        if dataset.status == "archived":
+            raise BadRequestException(f"Cannot update archived dataset '{dataset_id}'.")
+
+        if payload.name is not None and payload.name.strip():
+            dataset.name = payload.name.strip()
+        if payload.description is not None:
+            dataset.description = payload.description.strip() if payload.description else None
+        if payload.tags is not None:
+            dataset.tags = payload.tags
+
+        saved = await self.repo.save_dataset(dataset)
+        return DatasetResponseDTO.model_validate(saved)
+
+
 class GetDatasetVersionDetailUseCase:
     def __init__(self, repo: IDatasetRepository) -> None:
         self.repo = repo
@@ -154,7 +180,7 @@ class GetDatasetVersionDetailUseCase:
 
 class PublishDatasetVersionUseCase:
     def __init__(
-        self, repo: IDatasetRepository, outbox_repo: IOutboxRepository = None
+        self, repo: IDatasetRepository, outbox_repo: IOutboxRepository | None = None
     ) -> None:
         self.repo = repo
         self.outbox_repo = outbox_repo
@@ -455,7 +481,7 @@ class FinalizeAssetImportUseCase:
         self,
         repo: IDatasetRepository,
         storage_provider: IStorageProvider,
-        outbox_repo: IOutboxRepository = None,
+        outbox_repo: IOutboxRepository | None = None,
     ) -> None:
         self.repo = repo
         self.storage_provider = storage_provider

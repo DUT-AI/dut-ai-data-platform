@@ -521,3 +521,30 @@ async def test_outbox_processor_dispatches_events():
     assert dispatched[0]["dataset_id"] == "ds_123"
     mock_outbox_repo.mark_processed.assert_called_once_with("evt_001")
 
+
+@pytest.mark.asyncio
+async def test_update_dataset_use_case_success():
+    from modules.dataset.dtos.dataset_dtos import DatasetUpdateDTO
+    from modules.dataset.use_cases import UpdateDatasetUseCase
+
+    repo = AsyncMock()
+    mock_dataset = DatasetEntity(
+        id="ds_100",
+        project_id="proj_001",
+        name="Old Name",
+        description="Old Description",
+        status="active",
+    )
+    repo.get_dataset_by_id = AsyncMock(return_value=mock_dataset)
+    repo.save_dataset = AsyncMock(side_effect=lambda d: d)
+
+    use_case = UpdateDatasetUseCase(repo=repo)
+    res = await use_case.execute(
+        "ds_100", DatasetUpdateDTO(name="New Name", description="New Description")
+    )
+
+    assert res.name == "New Name"
+    assert res.description == "New Description"
+    repo.save_dataset.assert_called_once()
+
+

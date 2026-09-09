@@ -5,6 +5,7 @@ import {
   BatchUploadResult,
   Dataset,
   DatasetCreatePayload,
+  DatasetUpdatePayload,
   DatasetVersion,
   DatasetVersionCreatePayload,
 } from "../types";
@@ -25,6 +26,14 @@ export const datasetApi = {
       `/projects/${projectId}/datasets`,
       payload
     );
+    return response.data;
+  },
+
+  updateDataset: async (
+    datasetId: string,
+    payload: DatasetUpdatePayload
+  ): Promise<Dataset> => {
+    const response = await api.patch<Dataset>(`/datasets/${datasetId}`, payload);
     return response.data;
   },
 

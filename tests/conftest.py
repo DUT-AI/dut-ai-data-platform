@@ -1,5 +1,7 @@
 from collections.abc import AsyncIterable
+from typing import BinaryIO
 
+import pytest
 import pytest_asyncio
 from dishka import Provider, Scope, make_async_container, provide
 from dishka.integrations.fastapi import setup_dishka
@@ -20,7 +22,7 @@ import modules.ontology.models
 import modules.project.models  # noqa: F401
 from apps.api.main import app
 from core.database.base import Base
-from core.storage.di import StorageProvider
+from core.storage.interface import IStorageProvider
 from modules.annotation.di import AnnotationProvider
 from modules.dataset.di import DatasetProvider
 from modules.identity.di import IdentityProvider
@@ -70,11 +72,51 @@ class TestDatabaseProvider(Provider):
                 await session.rollback()
                 raise
 
+    @provide(scope=Scope.APP)
+    def get_storage_provider(self) -> IStorageProvider:
+        return InMemoryStorageProvider()
+
+
+class InMemoryStorageProvider(IStorageProvider):
+    def __init__(self) -> None:
+        self.objects: dict[tuple[str, str], bytes] = {}
+
+    async def upload(
+        self,
+        bucket: str,
+        key: str,
+        data: BinaryIO,
+        content_type: str | None = None,
+    ) -> str:
+        self.objects[(bucket, key)] = data.read()
+        return f"/{bucket}/{key.lstrip('/')}"
+
+    async def get_presigned_url(
+        self, bucket: str, key: str, expires: int = 3600
+    ) -> str:
+        return f"https://storage.test/{bucket}/{key.lstrip('/')}?expires={expires}"
+
+    async def delete(self, bucket: str, key: str) -> None:
+        self.objects.pop((bucket, key), None)
+
+    def build_public_url(self, uri_or_path: str, bucket: str | None = None) -> str:
+        return f"https://storage.test/{uri_or_path.lstrip('/')}"
+
+
+@pytest.fixture
+def test_session_factory():
+    return TestSessionLocal
+
 
 async def seed_test_catalog() -> None:
     from apps.cli.seed_project_catalog import TASKS
     from core.utils.datetime_utils import now_utc
     from core.utils.id_generator import generate_ulid
+    from modules.ontology.domain.catalog import (
+        INPUT_DEFINITIONS,
+        OUTPUT_DEFINITIONS,
+    )
+    from modules.ontology.models import InputDefinitionModel, OutputDefinitionModel
     from modules.project.models.catalog import (
         ProjectTemplateModel,
         ProjectTemplateVersionModel,
@@ -84,6 +126,32 @@ async def seed_test_catalog() -> None:
     )
 
     async with TestSessionLocal() as session, session.begin():
+        # Test-only catalog. Production definitions must be created explicitly
+        # through the authorized Ontology catalog API; shared databases are never
+        # populated implicitly by application startup or test helpers.
+        session.add_all(
+            [
+                InputDefinitionModel(
+                    id=generate_ulid(),
+                    code=code,
+                    name=name,
+                    description=description,
+                    allowed_formats=formats,
+                )
+                for code, name, description, formats in INPUT_DEFINITIONS
+            ]
+            + [
+                OutputDefinitionModel(
+                    id=generate_ulid(),
+                    code=code,
+                    name=name,
+                    description=description,
+                    supports_categories=supports_categories,
+                    default_schema=default_schema,
+                )
+                for code, name, description, supports_categories, default_schema in OUTPUT_DEFINITIONS
+            ]
+        )
         for key, name, category, modality, capabilities, providers in TASKS:
             task = TaskDefinitionModel(
                 id=generate_ulid(),
@@ -153,7 +221,6 @@ async def initialize_test_database():
 
     container = make_async_container(
         TestDatabaseProvider(),
-        StorageProvider(),
         IdentityProvider(),
         ProjectProvider(),
         DatasetProvider(),
@@ -167,4 +234,3 @@ async def initialize_test_database():
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
     await test_engine.dispose()
-

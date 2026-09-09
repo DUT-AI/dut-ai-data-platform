@@ -36,7 +36,7 @@ async def test_annotation_full_lifecycle():
         assert p_res.status_code == 201
         project_id = p_res.json()["id"]
 
-        # 2. Create an Ontology Schema & Categories
+        # 2. Build and publish an Ontology using the current node-composition API.
         onto_res = await client.post(
             f"/api/v1/projects/{project_id}/ontologies",
             json={
@@ -45,25 +45,88 @@ async def test_annotation_full_lifecycle():
             },
         )
         assert onto_res.status_code == 201
-        ontology_ver_id = onto_res.json()["versions"][0]["id"]
+        ontology = onto_res.json()
+        ontology_id = ontology["id"]
+        ontology_ver_id = ontology["versions"][0]["id"]
+
+        input_definitions = (
+            await client.get("/api/v1/ontology-definitions/inputs")
+        ).json()
+        output_definitions = (
+            await client.get("/api/v1/ontology-definitions/outputs")
+        ).json()
+        image_definition_id = next(
+            item["id"] for item in input_definitions if item["code"] == "image"
+        )
+        bbox_definition_id = next(
+            item["id"] for item in output_definitions if item["code"] == "bounding_box"
+        )
+
+        input_res = await client.post(
+            f"/api/v1/projects/{project_id}/ontologies/{ontology_id}/inputs",
+            json={
+                "definition_id": image_definition_id,
+                "name": "Traffic image",
+                "scope": "ONE_ITEM",
+                "input_schema": {
+                    "type": "image",
+                    "allowed_extensions": ["png", "jpg"],
+                    "item": None,
+                },
+            },
+        )
+        assert input_res.status_code == 201, input_res.text
+        input_id = input_res.json()["id"]
+
+        output_res = await client.post(
+            f"/api/v1/projects/{project_id}/ontologies/{ontology_id}/outputs",
+            json={
+                "definition_id": bbox_definition_id,
+                "name": "Detected objects",
+                "multiple": True,
+                "required": True,
+            },
+        )
+        assert output_res.status_code == 201, output_res.text
+        output_id = output_res.json()["id"]
 
         cat_car_res = await client.post(
-            f"/api/v1/ontology-versions/{ontology_ver_id}/categories",
-            json={"name": "car", "display_name": "Car", "color": "#3B82F6"},
+            f"/api/v1/projects/{project_id}/ontologies/{ontology_id}/categories",
+            json={"key": "car", "name": "Car", "color": "#3B82F6"},
         )
         assert cat_car_res.status_code == 201
         car_cat_id = cat_car_res.json()["id"]
 
         cat_ped_res = await client.post(
-            f"/api/v1/ontology-versions/{ontology_ver_id}/categories",
+            f"/api/v1/projects/{project_id}/ontologies/{ontology_id}/categories",
             json={
-                "name": "pedestrian",
-                "display_name": "Pedestrian",
+                "key": "pedestrian",
+                "name": "Pedestrian",
                 "color": "#EF4444",
             },
         )
         assert cat_ped_res.status_code == 201
         ped_cat_id = cat_ped_res.json()["id"]
+
+        compose_res = await client.put(
+            f"/api/v1/projects/{project_id}/ontologies/{ontology_id}/versions/{ontology_ver_id}/composition",
+            json={
+                "inputs": [{"input_id": input_id, "sort_order": 0}],
+                "outputs": [
+                    {
+                        "output_id": output_id,
+                        "input_id": input_id,
+                        "category_ids": [car_cat_id, ped_cat_id],
+                        "sort_order": 0,
+                    }
+                ],
+            },
+        )
+        assert compose_res.status_code == 200, compose_res.text
+        publish_res = await client.post(
+            f"/api/v1/projects/{project_id}/ontologies/{ontology_id}/versions/{ontology_ver_id}/publish"
+        )
+        assert publish_res.status_code == 200, publish_res.text
 
         # 3. Create Dataset & Version
         d_res = await client.post(

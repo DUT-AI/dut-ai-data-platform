@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package inference;
+
+service WorkerCallbackService {
+  rpc SubmitPredictionResult (PredictionResultPayload) returns (SubmitResponse);
+}
+
+message PredictionResultPayload {
+  string job_id = 1;
+  string asset_id = 2;
+  string model_name = 3;
+  string internal_annotation_json = 4;
+  string storage_uri = 5;
+  double latency_ms = 6;
+}
+
+message SubmitResponse {
+  bool success = 1;
+  string message = 2;
+}

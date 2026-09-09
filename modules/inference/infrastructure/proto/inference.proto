@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package inference;
+
+service InferenceService {
+  rpc Predict (InferenceRequest) returns (InferenceResponse);
+}
+
+message InferenceRequest {
+  string prompt = 1;
+  string model = 2;
+  string system_prompt = 3;
+  float temperature = 4;
+  int32 max_tokens = 5;
+}
+
+message InferenceResponse {
+  string content = 1;
+  string model = 2;
+  double latency_ms = 3;
+  string status = 4;
+}

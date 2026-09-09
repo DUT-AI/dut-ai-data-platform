@@ -2,6 +2,12 @@ import io
 from collections.abc import Sequence
 
 from core.config import s3_settings
+from core.events.domain_event import (
+    AssetReadyEvent,
+    DatasetCreatedEvent,
+    DatasetVersionPublishedEvent,
+)
+from core.events.outbox import IOutboxRepository
 from core.exceptions import BadRequestException, NotFoundException
 from core.storage.interface import IStorageProvider
 from core.storage.url_builder import parse_storage_uri
@@ -33,8 +39,11 @@ from modules.dataset.services.metadata_extractor import AssetMetadataExtractor
 
 
 class CreateDatasetUseCase:
-    def __init__(self, repo: IDatasetRepository) -> None:
+    def __init__(
+        self, repo: IDatasetRepository, outbox_repo: IOutboxRepository = None
+    ) -> None:
         self.repo = repo
+        self.outbox_repo = outbox_repo
 
     async def execute(
         self, project_id: str, payload: DatasetCreateDTO
@@ -57,6 +66,16 @@ class CreateDatasetUseCase:
         )
         saved_ver = await self.repo.save_version(initial_version)
         saved.versions = [saved_ver]
+
+        if self.outbox_repo:
+            await self.outbox_repo.save_event(
+                DatasetCreatedEvent(
+                    dataset_id=saved.id,
+                    project_id=saved.project_id,
+                    name=saved.name,
+                    created_by=saved.created_by,
+                )
+            )
 
         return DatasetResponseDTO.model_validate(saved)
 
@@ -134,8 +153,11 @@ class GetDatasetVersionDetailUseCase:
 
 
 class PublishDatasetVersionUseCase:
-    def __init__(self, repo: IDatasetRepository) -> None:
+    def __init__(
+        self, repo: IDatasetRepository, outbox_repo: IOutboxRepository = None
+    ) -> None:
         self.repo = repo
+        self.outbox_repo = outbox_repo
 
     async def execute(self, version_id: str) -> DatasetVersionResponseDTO:
         version = await self.repo.get_version_by_id(version_id)
@@ -169,6 +191,17 @@ class PublishDatasetVersionUseCase:
             current_num + 1, version.version_number or 1
         )
         await self.repo.save_dataset(dataset)
+
+        if self.outbox_repo:
+            await self.outbox_repo.save_event(
+                DatasetVersionPublishedEvent(
+                    dataset_id=dataset.id,
+                    version_id=saved_ver.id,
+                    version_number=saved_ver.version_number,
+                    manifest_hash=saved_ver.manifest_hash,
+                    asset_count=saved_ver.asset_count,
+                )
+            )
 
         saved_ver.assets = list(assets)
         return DatasetVersionResponseDTO.model_validate(saved_ver)
@@ -419,10 +452,14 @@ class PrepareAssetUploadUseCase:
 
 class FinalizeAssetImportUseCase:
     def __init__(
-        self, repo: IDatasetRepository, storage_provider: IStorageProvider
+        self,
+        repo: IDatasetRepository,
+        storage_provider: IStorageProvider,
+        outbox_repo: IOutboxRepository = None,
     ) -> None:
         self.repo = repo
         self.storage_provider = storage_provider
+        self.outbox_repo = outbox_repo
 
     async def execute(
         self,
@@ -469,6 +506,18 @@ class FinalizeAssetImportUseCase:
             saved_asset = await self.repo.save_asset(new_asset)
             await self.repo.add_asset_to_version(version_id, saved_asset.id)
             imported_assets.append(saved_asset)
+
+            if self.outbox_repo:
+                await self.outbox_repo.save_event(
+                    AssetReadyEvent(
+                        asset_id=saved_asset.id,
+                        project_id=project_id,
+                        filename=saved_asset.filename,
+                        mime_type=saved_asset.mime_type,
+                        file_size=saved_asset.file_size,
+                        sha256=saved_asset.sha256,
+                    )
+                )
 
         return FinalizeAssetImportResponseDTO(
             imported_assets=[

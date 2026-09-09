@@ -357,3 +357,167 @@ async def test_retire_unlinked_asset_success():
     assert res.status == "RETIRED"
     assert res.retired_at is not None
     repo.save_asset.assert_called_once()
+
+
+# ============================================================================
+# Phase 5: Transactional Outbox & Async Event Processing
+# ============================================================================
+
+
+@pytest.mark.asyncio
+async def test_create_dataset_emits_outbox_event():
+    from core.events.domain_event import DatasetCreatedEvent
+    from modules.dataset.dtos.dataset_dtos import DatasetCreateDTO
+    from modules.dataset.use_cases import CreateDatasetUseCase
+
+    repo = AsyncMock()
+    outbox_repo = AsyncMock()
+
+    mock_saved = DatasetEntity(
+        id="ds_123",
+        project_id="proj_456",
+        name="Outbox Dataset",
+        status="active",
+        created_by="user_789",
+    )
+    repo.save_dataset = AsyncMock(return_value=mock_saved)
+    repo.save_version = AsyncMock(side_effect=lambda v: v)
+
+    use_case = CreateDatasetUseCase(repo=repo, outbox_repo=outbox_repo)
+    res = await use_case.execute("proj_456", DatasetCreateDTO(name="Outbox Dataset"))
+
+    assert res.id == "ds_123"
+    outbox_repo.save_event.assert_called_once()
+    event_arg = outbox_repo.save_event.call_args[0][0]
+    assert isinstance(event_arg, DatasetCreatedEvent)
+    assert event_arg.payload["dataset_id"] == "ds_123"
+    assert event_arg.payload["project_id"] == "proj_456"
+
+
+@pytest.mark.asyncio
+async def test_publish_version_emits_outbox_event():
+    from core.events.domain_event import DatasetVersionPublishedEvent
+    from modules.dataset.use_cases import PublishDatasetVersionUseCase
+
+    repo = AsyncMock()
+    outbox_repo = AsyncMock()
+
+    mock_ver = DatasetVersionEntity(
+        id="ver_111",
+        dataset_id="ds_123",
+        version="v1.0.0",
+        version_number=1,
+        status="draft",
+    )
+    mock_dataset = DatasetEntity(
+        id="ds_123",
+        project_id="proj_456",
+        name="Test",
+        status="active",
+        latest_published_version_number=0,
+    )
+
+    repo.get_version_by_id = AsyncMock(return_value=mock_ver)
+    repo.get_dataset_by_id = AsyncMock(return_value=mock_dataset)
+    repo.get_all_assets_by_version = AsyncMock(return_value=[])
+    repo.save_version = AsyncMock(side_effect=lambda v: v)
+    repo.save_dataset = AsyncMock(side_effect=lambda d: d)
+
+    use_case = PublishDatasetVersionUseCase(repo=repo, outbox_repo=outbox_repo)
+    res = await use_case.execute("ver_111")
+
+    assert res.status == "published"
+    outbox_repo.save_event.assert_called_once()
+    event_arg = outbox_repo.save_event.call_args[0][0]
+    assert isinstance(event_arg, DatasetVersionPublishedEvent)
+    assert event_arg.payload["version_id"] == "ver_111"
+    assert event_arg.payload["dataset_id"] == "ds_123"
+
+
+@pytest.mark.asyncio
+async def test_finalize_asset_import_emits_outbox_event():
+    from core.events.domain_event import AssetReadyEvent
+    from modules.dataset.dtos.dataset_dtos import (
+        FinalizeAssetImportItemDTO,
+        FinalizeAssetImportRequestDTO,
+    )
+    from modules.dataset.use_cases import FinalizeAssetImportUseCase
+
+    repo = AsyncMock()
+    storage_provider = AsyncMock()
+    outbox_repo = AsyncMock()
+
+    mock_ver = DatasetVersionEntity(
+        id="ver_111", dataset_id="ds_123", version="v1.0.0", status="draft"
+    )
+    mock_dataset = DatasetEntity(id="ds_123", project_id="proj_456", name="Test")
+
+    repo.get_version_by_id = AsyncMock(return_value=mock_ver)
+    repo.get_dataset_by_id = AsyncMock(return_value=mock_dataset)
+    repo.save_asset = AsyncMock(side_effect=lambda a: a)
+    repo.add_asset_to_version = AsyncMock()
+
+    use_case = FinalizeAssetImportUseCase(
+        repo=repo, storage_provider=storage_provider, outbox_repo=outbox_repo
+    )
+
+    payload = FinalizeAssetImportRequestDTO(
+        items=[
+            FinalizeAssetImportItemDTO(
+                asset_id="ast_999",
+                filename="test.jpg",
+                storage_key="project-proj_456/assets/ast_999/test.jpg",
+                mime_type="image/jpeg",
+                file_size=1024,
+                sha256="a" * 64,
+            )
+        ]
+    )
+
+    res = await use_case.execute("ver_111", payload)
+    assert len(res.imported_assets) == 1
+    outbox_repo.save_event.assert_called_once()
+    event_arg = outbox_repo.save_event.call_args[0][0]
+    assert isinstance(event_arg, AssetReadyEvent)
+    assert event_arg.payload["asset_id"] == "ast_999"
+
+
+@pytest.mark.asyncio
+async def test_outbox_processor_dispatches_events():
+    from core.events.models import OutboxEventModel
+    from core.events.processor import OutboxProcessor
+
+    processor = OutboxProcessor()
+    dispatched = []
+
+    async def sample_handler(payload):
+        dispatched.append(payload)
+
+    processor.register_handler("DatasetCreated", sample_handler)
+
+    mock_session = AsyncMock()
+    mock_event = OutboxEventModel(
+        event_id="evt_001",
+        event_type="DatasetCreated",
+        aggregate_type="Dataset",
+        aggregate_id="ds_123",
+        payload={"dataset_id": "ds_123", "name": "Handled Dataset"},
+        status="PENDING",
+    )
+
+    mock_outbox_repo = AsyncMock()
+    mock_outbox_repo.fetch_pending_events = AsyncMock(return_value=[mock_event])
+    mock_outbox_repo.mark_processed = AsyncMock()
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(
+            "core.events.processor.SqlOutboxRepository",
+            lambda session: mock_outbox_repo,
+        )
+        count = await processor.process_pending_batch(mock_session)
+
+    assert count == 1
+    assert len(dispatched) == 1
+    assert dispatched[0]["dataset_id"] == "ds_123"
+    mock_outbox_repo.mark_processed.assert_called_once_with("evt_001")
+

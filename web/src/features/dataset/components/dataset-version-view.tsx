@@ -21,6 +21,11 @@ import {
   useUpdateDatasetMutation,
   useVersionAssetsQuery,
 } from "../hooks";
+import {
+  AssetFilterToolbar,
+  DateOption,
+  FileTypeOption,
+} from "./asset-filter-toolbar";
 import { UploadDropzoneModal } from "./upload-dropzone-modal";
 import { InheritVersionModal } from "./inherit-version-modal";
 import { AssetGalleryGrid } from "./asset-gallery-grid";
@@ -48,6 +53,11 @@ export function DatasetVersionView({
   const [editName, setEditName] = useState(dataset.name);
   const [editDescription, setEditDescription] = useState(dataset.description || "");
 
+  // Search & Filter States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFileType, setSelectedFileType] = useState("all");
+  const [selectedDate, setSelectedDate] = useState("all");
+
   const activeVersionId = selectedVersionId || versions[0]?.id || "";
 
   const { data: versionDetail, isLoading: isVerLoading } =
@@ -69,6 +79,108 @@ export function DatasetVersionView({
       ontologyVersions[0];
     return activeVer?.id;
   }, [ontologies]);
+
+  // Computed available file types present in the current dataset version assets
+  const fileTypeOptions = useMemo<FileTypeOption[]>(() => {
+    if (!assets || assets.length === 0) return [];
+    const map = new Map<string, { label: string; count: number }>();
+
+    assets.forEach((asset) => {
+      const mime = asset.mime_type || "application/octet-stream";
+      const ext = asset.filename.includes(".")
+        ? asset.filename.split(".").pop()?.toLowerCase() || ""
+        : mime.split("/")[1] || "file";
+
+      const displayLabel = ext ? ext.toUpperCase() : mime;
+
+      if (map.has(mime)) {
+        map.get(mime)!.count += 1;
+      } else {
+        map.set(mime, { label: displayLabel, count: 1 });
+      }
+    });
+
+    return Array.from(map.entries()).map(([mimeType, val]) => ({
+      mimeType,
+      label: val.label,
+      count: val.count,
+    }));
+  }, [assets]);
+
+  // Computed available dates present in the dataset version assets
+  const dateOptions = useMemo<DateOption[]>(() => {
+    if (!assets || assets.length === 0) return [];
+    const map = new Map<string, { displayLabel: string; count: number }>();
+
+    assets.forEach((asset) => {
+      if (!asset.created_at) return;
+      const dateObj = new Date(asset.created_at);
+      if (isNaN(dateObj.getTime())) return;
+
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const dd = String(dateObj.getDate()).padStart(2, "0");
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const displayLabel = `${dd}/${mm}/${yyyy}`;
+
+      if (map.has(dateStr)) {
+        map.get(dateStr)!.count += 1;
+      } else {
+        map.set(dateStr, { displayLabel, count: 1 });
+      }
+    });
+
+    return Array.from(map.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([dateStr, val]) => ({
+        dateStr,
+        displayLabel: val.displayLabel,
+        count: val.count,
+      }));
+  }, [assets]);
+
+  // Filtered assets list based on search and selected filters
+  const filteredAssets = useMemo(() => {
+    if (!assets) return [];
+    return assets.filter((asset) => {
+      // 1. Filename search filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        if (!asset.filename.toLowerCase().includes(q)) {
+          return false;
+        }
+      }
+
+      // 2. File type filter
+      if (selectedFileType !== "all") {
+        if (asset.mime_type !== selectedFileType) {
+          return false;
+        }
+      }
+
+      // 3. Date filter
+      if (selectedDate !== "all") {
+        if (!asset.created_at) return false;
+        const dateObj = new Date(asset.created_at);
+        if (isNaN(dateObj.getTime())) return false;
+        const yyyy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+        const dd = String(dateObj.getDate()).padStart(2, "0");
+        const dateStr = `${yyyy}-${mm}-${dd}`;
+        if (dateStr !== selectedDate) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [assets, searchQuery, selectedFileType, selectedDate]);
+
+  const handleResetFilters = () => {
+    setSearchQuery("");
+    setSelectedFileType("all");
+    setSelectedDate("all");
+  };
 
   const createVersionMutation = useCreateDatasetVersionMutation(
     dataset.id,
@@ -268,6 +380,23 @@ export function DatasetVersionView({
         annotatedAssets={assets?.length ? Math.round(assets.length * 0.4) : 0}
       />
 
+      {/* Search & Filter Toolbar */}
+      {assets && assets.length > 0 && (
+        <AssetFilterToolbar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedFileType={selectedFileType}
+          onFileTypeChange={setSelectedFileType}
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+          fileTypeOptions={fileTypeOptions}
+          dateOptions={dateOptions}
+          totalAssetsCount={assets.length}
+          filteredAssetsCount={filteredAssets.length}
+          onResetFilters={handleResetFilters}
+        />
+      )}
+
       {/* Asset Gallery Body */}
       {isVerLoading || isAssetsLoading ? (
         <div className="p-12 text-center text-sm text-slate-500">
@@ -277,7 +406,9 @@ export function DatasetVersionView({
         viewMode === "grid" ? (
           <AssetGalleryGrid
             versionId={activeVersionId}
-            assets={assets}
+            assets={filteredAssets}
+            totalAssetsCount={assets.length}
+            onResetFilters={handleResetFilters}
             isEditable={isEditable}
             projectId={projectId}
             ontologyVersionId={ontologyVersionId}
@@ -285,7 +416,9 @@ export function DatasetVersionView({
         ) : (
           <AssetListTable
             versionId={activeVersionId}
-            assets={assets}
+            assets={filteredAssets}
+            totalAssetsCount={assets.length}
+            onResetFilters={handleResetFilters}
             isEditable={isEditable}
             projectId={projectId}
             ontologyVersionId={ontologyVersionId}

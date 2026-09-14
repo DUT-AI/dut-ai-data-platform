@@ -25,7 +25,6 @@ import {
   Text as KonvaText,
 } from "react-konva";
 
-
 export function KonvaAnnotationCanvas({
   imageUrl,
   results,
@@ -63,7 +62,9 @@ export function KonvaAnnotationCanvas({
 
   // Tool and selection state
   const [currentTool, setCurrentTool] = useState<ToolMode>("select");
-  const [internalSelectedShapeId, setInternalSelectedShapeId] = useState<string | null>(null);
+  const [internalSelectedShapeId, setInternalSelectedShapeId] = useState<
+    string | null
+  >(null);
 
   const selectedShapeId =
     externalSelectedShapeId !== undefined
@@ -488,7 +489,6 @@ export function KonvaAnnotationCanvas({
           >
             <Layer>
               {/* Background Main Image */}
-              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               <KonvaImage
                 name="main-image"
                 image={imageObj}
@@ -527,34 +527,37 @@ export function KonvaAnnotationCanvas({
               })}
 
               {/* Crosshair Guides for Pixel Precision in BBox mode */}
-              {currentTool === "bbox" && currentMousePos && !readOnly && imageObj && (
-                <Group opacity={0.4} listening={false}>
-                  {/* Horizontal crosshair */}
-                  <Line
-                    points={[
-                      imageLayout.x,
-                      currentMousePos.y,
-                      imageLayout.x + imageLayout.width,
-                      currentMousePos.y,
-                    ]}
-                    stroke="#38BDF8"
-                    strokeWidth={1 / stageScale}
-                    dash={[4 / stageScale, 4 / stageScale]}
-                  />
-                  {/* Vertical crosshair */}
-                  <Line
-                    points={[
-                      currentMousePos.x,
-                      imageLayout.y,
-                      currentMousePos.x,
-                      imageLayout.y + imageLayout.height,
-                    ]}
-                    stroke="#38BDF8"
-                    strokeWidth={1 / stageScale}
-                    dash={[4 / stageScale, 4 / stageScale]}
-                  />
-                </Group>
-              )}
+              {currentTool === "bbox" &&
+                currentMousePos &&
+                !readOnly &&
+                imageObj && (
+                  <Group opacity={0.4} listening={false}>
+                    {/* Horizontal crosshair */}
+                    <Line
+                      points={[
+                        imageLayout.x,
+                        currentMousePos.y,
+                        imageLayout.x + imageLayout.width,
+                        currentMousePos.y,
+                      ]}
+                      stroke="#38BDF8"
+                      strokeWidth={1 / stageScale}
+                      dash={[4 / stageScale, 4 / stageScale]}
+                    />
+                    {/* Vertical crosshair */}
+                    <Line
+                      points={[
+                        currentMousePos.x,
+                        imageLayout.y,
+                        currentMousePos.x,
+                        imageLayout.y + imageLayout.height,
+                      ]}
+                      stroke="#38BDF8"
+                      strokeWidth={1 / stageScale}
+                      dash={[4 / stageScale, 4 / stageScale]}
+                    />
+                  </Group>
+                )}
 
               {/* In-progress drawing rectangle with live Dimension HUD */}
               {newRect && (
@@ -570,28 +573,30 @@ export function KonvaAnnotationCanvas({
                     fill={getColor(selectedCategoryId)}
                     opacity={0.25}
                   />
-                  {newRect.width > 5 && newRect.height > 5 && naturalDimensions.width > 0 && (
-                    <Group
-                      x={newRect.x + newRect.width + 4 / stageScale}
-                      y={newRect.y + newRect.height + 4 / stageScale}
-                    >
-                      <Rect
-                        width={90 / stageScale}
-                        height={18 / stageScale}
-                        fill="#0F172A"
-                        opacity={0.9}
-                        cornerRadius={2 / stageScale}
-                      />
-                      <KonvaText
-                        x={4 / stageScale}
-                        y={4 / stageScale}
-                        text={`${Math.round((newRect.width / imageLayout.width) * naturalDimensions.width)} × ${Math.round((newRect.height / imageLayout.height) * naturalDimensions.height)} px`}
-                        fontSize={10 / stageScale}
-                        fill="#38BDF8"
-                        fontFamily="monospace"
-                      />
-                    </Group>
-                  )}
+                  {newRect.width > 5 &&
+                    newRect.height > 5 &&
+                    naturalDimensions.width > 0 && (
+                      <Group
+                        x={newRect.x + newRect.width + 4 / stageScale}
+                        y={newRect.y + newRect.height + 4 / stageScale}
+                      >
+                        <Rect
+                          width={90 / stageScale}
+                          height={18 / stageScale}
+                          fill="#0F172A"
+                          opacity={0.9}
+                          cornerRadius={2 / stageScale}
+                        />
+                        <KonvaText
+                          x={4 / stageScale}
+                          y={4 / stageScale}
+                          text={`${Math.round((newRect.width / imageLayout.width) * naturalDimensions.width)} × ${Math.round((newRect.height / imageLayout.height) * naturalDimensions.height)} px`}
+                          fontSize={10 / stageScale}
+                          fill="#38BDF8"
+                          fontFamily="monospace"
+                        />
+                      </Group>
+                    )}
                 </Group>
               )}
 

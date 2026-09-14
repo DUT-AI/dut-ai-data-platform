@@ -6,7 +6,6 @@ import { AnnotationResult } from "../../types";
 
 import { Group, Rect, Line, Circle, Text } from "react-konva";
 
-
 interface ShapeRendererProps {
   result: AnnotationResult;
   index: number;
@@ -59,11 +58,12 @@ export function ShapeRenderer({
     const displayText = `${labelName}${confidenceText}`;
     const badgeWidth = Math.max(50, displayText.length * 7.5 + 8) / stageScale;
     const badgeHeight = 18 / stageScale;
-    
+
     // Position badge above bbox, or inside if too close to top edge
-    const badgeY = coords.y >= badgeHeight + 2 / stageScale
-      ? coords.y - badgeHeight
-      : coords.y;
+    const badgeY =
+      coords.y >= badgeHeight + 2 / stageScale
+        ? coords.y - badgeHeight
+        : coords.y;
 
     return (
       <Group key={shapeId}>
@@ -77,7 +77,11 @@ export function ShapeRenderer({
           strokeWidth={isSelected ? 3 / stageScale : 2 / stageScale}
           fill={color}
           opacity={isSelected ? 0.35 : 0.15}
-          dash={result.confidence !== undefined ? [6 / stageScale, 3 / stageScale] : undefined}
+          dash={
+            result.confidence !== undefined
+              ? [6 / stageScale, 3 / stageScale]
+              : undefined
+          }
           draggable={currentTool === "select" && !readOnly}
           onClick={() => {
             if (currentTool === "select") onSelect(shapeId);
@@ -120,7 +124,8 @@ export function ShapeRenderer({
 
   // 2. Render Polygon (handles "polygon" and "segmentation")
   if (
-    (result.result_type === "polygon" || result.result_type === "segmentation") &&
+    (result.result_type === "polygon" ||
+      result.result_type === "segmentation") &&
     result.geometry?.points &&
     Array.isArray(result.geometry.points) &&
     result.geometry.points.length > 0

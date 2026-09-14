@@ -79,5 +79,3 @@ export const projectConfigSchema = z.object({
   settings_schema_version: z.string(),
 });
 export type ProjectConfig = z.infer<typeof projectConfigSchema>;
-
-

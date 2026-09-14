@@ -85,7 +85,7 @@ export function WorkspaceCategoryBar({
       </div>
 
       {/* Right: Quick Action Buttons */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex shrink-0 items-center gap-2">
         {onNavigatePrev && hasPrev && (
           <button
             type="button"

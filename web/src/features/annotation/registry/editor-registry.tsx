@@ -24,7 +24,6 @@ const KonvaAnnotationCanvas = dynamic(
   }
 );
 
-
 /**
  * Standardized Props that every Editor Component in the Registry must accept
  */

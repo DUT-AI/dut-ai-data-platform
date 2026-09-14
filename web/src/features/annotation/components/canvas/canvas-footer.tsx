@@ -43,7 +43,7 @@ export function CanvasFooter({
       : null;
 
   return (
-    <div className="flex items-center justify-between border-t border-slate-900 bg-slate-950 px-4 py-1.5 text-[11px] text-slate-400 select-none">
+    <div className="flex select-none items-center justify-between border-t border-slate-900 bg-slate-950 px-4 py-1.5 text-[11px] text-slate-400">
       <div className="flex items-center gap-3">
         <span>
           Tool:{" "}
@@ -73,7 +73,7 @@ export function CanvasFooter({
           </span>
         )}
         <span>•</span>
-        <span className="text-slate-200 font-semibold">
+        <span className="font-semibold text-slate-200">
           Zoom: {Math.round(stageScale * 100)}%
         </span>
       </div>

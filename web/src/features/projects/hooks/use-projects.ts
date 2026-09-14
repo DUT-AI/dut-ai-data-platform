@@ -12,8 +12,11 @@ export const PROJECT_KEYS = {
   details: () => [...PROJECT_KEYS.all, "detail"] as const,
   detail: (id: string) => [...PROJECT_KEYS.details(), id] as const,
   config: (id: string) => [...PROJECT_KEYS.detail(id), "config"] as const,
-  templates: (params?: { group?: string; modality?: string; search?: string }) =>
-    [...PROJECT_KEYS.all, "templates", params] as const,
+  templates: (params?: {
+    group?: string;
+    modality?: string;
+    search?: string;
+  }) => [...PROJECT_KEYS.all, "templates", params] as const,
   templateGroups: () => [...PROJECT_KEYS.all, "templateGroups"] as const,
 };
 

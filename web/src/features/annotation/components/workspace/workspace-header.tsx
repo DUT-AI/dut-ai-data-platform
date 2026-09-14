@@ -139,7 +139,7 @@ export function WorkspaceHeader({
           variant="default"
           disabled={isSubmitting}
           onClick={onSaveRevision}
-          className="h-8 text-xs font-semibold bg-blue-600 text-white hover:bg-blue-500 shadow-sm"
+          className="h-8 bg-blue-600 text-xs font-semibold text-white shadow-sm hover:bg-blue-500"
         >
           {isSubmitting ? "Đang lưu..." : "💾 Lưu (Mod+S)"}
         </Button>

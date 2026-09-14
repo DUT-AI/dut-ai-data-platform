@@ -118,7 +118,9 @@ function AnnotationWorkspaceInner({
   const activeAnnotation = annotations?.[0];
   const revisions = useMemo(() => {
     if (!activeAnnotation) return [];
-    const list = activeAnnotation.revisions ? [...activeAnnotation.revisions] : [];
+    const list = activeAnnotation.revisions
+      ? [...activeAnnotation.revisions]
+      : [];
     if (list.length === 0 && activeAnnotation.latest_revision) {
       list.push(activeAnnotation.latest_revision);
     }
@@ -405,10 +407,14 @@ function AnnotationWorkspaceInner({
                 hasPrev={hasPrev}
                 hasNext={hasNext}
                 onNavigatePrev={() =>
-                  hasPrev && assets && navigateToAsset(assets[currentAssetIdx - 1].id)
+                  hasPrev &&
+                  assets &&
+                  navigateToAsset(assets[currentAssetIdx - 1].id)
                 }
                 onNavigateNext={() =>
-                  hasNext && assets && navigateToAsset(assets[currentAssetIdx + 1].id)
+                  hasNext &&
+                  assets &&
+                  navigateToAsset(assets[currentAssetIdx + 1].id)
                 }
               />
 

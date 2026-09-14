@@ -86,22 +86,14 @@ export function CreateProjectView() {
     },
   });
 
-  // Initialize selected group and template when data arrives
-  useEffect(() => {
-    if (groups.length > 0 && !selectedGroup) {
-      setSelectedGroup(groups[0]);
-    }
-  }, [groups, selectedGroup]);
-
-  useEffect(() => {
-    if (templates.length > 0 && !selectedTemplateId) {
-      setSelectedTemplateId(templates[0].id);
-    }
-  }, [templates, selectedTemplateId]);
+  // Derive active group and template fallback from catalog data
+  const activeGroup = selectedGroup || (groups.length > 0 ? groups[0] : "");
+  const activeTemplateId =
+    selectedTemplateId || (templates.length > 0 ? templates[0].id : "");
 
   // Filter templates for current selected group & search query
   const currentTemplates = useMemo(() => {
-    let list = templates.filter((t) => t.group === selectedGroup);
+    let list = templates.filter((t) => t.group === activeGroup);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(
@@ -112,16 +104,16 @@ export function CreateProjectView() {
       );
     }
     return list;
-  }, [templates, selectedGroup, searchQuery]);
+  }, [templates, activeGroup, searchQuery]);
 
   // Selected template object
   const activeTemplate = useMemo(() => {
     return (
-      templates.find((t) => t.id === selectedTemplateId) ||
+      templates.find((t) => t.id === activeTemplateId) ||
       currentTemplates[0] ||
       null
     );
-  }, [selectedTemplateId, templates, currentTemplates]);
+  }, [activeTemplateId, templates, currentTemplates]);
 
   // Sync backend template id to form
   useEffect(() => {
@@ -160,7 +152,6 @@ export function CreateProjectView() {
       );
     }
   };
-
 
   const isLoadingData = isGroupsLoading || isTemplatesLoading;
 
@@ -253,7 +244,8 @@ export function CreateProjectView() {
                       Thông tin dự án mới
                     </h2>
                     <p className="mt-1 text-xs text-slate-500">
-                      Khởi tạo không gian làm việc cho dữ liệu và mô hình AI của bạn.
+                      Khởi tạo không gian làm việc cho dữ liệu và mô hình AI của
+                      bạn.
                     </p>
                   </div>
 
@@ -380,7 +372,8 @@ export function CreateProjectView() {
                         {selectedGroup}
                       </h3>
                       <p className="text-xs text-slate-500">
-                        Chọn cấu hình gán nhãn bài toán AI phù hợp với dữ liệu của bạn.
+                        Chọn cấu hình gán nhãn bài toán AI phù hợp với dữ liệu
+                        của bạn.
                       </p>
                     </div>
 
@@ -402,7 +395,7 @@ export function CreateProjectView() {
                   ) : (
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
                       {currentTemplates.map((tpl) => {
-                        const isSelected = selectedTemplateId === tpl.id;
+                        const isSelected = activeTemplateId === tpl.id;
                         const isEnterprise = tpl.type === "enterprise";
 
                         return (

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Folder, ArrowRight, Calendar, User, Tag } from "lucide-react";
+import { Folder, ArrowRight, Calendar, User } from "lucide-react";
 import { Project } from "../types";
 import {
   Badge,

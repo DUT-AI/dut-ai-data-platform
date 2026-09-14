@@ -1,7 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input } from "@/components/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+} from "@/components/ui";
 import { getOntologyApiError } from "../../helpers/ontology-error";
 import { ontologyCreateSchema, type OntologyCreatePayload } from "../../types";
 

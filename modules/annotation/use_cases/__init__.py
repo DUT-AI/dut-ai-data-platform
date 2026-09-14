@@ -1,10 +1,18 @@
-from modules.annotation.use_cases.annotation_use_cases import (
+from modules.annotation.use_cases.create_annotation import (
     CreateAnnotationUseCase,
+)
+from modules.annotation.use_cases.create_revision import (
     CreateRevisionUseCase,
+)
+from modules.annotation.use_cases.get_annotation import (
     GetAnnotationDetailUseCase,
+    ListAssetAnnotationsUseCase,
+)
+from modules.annotation.use_cases.get_revision import (
     GetRevisionDetailUseCase,
     ListAnnotationRevisionsUseCase,
-    ListAssetAnnotationsUseCase,
+)
+from modules.annotation.use_cases.label_studio import (
     OpenAssetInLabelStudioUseCase,
     SyncLabelStudioWebhookUseCase,
 )

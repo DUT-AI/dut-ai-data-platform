@@ -2,8 +2,18 @@
 
 import { useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui";
-import { ONTOLOGY_PRESETS, type OntologyPreset } from "../helpers/ontology-presets";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui";
+import {
+  ONTOLOGY_PRESETS,
+  type OntologyPreset,
+} from "../helpers/ontology-presets";
 
 interface OntologyPresetPickerProps {
   disabled: boolean;

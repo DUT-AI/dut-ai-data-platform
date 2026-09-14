@@ -13,6 +13,9 @@ importers:
       "@radix-ui/react-slot":
         specifier: ^1.2.4
         version: 1.3.0(@types/react@19.2.17)(react@19.2.4)
+      "@tanstack/react-hotkeys":
+        specifier: ^0.10.0
+        version: 0.10.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       "@tanstack/react-query":
         specifier: ^5.100.10
         version: 5.101.2(react@19.2.4)
@@ -25,6 +28,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      konva:
+        specifier: ^10.5.0
+        version: 10.5.0
       lucide-react:
         specifier: ^1.16.0
         version: 1.23.0(react@19.2.4)
@@ -43,6 +49,9 @@ importers:
       react-hook-form:
         specifier: ^7.83.0
         version: 7.83.0(react@19.2.4)
+      react-konva:
+        specifier: ^19.2.7
+        version: 19.2.7(@types/react@19.2.17)(konva@10.5.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       tailwind-merge:
         specifier: ^3.6.0
         version: 3.6.0
@@ -460,6 +469,7 @@ packages:
       }
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   "@img/sharp-libvips-linux-arm@1.2.4":
     resolution:
@@ -468,6 +478,7 @@ packages:
       }
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   "@img/sharp-libvips-linux-ppc64@1.2.4":
     resolution:
@@ -476,6 +487,7 @@ packages:
       }
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   "@img/sharp-libvips-linux-riscv64@1.2.4":
     resolution:
@@ -484,6 +496,7 @@ packages:
       }
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   "@img/sharp-libvips-linux-s390x@1.2.4":
     resolution:
@@ -492,6 +505,7 @@ packages:
       }
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   "@img/sharp-libvips-linux-x64@1.2.4":
     resolution:
@@ -500,6 +514,7 @@ packages:
       }
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   "@img/sharp-libvips-linuxmusl-arm64@1.2.4":
     resolution:
@@ -508,6 +523,7 @@ packages:
       }
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   "@img/sharp-libvips-linuxmusl-x64@1.2.4":
     resolution:
@@ -516,6 +532,7 @@ packages:
       }
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   "@img/sharp-linux-arm64@0.34.5":
     resolution:
@@ -525,6 +542,7 @@ packages:
     engines: { node: ^18.17.0 || ^20.3.0 || >=21.0.0 }
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   "@img/sharp-linux-arm@0.34.5":
     resolution:
@@ -534,6 +552,7 @@ packages:
     engines: { node: ^18.17.0 || ^20.3.0 || >=21.0.0 }
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   "@img/sharp-linux-ppc64@0.34.5":
     resolution:
@@ -543,6 +562,7 @@ packages:
     engines: { node: ^18.17.0 || ^20.3.0 || >=21.0.0 }
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   "@img/sharp-linux-riscv64@0.34.5":
     resolution:
@@ -552,6 +572,7 @@ packages:
     engines: { node: ^18.17.0 || ^20.3.0 || >=21.0.0 }
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   "@img/sharp-linux-s390x@0.34.5":
     resolution:
@@ -561,6 +582,7 @@ packages:
     engines: { node: ^18.17.0 || ^20.3.0 || >=21.0.0 }
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   "@img/sharp-linux-x64@0.34.5":
     resolution:
@@ -570,6 +592,7 @@ packages:
     engines: { node: ^18.17.0 || ^20.3.0 || >=21.0.0 }
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   "@img/sharp-linuxmusl-arm64@0.34.5":
     resolution:
@@ -579,6 +602,7 @@ packages:
     engines: { node: ^18.17.0 || ^20.3.0 || >=21.0.0 }
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   "@img/sharp-linuxmusl-x64@0.34.5":
     resolution:
@@ -588,6 +612,7 @@ packages:
     engines: { node: ^18.17.0 || ^20.3.0 || >=21.0.0 }
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   "@img/sharp-wasm32@0.34.5":
     resolution:
@@ -702,6 +727,7 @@ packages:
     engines: { node: ">= 10" }
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   "@next/swc-linux-arm64-musl@16.2.4":
     resolution:
@@ -711,6 +737,7 @@ packages:
     engines: { node: ">= 10" }
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   "@next/swc-linux-x64-gnu@16.2.4":
     resolution:
@@ -720,6 +747,7 @@ packages:
     engines: { node: ">= 10" }
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   "@next/swc-linux-x64-musl@16.2.4":
     resolution:
@@ -729,6 +757,7 @@ packages:
     engines: { node: ">= 10" }
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   "@next/swc-win32-arm64-msvc@16.2.4":
     resolution:
@@ -877,6 +906,7 @@ packages:
     engines: { node: ">= 20" }
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   "@tailwindcss/oxide-linux-arm64-musl@4.3.2":
     resolution:
@@ -886,6 +916,7 @@ packages:
     engines: { node: ">= 20" }
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   "@tailwindcss/oxide-linux-x64-gnu@4.3.2":
     resolution:
@@ -895,6 +926,7 @@ packages:
     engines: { node: ">= 20" }
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   "@tailwindcss/oxide-linux-x64-musl@4.3.2":
     resolution:
@@ -904,6 +936,7 @@ packages:
     engines: { node: ">= 20" }
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   "@tailwindcss/oxide-wasm32-wasi@4.3.2":
     resolution:
@@ -951,11 +984,28 @@ packages:
         integrity: sha512-rjVWYCa7Ngbi5AarT6k8TkxUG3Wl1QKzHdIZVsjZSzf36Jmo2IKZt/NHRAwly8oDkbBOH0YTu+CHuf9jPxMc+g==,
       }
 
+  "@tanstack/hotkeys@0.8.0":
+    resolution:
+      {
+        integrity: sha512-vqH7X9nb0MTJ/O08++dB5bP9jgj4+BIPOUu/U+6myG86lDsirZSVSobpq5UQpE7nBuk62i8eIYeOhd+OMl/UrA==,
+      }
+    engines: { node: ">=18" }
+
   "@tanstack/query-core@5.101.2":
     resolution:
       {
         integrity: sha512-hH5MLoJhF7KaIGd7q3xTXGXvslI+GYlM1Z/35aSHHWaCJWB7XvTSHYuV3eM7tw+aE0mT/xMro4M4Q9rCGHT0lw==,
       }
+
+  "@tanstack/react-hotkeys@0.10.0":
+    resolution:
+      {
+        integrity: sha512-GwOSndI5j3qBVYTmgP1mYyRTnlxb2MS17cwGlsavSxMQPSnmDf+m3LzMIpRMs+3zzQMjg3cYhHsFYizYlFI2tw==,
+      }
+    engines: { node: ">=18" }
+    peerDependencies:
+      react: ">=16.8"
+      react-dom: ">=16.8"
 
   "@tanstack/react-query@5.101.2":
     resolution:
@@ -964,6 +1014,21 @@ packages:
       }
     peerDependencies:
       react: ^18 || ^19
+
+  "@tanstack/react-store@0.11.1":
+    resolution:
+      {
+        integrity: sha512-HaIGKI3YLmjBYIvy5DFDY23oNaYZIsTZfngey07Uh5iLVJgM3bIGCnZeOFOqzjFld9JHWcaHJnasD/bKoGKwJQ==,
+      }
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  "@tanstack/store@0.11.1":
+    resolution:
+      {
+        integrity: sha512-mzTOBhypOuDJAy/D8n2MfUZ1HFkXnmSETviRyhqEC8LUE7/IZQExOTxMANj3KjTofYTkFNpBY67qaVrT41YccA==,
+      }
 
   "@tybys/wasm-util@0.10.3":
     resolution:
@@ -1002,6 +1067,22 @@ packages:
       }
     peerDependencies:
       "@types/react": ^19.2.0
+
+  "@types/react-reconciler@0.28.9":
+    resolution:
+      {
+        integrity: sha512-HHM3nxyUZ3zAylX8ZEyrDNd2XZOnQ0D5XfunJF5FLQnZbHHYq4UWvW1QfelQNXv1ICNkwYhfxjwfnqivYB6bFg==,
+      }
+    peerDependencies:
+      "@types/react": "*"
+
+  "@types/react-reconciler@0.33.0":
+    resolution:
+      {
+        integrity: sha512-HZOXsKT0tGI9LlUw2LuedXsVeB88wFa536vVL0M6vE8zN63nI+sSr1ByxmPToP5K5bukaVscyeCJcF9guVNJ1g==,
+      }
+    peerDependencies:
+      "@types/react": "*"
 
   "@types/react@19.2.17":
     resolution:
@@ -1161,6 +1242,7 @@ packages:
       }
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   "@unrs/resolver-binding-linux-arm64-musl@1.12.2":
     resolution:
@@ -1169,6 +1251,7 @@ packages:
       }
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   "@unrs/resolver-binding-linux-loong64-gnu@1.12.2":
     resolution:
@@ -1177,6 +1260,7 @@ packages:
       }
     cpu: [loong64]
     os: [linux]
+    libc: [glibc]
 
   "@unrs/resolver-binding-linux-loong64-musl@1.12.2":
     resolution:
@@ -1185,6 +1269,7 @@ packages:
       }
     cpu: [loong64]
     os: [linux]
+    libc: [musl]
 
   "@unrs/resolver-binding-linux-ppc64-gnu@1.12.2":
     resolution:
@@ -1193,6 +1278,7 @@ packages:
       }
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   "@unrs/resolver-binding-linux-riscv64-gnu@1.12.2":
     resolution:
@@ -1201,6 +1287,7 @@ packages:
       }
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   "@unrs/resolver-binding-linux-riscv64-musl@1.12.2":
     resolution:
@@ -1209,6 +1296,7 @@ packages:
       }
     cpu: [riscv64]
     os: [linux]
+    libc: [musl]
 
   "@unrs/resolver-binding-linux-s390x-gnu@1.12.2":
     resolution:
@@ -1217,6 +1305,7 @@ packages:
       }
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   "@unrs/resolver-binding-linux-x64-gnu@1.12.2":
     resolution:
@@ -1225,6 +1314,7 @@ packages:
       }
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   "@unrs/resolver-binding-linux-x64-musl@1.12.2":
     resolution:
@@ -1233,6 +1323,7 @@ packages:
       }
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   "@unrs/resolver-binding-openharmony-arm64@1.12.2":
     resolution:
@@ -2481,6 +2572,14 @@ packages:
       }
     engines: { node: ">= 0.4" }
 
+  its-fine@2.0.0:
+    resolution:
+      {
+        integrity: sha512-KLViCmWx94zOvpLwSlsx6yOCeMhZYaxrJV87Po5k/FoZzcPSahvK5qJ7fYhS61sZi5ikmh2S3Hz55A2l3U69ng==,
+      }
+    peerDependencies:
+      react: ^19.0.0
+
   jiti@2.7.0:
     resolution:
       {
@@ -2555,6 +2654,20 @@ packages:
         integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==,
       }
 
+  konva@10.5.0:
+    resolution:
+      {
+        integrity: sha512-gTVQ12CVE2vCaP8g+Ag6lYf9LIo1s1lr7bXLNTbF5pcXbdRFCA3Oy1fFxDN/wK7RklJ9e8oqTiSsqmUtfQx91w==,
+      }
+    peerDependencies:
+      canvas: ^3.0.0
+      skia-canvas: ^3.0.0
+    peerDependenciesMeta:
+      canvas:
+        optional: true
+      skia-canvas:
+        optional: true
+
   language-subtag-registry@0.3.23:
     resolution:
       {
@@ -2628,6 +2741,7 @@ packages:
     engines: { node: ">= 12.0.0" }
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   lightningcss-linux-arm64-musl@1.32.0:
     resolution:
@@ -2637,6 +2751,7 @@ packages:
     engines: { node: ">= 12.0.0" }
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   lightningcss-linux-x64-gnu@1.32.0:
     resolution:
@@ -2646,6 +2761,7 @@ packages:
     engines: { node: ">= 12.0.0" }
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   lightningcss-linux-x64-musl@1.32.0:
     resolution:
@@ -2655,6 +2771,7 @@ packages:
     engines: { node: ">= 12.0.0" }
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   lightningcss-win32-arm64-msvc@1.32.0:
     resolution:
@@ -3128,6 +3245,25 @@ packages:
         integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==,
       }
 
+  react-konva@19.2.7:
+    resolution:
+      {
+        integrity: sha512-z/mxVITj2W+MQ8+TeD7ONMnMvy99hj4NJ4UfmWbjJcdeUOm8AZR41cCfwRZTryE3/z4r2/nOyckRNlr0GP+G3w==,
+      }
+    peerDependencies:
+      konva: ^8.0.1 || ^7.2.5 || ^9.0.0 || ^10.0.0
+      react: ^19.2.0
+      react-dom: ^19.2.0
+
+  react-reconciler@0.33.0:
+    resolution:
+      {
+        integrity: sha512-KetWRytFv1epdpJc3J4G75I4WrplZE5jOL7Yq0p34+OVOKF4Se7WrdIdVC45XsSSmUTlht2FM/fM1FZb1mfQeA==,
+      }
+    engines: { node: ">=0.10.0" }
+    peerDependencies:
+      react: ^19.2.0
+
   react@19.2.4:
     resolution:
       {
@@ -3540,6 +3676,14 @@ packages:
       {
         integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==,
       }
+
+  use-sync-external-store@1.7.0:
+    resolution:
+      {
+        integrity: sha512-6L+EeigHMQhdaIPNIFUKwfWJSwWFQ8gJbJ2DLOs5sDIegTwR9fRxvnM3uciHKjIZhFz+KAv2emhWMRvDmMcY8A==,
+      }
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   which-boxed-primitive@1.1.1:
     resolution:
@@ -4062,12 +4206,32 @@ snapshots:
       postcss: 8.5.16
       tailwindcss: 4.3.2
 
+  "@tanstack/hotkeys@0.8.0":
+    dependencies:
+      "@tanstack/store": 0.11.1
+
   "@tanstack/query-core@5.101.2": {}
+
+  "@tanstack/react-hotkeys@0.10.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)":
+    dependencies:
+      "@tanstack/hotkeys": 0.8.0
+      "@tanstack/react-store": 0.11.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   "@tanstack/react-query@5.101.2(react@19.2.4)":
     dependencies:
       "@tanstack/query-core": 5.101.2
       react: 19.2.4
+
+  "@tanstack/react-store@0.11.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)":
+    dependencies:
+      "@tanstack/store": 0.11.1
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      use-sync-external-store: 1.7.0(react@19.2.4)
+
+  "@tanstack/store@0.11.1": {}
 
   "@tybys/wasm-util@0.10.3":
     dependencies:
@@ -4085,6 +4249,14 @@ snapshots:
       undici-types: 6.21.0
 
   "@types/react-dom@19.2.3(@types/react@19.2.17)":
+    dependencies:
+      "@types/react": 19.2.17
+
+  "@types/react-reconciler@0.28.9(@types/react@19.2.17)":
+    dependencies:
+      "@types/react": 19.2.17
+
+  "@types/react-reconciler@0.33.0(@types/react@19.2.17)":
     dependencies:
       "@types/react": 19.2.17
 
@@ -5150,6 +5322,13 @@ snapshots:
       has-symbols: 1.1.0
       set-function-name: 2.0.2
 
+  its-fine@2.0.0(@types/react@19.2.17)(react@19.2.4):
+    dependencies:
+      "@types/react-reconciler": 0.28.9(@types/react@19.2.17)
+      react: 19.2.4
+    transitivePeerDependencies:
+      - "@types/react"
+
   jiti@2.7.0: {}
 
   js-tokens@4.0.0: {}
@@ -5182,6 +5361,8 @@ snapshots:
   keyv@4.5.4:
     dependencies:
       json-buffer: 3.0.1
+
+  konva@10.5.0: {}
 
   language-subtag-registry@0.3.23: {}
 
@@ -5466,6 +5647,23 @@ snapshots:
       react: 19.2.4
 
   react-is@16.13.1: {}
+
+  react-konva@19.2.7(@types/react@19.2.17)(konva@10.5.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      "@types/react-reconciler": 0.33.0(@types/react@19.2.17)
+      its-fine: 2.0.0(@types/react@19.2.17)(react@19.2.4)
+      konva: 10.5.0
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      react-reconciler: 0.33.0(react@19.2.4)
+      scheduler: 0.27.0
+    transitivePeerDependencies:
+      - "@types/react"
+
+  react-reconciler@0.33.0(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+      scheduler: 0.27.0
 
   react@19.2.4: {}
 
@@ -5821,6 +6019,10 @@ snapshots:
   uri-js@4.4.1:
     dependencies:
       punycode: 2.3.1
+
+  use-sync-external-store@1.7.0(react@19.2.4):
+    dependencies:
+      react: 19.2.4
 
   which-boxed-primitive@1.1.1:
     dependencies:

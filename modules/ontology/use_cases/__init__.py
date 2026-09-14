@@ -30,6 +30,7 @@ from modules.ontology.use_cases.ontologies import (
     CreateOntologyUseCase,
     DeleteOntologyUseCase,
     GetOntologyUseCase,
+    GetProjectOntologyUseCase,
     ListProjectOntologiesUseCase,
     UpdateOntologyUseCase,
 )

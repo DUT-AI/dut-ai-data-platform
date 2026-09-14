@@ -20,6 +20,9 @@ class CreateOntologyUseCase:
     async def execute(
         self, project_id: str, data: OntologyCreateDTO
     ) -> OntologyResponseDTO:
+        existing = await self.repo.get_by_project(project_id)
+        if existing is not None:
+            raise ConflictException("Project đã có Ontology; mỗi Project chỉ sở hữu duy nhất 1 Ontology.")
         ontology = await self.repo.add(
             OntologyEntity(project_id=project_id, **data.model_dump())
         )
@@ -29,6 +32,28 @@ class CreateOntologyUseCase:
             )
         )
         ontology.versions = [draft]
+        return OntologyResponseDTO.model_validate(ontology)
+
+
+class GetProjectOntologyUseCase:
+    def __init__(
+        self, repo: IOntologyRepository, versions: IOntologyVersionRepository
+    ) -> None:
+        self.repo, self.versions = repo, versions
+
+    async def execute(self, project_id: str) -> OntologyResponseDTO:
+        ontology = await self.repo.get_by_project(project_id)
+        if ontology is None:
+            # Auto-create default ontology for projects that don't have one
+            ontology = await self.repo.add(
+                OntologyEntity(project_id=project_id, name="Project Ontology")
+            )
+            draft = await self.versions.add(
+                OntologyVersionEntity(
+                    ontology_id=ontology.id, version_no=1, name="Version 1"
+                )
+            )
+            ontology.versions = [draft]
         return OntologyResponseDTO.model_validate(ontology)
 
 

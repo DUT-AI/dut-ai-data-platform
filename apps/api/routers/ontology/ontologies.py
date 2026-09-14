@@ -12,14 +12,27 @@ from modules.ontology.use_cases import (
     CreateOntologyUseCase,
     DeleteOntologyUseCase,
     GetOntologyUseCase,
+    GetProjectOntologyUseCase,
     ListProjectOntologiesUseCase,
     UpdateOntologyUseCase,
 )
 
-router = APIRouter(prefix="/projects/{project_id}/ontologies", tags=["Ontology"])
+router = APIRouter(prefix="/projects/{project_id}", tags=["Ontology"])
 
 
-@router.get("", response_model=list[OntologyResponseDTO])
+@router.get("/ontology", response_model=OntologyResponseDTO)
+@inject
+async def get_project_ontology(
+    project_id: str,
+    current_user: CurrentUser,
+    use_case: FromDishka[GetProjectOntologyUseCase],
+    role: str = Depends(require_ontology_read),
+):
+    """Retrieve the single official ontology for this project."""
+    return await use_case.execute(project_id)
+
+
+@router.get("/ontologies", response_model=list[OntologyResponseDTO])
 @inject
 async def list_ontologies(
     project_id: str,
@@ -31,7 +44,7 @@ async def list_ontologies(
 
 
 @router.post(
-    "", response_model=OntologyResponseDTO, status_code=status.HTTP_201_CREATED
+    "/ontologies", response_model=OntologyResponseDTO, status_code=status.HTTP_201_CREATED
 )
 @inject
 async def create_ontology(
@@ -44,7 +57,7 @@ async def create_ontology(
     return await use_case.execute(project_id, data)
 
 
-@router.get("/{ontology_id}", response_model=OntologyResponseDTO)
+@router.get("/ontologies/{ontology_id}", response_model=OntologyResponseDTO)
 @inject
 async def get_ontology(
     project_id: str,
@@ -56,7 +69,7 @@ async def get_ontology(
     return await use_case.execute(project_id, ontology_id)
 
 
-@router.patch("/{ontology_id}", response_model=OntologyResponseDTO)
+@router.patch("/ontologies/{ontology_id}", response_model=OntologyResponseDTO)
 @inject
 async def update_ontology(
     project_id: str,
@@ -69,7 +82,7 @@ async def update_ontology(
     return await use_case.execute(project_id, ontology_id, data)
 
 
-@router.delete("/{ontology_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/ontologies/{ontology_id}", status_code=status.HTTP_204_NO_CONTENT)
 @inject
 async def delete_ontology(
     project_id: str,

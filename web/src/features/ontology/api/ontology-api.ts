@@ -1,6 +1,26 @@
 import { api } from "@/lib/api";
-import type { Category, CategoryForm, ExportedOntologySchema, InputDefinition, InputNodeForm, Ontology, OntologyCompositionPayload, OntologyCreatePayload, OntologyInput, OntologyOutput, OntologyVersion, OutputDefinition, OutputNodeForm, ValidationResult } from "../types";
-import { toCategoryNodeRequest, toCategoryNodeUpdateRequest, toInputNodeRequest, toOutputNodeRequest } from "./ontology-mappers";
+import type {
+  Category,
+  CategoryForm,
+  ExportedOntologySchema,
+  InputDefinition,
+  InputNodeForm,
+  Ontology,
+  OntologyCompositionPayload,
+  OntologyCreatePayload,
+  OntologyInput,
+  OntologyOutput,
+  OntologyVersion,
+  OutputDefinition,
+  OutputNodeForm,
+  ValidationResult,
+} from "../types";
+import {
+  toCategoryNodeRequest,
+  toCategoryNodeUpdateRequest,
+  toInputNodeRequest,
+  toOutputNodeRequest,
+} from "./ontology-mappers";
 
 /* ------------------------------------------------------------------ */
 /*  URL helpers (private)                                              */
@@ -18,6 +38,12 @@ const versionRoot = (
 /* ------------------------------------------------------------------ */
 /*  Ontology                                                          */
 /* ------------------------------------------------------------------ */
+
+export async function loadProjectOntology(
+  projectId: string
+): Promise<Ontology> {
+  return (await api.get<Ontology>(`/projects/${projectId}/ontology`)).data;
+}
 
 export async function loadProjectOntologies(
   projectId: string

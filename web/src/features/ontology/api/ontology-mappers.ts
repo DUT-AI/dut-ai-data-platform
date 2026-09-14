@@ -1,4 +1,17 @@
-import type { CategoryForm, CategoryPayload, CategoryUpdatePayload, InputDefinition, InputNodeForm, JsonFieldType, JsonObject, OntologyInputPayload, OntologyOutputPayload, OutputDefinition, OutputNodeForm, SchemaField } from "../types";
+import type {
+  CategoryForm,
+  CategoryPayload,
+  CategoryUpdatePayload,
+  InputDefinition,
+  InputNodeForm,
+  JsonFieldType,
+  JsonObject,
+  OntologyInputPayload,
+  OntologyOutputPayload,
+  OutputDefinition,
+  OutputNodeForm,
+  SchemaField,
+} from "../types";
 
 /* ------------------------------------------------------------------ */
 /*  Schema ↔ Fields mappers (single source of truth)                  */

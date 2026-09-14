@@ -7,12 +7,16 @@ interface RevisionHistoryPanelProps {
   revisions: AnnotationRevision[];
   selectedRevisionId: string;
   onSelectRevision: (revisionId: string) => void;
+  categoryNames?: Record<string, string>;
+  categoryColors?: Record<string, string>;
 }
 
 export function RevisionHistoryPanel({
   revisions,
   selectedRevisionId,
   onSelectRevision,
+  categoryNames = {},
+  categoryColors = {},
 }: RevisionHistoryPanelProps) {
   if (revisions.length === 0) {
     return (
@@ -72,6 +76,33 @@ export function RevisionHistoryPanel({
                   {rev.results.length} nhãn
                 </span>
               </div>
+
+              {rev.results.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {Array.from(
+                    new Set(
+                      rev.results.map((r) => r.category_id).filter(Boolean)
+                    )
+                  ).map((catId) => {
+                    const idStr = String(catId);
+                    const name = categoryNames[idStr] || idStr;
+                    const color = categoryColors[idStr] || "#64748b";
+                    return (
+                      <span
+                        key={idStr}
+                        style={{
+                          backgroundColor: `${color}20`,
+                          borderColor: color,
+                          color: color,
+                        }}
+                        className="rounded border px-1.5 py-0.5 text-[9px] font-medium"
+                      >
+                        {name}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </Card>
           );
         })}

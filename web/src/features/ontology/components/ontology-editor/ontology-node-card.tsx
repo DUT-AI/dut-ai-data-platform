@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, type DragEvent, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import {
+  useState,
+  type DragEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { GripVertical, LockKeyhole, Pencil } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";

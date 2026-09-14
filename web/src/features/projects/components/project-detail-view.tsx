@@ -121,7 +121,7 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
                 : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-300"
             }`}
           >
-            Ontologies (Bộ Nhãn)
+            Nhãn & Schema (Ontology)
           </button>
           <button
             onClick={() => setActiveTab("members")}

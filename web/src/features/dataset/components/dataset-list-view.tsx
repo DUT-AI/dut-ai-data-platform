@@ -48,7 +48,9 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
     projectId
   );
 
-  const activeDataset = datasets?.find((d: Dataset) => d.id === selectedDatasetId);
+  const activeDataset = datasets?.find(
+    (d: Dataset) => d.id === selectedDatasetId
+  );
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();

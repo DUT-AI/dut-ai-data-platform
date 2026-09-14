@@ -41,6 +41,7 @@ from modules.ontology.use_cases import (
     GetOntologyUseCase,
     GetOntologyVersionUseCase,
     GetOutputDefinitionUseCase,
+    GetProjectOntologyUseCase,
     ListCategoriesUseCase,
     ListInputDefinitionsUseCase,
     ListOntologyInputsUseCase,
@@ -83,6 +84,7 @@ class OntologyProvider(Provider):
     create_ontology = provide(CreateOntologyUseCase)
     list_ontologies = provide(ListProjectOntologiesUseCase)
     get_ontology = provide(GetOntologyUseCase)
+    get_project_ontology = provide(GetProjectOntologyUseCase)
     update_ontology = provide(UpdateOntologyUseCase)
     delete_ontology = provide(DeleteOntologyUseCase)
     input_definitions = provide(ListInputDefinitionsUseCase)

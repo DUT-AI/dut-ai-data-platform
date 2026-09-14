@@ -58,6 +58,25 @@ class SqlOntologyRepository(IOntologyRepository):
         )
         return map_ontology(model) if model else None
 
+    async def get_by_project(self, project_id: str) -> OntologyEntity | None:
+        model = (
+            (
+                await self._session.execute(
+                    select(OntologyModel)
+                    .options(
+                        selectinload(OntologyModel.versions).options(
+                            *version_load_options()
+                        )
+                    )
+                    .where(OntologyModel.project_id == project_id)
+                )
+            )
+            .scalars()
+            .unique()
+            .one_or_none()
+        )
+        return map_ontology(model) if model else None
+
     async def list_by_project(self, project_id: str) -> Sequence[OntologyEntity]:
         models = (
             (

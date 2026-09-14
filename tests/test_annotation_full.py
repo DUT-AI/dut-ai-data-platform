@@ -190,6 +190,7 @@ async def test_annotation_full_lifecycle():
         assert detail_res.status_code == 200
         detail_data = detail_res.json()
         assert detail_data["asset_id"] == asset_id
+        assert detail_data["target_type"] == "FULL_ASSET"
         assert len(detail_data["revisions"]) == 1
         assert detail_data["revisions"][0]["revision_number"] == 1
         assert len(detail_data["revisions"][0]["results"]) == 2

@@ -1,17 +1,17 @@
 from modules.annotation.domain.entities import (
     AnnotationEntity,
-    AnnotationResultEntity,
     AnnotationRevisionEntity,
+    AnnotationTarget,
+    RevisionSource,
+    SelectorType,
 )
-from modules.annotation.domain.interfaces import (
-    IAnnotationRepository,
-    IToolAdapter,
-)
+from modules.annotation.domain.interfaces import IAnnotationRepository
 
 __all__ = [
     "AnnotationEntity",
-    "AnnotationResultEntity",
     "AnnotationRevisionEntity",
+    "AnnotationTarget",
     "IAnnotationRepository",
-    "IToolAdapter",
+    "RevisionSource",
+    "SelectorType",
 ]

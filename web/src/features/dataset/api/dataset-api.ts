@@ -34,7 +34,10 @@ export const datasetApi = {
     datasetId: string,
     payload: DatasetUpdatePayload
   ): Promise<Dataset> => {
-    const response = await api.patch<Dataset>(`/datasets/${datasetId}`, payload);
+    const response = await api.patch<Dataset>(
+      `/datasets/${datasetId}`,
+      payload
+    );
     return response.data;
   },
 

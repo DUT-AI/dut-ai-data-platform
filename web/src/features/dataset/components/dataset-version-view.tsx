@@ -51,7 +51,9 @@ export function DatasetVersionView({
   const [isInheritOpen, setIsInheritOpen] = useState(false);
   const [isEditDatasetOpen, setIsEditDatasetOpen] = useState(false);
   const [editName, setEditName] = useState(dataset.name);
-  const [editDescription, setEditDescription] = useState(dataset.description || "");
+  const [editDescription, setEditDescription] = useState(
+    dataset.description || ""
+  );
 
   // Search & Filter States
   const [searchQuery, setSearchQuery] = useState("");
@@ -75,8 +77,9 @@ export function DatasetVersionView({
     const ontologyVersions = firstOntology.versions || [];
     // Ưu tiên bản published hoặc bản đầu tiên
     const activeVer =
-      ontologyVersions.find((v: { status: string; id: string }) => v.status === "published") ||
-      ontologyVersions[0];
+      ontologyVersions.find(
+        (v: { status: string; id: string }) => v.status === "published"
+      ) || ontologyVersions[0];
     return activeVer?.id;
   }, [ontologies]);
 
@@ -186,10 +189,7 @@ export function DatasetVersionView({
     dataset.id,
     projectId
   );
-  const updateDatasetMutation = useUpdateDatasetMutation(
-    dataset.id,
-    projectId
-  );
+  const updateDatasetMutation = useUpdateDatasetMutation(dataset.id, projectId);
   const publishMutation = usePublishDatasetVersionMutation(
     activeVersionId,
     projectId
@@ -200,7 +200,10 @@ export function DatasetVersionView({
     if (!editName.trim()) return;
 
     updateDatasetMutation.mutate(
-      { name: editName.trim(), description: editDescription.trim() || undefined },
+      {
+        name: editName.trim(),
+        description: editDescription.trim() || undefined,
+      },
       {
         onSuccess: () => {
           setIsEditDatasetOpen(false);
@@ -466,7 +469,9 @@ export function DatasetVersionView({
               <Input
                 placeholder="Nhập tên Dataset..."
                 value={editName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setEditName(e.target.value)
+                }
                 required
               />
             </div>
@@ -478,7 +483,9 @@ export function DatasetVersionView({
               <textarea
                 placeholder="Nhập mô tả Dataset..."
                 value={editDescription}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditDescription(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setEditDescription(e.target.value)
+                }
                 rows={3}
                 className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
               />

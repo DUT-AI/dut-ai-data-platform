@@ -68,7 +68,10 @@ function InheritVersionContent({
     useState<InheritDatasetVersionResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const inheritMutation = useInheritDatasetVersionMutation(versionId, projectId);
+  const inheritMutation = useInheritDatasetVersionMutation(
+    versionId,
+    projectId
+  );
 
   const selectedSourceVersion = availableSourceVersions.find(
     (v) => v.id === selectedSourceId
@@ -112,7 +115,8 @@ function InheritVersionContent({
           <span>🔄</span> Kế thừa phiên bản dữ liệu
         </DialogTitle>
         <DialogDescription>
-          Kế thừa tập tin dữ liệu từ một phiên bản khác trong cùng dataset vào phiên bản nháp{" "}
+          Kế thừa tập tin dữ liệu từ một phiên bản khác trong cùng dataset vào
+          phiên bản nháp{" "}
           <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
             {currentVersionString}
           </span>
@@ -162,7 +166,8 @@ function InheritVersionContent({
               >
                 {availableSourceVersions.map((v) => (
                   <option key={v.id} value={v.id}>
-                    {v.version} ({v.status.toUpperCase()}) — {v.asset_count} tập tin
+                    {v.version} ({v.status.toUpperCase()}) — {v.asset_count} tập
+                    tin
                   </option>
                 ))}
               </select>
@@ -175,20 +180,26 @@ function InheritVersionContent({
                 </p>
                 <ul className="mt-1 space-y-1 text-[11px]">
                   <li>
-                    • Nguồn: <span className="font-mono">{selectedSourceVersion.version}</span> (
-                    {selectedSourceVersion.asset_count} tập tin)
+                    • Nguồn:{" "}
+                    <span className="font-mono">
+                      {selectedSourceVersion.version}
+                    </span>{" "}
+                    ({selectedSourceVersion.asset_count} tập tin)
                   </li>
                   <li>
-                    • Đích: <span className="font-mono">{currentVersionString}</span> (
+                    • Đích:{" "}
+                    <span className="font-mono">{currentVersionString}</span> (
                     {targetVersion?.asset_count || 0} tập tin hiện có)
                   </li>
                   {targetVersion && targetVersion.asset_count > 0 ? (
                     <li className="text-amber-600 dark:text-amber-400">
-                      ℹ️ Phiên bản đích đã có dữ liệu. Các tập tin trùng lặp sẽ tự động được giữ nguyên.
+                      ℹ️ Phiên bản đích đã có dữ liệu. Các tập tin trùng lặp sẽ
+                      tự động được giữ nguyên.
                     </li>
                   ) : (
                     <li className="text-emerald-600 dark:text-emerald-400">
-                      ✓ Phiên bản đích đang trống. Tất cả tập tin sẽ được kế thừa nguyên vẹn.
+                      ✓ Phiên bản đích đang trống. Tất cả tập tin sẽ được kế
+                      thừa nguyên vẹn.
                     </li>
                   )}
                 </ul>

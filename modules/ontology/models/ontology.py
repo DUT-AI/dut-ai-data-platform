@@ -20,11 +20,15 @@ from core.database.base import Base, TimestampMixin, ULIDPrimaryKeyMixin
 
 class OntologyModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "ontologies"
+    __table_args__ = (
+        UniqueConstraint("project_id", name="uq_ontologies_project_id"),
+    )
 
     project_id: Mapped[str] = mapped_column(
         String(26),
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
+        unique=True,
         index=True,
     )
     current_version_id: Mapped[str | None] = mapped_column(

@@ -37,7 +37,7 @@ def test_s3_prediction_storage_upload_bytes():
     )
 
     assert s3_uri == "s3://data-platform/predictions/job_002.json"
-    mock_adapter.upload_bytes.assert_called_once()
+    mock_adapter.client.put_object.assert_called_once()
 
 
 @pytest.mark.asyncio

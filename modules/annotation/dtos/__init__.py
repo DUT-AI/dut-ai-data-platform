@@ -1,9 +1,8 @@
 from modules.annotation.dtos.annotation_dtos import (
     AnnotationCreateDTO,
     AnnotationResponseDTO,
-    AnnotationResultCreateDTO,
-    AnnotationResultResponseDTO,
     AnnotationRevisionResponseDTO,
+    AnnotationTargetDTO,
     LabelStudioSyncWebhookDTO,
     OpenInLabelStudioRequestDTO,
     OpenInLabelStudioResponseDTO,
@@ -13,9 +12,8 @@ from modules.annotation.dtos.annotation_dtos import (
 __all__ = [
     "AnnotationCreateDTO",
     "AnnotationResponseDTO",
-    "AnnotationResultCreateDTO",
-    "AnnotationResultResponseDTO",
     "AnnotationRevisionResponseDTO",
+    "AnnotationTargetDTO",
     "LabelStudioSyncWebhookDTO",
     "OpenInLabelStudioRequestDTO",
     "OpenInLabelStudioResponseDTO",

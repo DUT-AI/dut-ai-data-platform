@@ -51,7 +51,7 @@ export function AssetFilterToolbar({
     <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         {/* Left Side: Filter Control Group */}
-        <div className="flex flex-wrap items-center gap-2.5 flex-1">
+        <div className="flex flex-1 flex-wrap items-center gap-2.5">
           {/* Search Asset Name Input */}
           <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -74,7 +74,7 @@ export function AssetFilterToolbar({
               placeholder="Tìm kiếm theo tên tập tin..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-9 pr-8 text-xs focus:ring-primary-500 border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              className="focus:ring-primary-500 border-slate-200 bg-slate-50 pl-9 pr-8 text-xs text-slate-900 placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             />
             {searchQuery && (
               <button
@@ -89,13 +89,13 @@ export function AssetFilterToolbar({
 
           {/* Filter by File Type (Dynamic based on dataset assets) */}
           <div className="flex items-center gap-1.5">
-            <span className="hidden text-xs font-medium text-slate-500 dark:text-slate-400 sm:inline-block">
+            <span className="hidden text-xs font-medium text-slate-500 sm:inline-block dark:text-slate-400">
               Loại file:
             </span>
             <select
               value={selectedFileType}
               onChange={(e) => onFileTypeChange(e.target.value)}
-              className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-800 transition-colors focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+              className="focus:border-primary-500 focus:ring-primary-500 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-800 transition-colors focus:outline-none focus:ring-1 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
             >
               <option value="all">Tất cả loại file ({totalAssetsCount})</option>
               {fileTypeOptions.map((opt) => (
@@ -108,13 +108,13 @@ export function AssetFilterToolbar({
 
           {/* Filter by Date */}
           <div className="flex items-center gap-1.5">
-            <span className="hidden text-xs font-medium text-slate-500 dark:text-slate-400 sm:inline-block">
+            <span className="hidden text-xs font-medium text-slate-500 sm:inline-block dark:text-slate-400">
               Ngày tạo:
             </span>
             <select
               value={selectedDate}
               onChange={(e) => onDateChange(e.target.value)}
-              className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-800 transition-colors focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+              className="focus:border-primary-500 focus:ring-primary-500 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-800 transition-colors focus:outline-none focus:ring-1 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
             >
               <option value="all">Tất cả ngày</option>
               {dateOptions.map((opt) => (

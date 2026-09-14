@@ -1,7 +1,20 @@
 "use client";
 
-import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui";
-import type { Category, OntologyInput, OntologyOutput, OntologyVersion } from "../../types";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui";
+import type {
+  Category,
+  OntologyInput,
+  OntologyOutput,
+  OntologyVersion,
+} from "../../types";
 
 export type OntologyNodeDetails =
   | { kind: "input"; node: OntologyInput; versions: OntologyVersion[] }
@@ -24,7 +37,7 @@ const versionStatusLabel = (version: OntologyVersion): string =>
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="grid gap-1 rounded-lg border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-950/40 sm:grid-cols-[140px_1fr]">
+    <div className="grid gap-1 rounded-lg border border-slate-200 bg-slate-50/70 p-3 sm:grid-cols-[140px_1fr] dark:border-slate-800 dark:bg-slate-950/40">
       <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
         {label}
       </dt>
@@ -44,7 +57,7 @@ export function OntologyNodeDetailDialog({
     details?.kind === "input"
       ? details.node.input_schema
       : details?.kind === "output"
-        ? details.node.value_schema ?? details.node.definition?.default_schema
+        ? (details.node.value_schema ?? details.node.definition?.default_schema)
         : details?.kind === "category"
           ? {
               key: details.node.key,
@@ -87,30 +100,77 @@ export function OntologyNodeDetailDialog({
             <dl className="grid gap-2">
               <DetailRow label="Tên" value={node.name} />
               <DetailRow label="ID" value={node.id} />
-              <DetailRow label="Mô tả" value={node.description || "Chưa có mô tả"} />
-              <DetailRow label="Trạng thái" value={node.locked ? "Đã khóa" : "Có thể chỉnh sửa"} />
+              <DetailRow
+                label="Mô tả"
+                value={node.description || "Chưa có mô tả"}
+              />
+              <DetailRow
+                label="Trạng thái"
+                value={node.locked ? "Đã khóa" : "Có thể chỉnh sửa"}
+              />
 
               {details.kind === "input" && (
                 <>
-                  <DetailRow label="Loại Input" value={details.node.definition?.name ?? details.node.input_schema.type} />
-                  <DetailRow label="Scope" value={details.node.scope === "ONE_ITEM" ? "1 Asset = 1 Item" : "1 Asset = N Items"} />
-                  <DetailRow label="Định dạng" value={details.node.input_schema.allowed_extensions.map((extension) => `.${extension}`).join(", ") || "Không giới hạn"} />
+                  <DetailRow
+                    label="Loại Input"
+                    value={
+                      details.node.definition?.name ??
+                      details.node.input_schema.type
+                    }
+                  />
+                  <DetailRow
+                    label="Scope"
+                    value={
+                      details.node.scope === "ONE_ITEM"
+                        ? "1 Asset = 1 Item"
+                        : "1 Asset = N Items"
+                    }
+                  />
+                  <DetailRow
+                    label="Định dạng"
+                    value={
+                      details.node.input_schema.allowed_extensions
+                        .map((extension) => `.${extension}`)
+                        .join(", ") || "Không giới hạn"
+                    }
+                  />
                 </>
               )}
 
               {details.kind === "output" && (
                 <>
-                  <DetailRow label="Loại Output" value={details.node.definition?.name ?? "Output"} />
-                  <DetailRow label="Số kết quả" value={details.node.multiple ? "Nhiều kết quả" : "Một kết quả"} />
-                  <DetailRow label="Bắt buộc" value={details.node.required ? "Có" : "Không"} />
-                  <DetailRow label="Category" value={details.node.definition?.supports_categories ? "Có sử dụng Category" : "Không sử dụng Category"} />
+                  <DetailRow
+                    label="Loại Output"
+                    value={details.node.definition?.name ?? "Output"}
+                  />
+                  <DetailRow
+                    label="Số kết quả"
+                    value={
+                      details.node.multiple ? "Nhiều kết quả" : "Một kết quả"
+                    }
+                  />
+                  <DetailRow
+                    label="Bắt buộc"
+                    value={details.node.required ? "Có" : "Không"}
+                  />
+                  <DetailRow
+                    label="Category"
+                    value={
+                      details.node.definition?.supports_categories
+                        ? "Có sử dụng Category"
+                        : "Không sử dụng Category"
+                    }
+                  />
                 </>
               )}
 
               {details.kind === "category" && (
                 <>
                   <DetailRow label="Key" value={details.node.key} />
-                  <DetailRow label="Màu" value={details.node.color ?? "Chưa đặt màu"} />
+                  <DetailRow
+                    label="Màu"
+                    value={details.node.color ?? "Chưa đặt màu"}
+                  />
                 </>
               )}
             </dl>

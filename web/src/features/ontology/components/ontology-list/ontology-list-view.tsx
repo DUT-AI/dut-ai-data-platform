@@ -2,30 +2,36 @@
 
 import { useState } from "react";
 import { Boxes, Plus, RefreshCcw } from "lucide-react";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { useCreateOntologyMutation, useProjectOntologiesQuery } from "../../hooks";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui";
+import {
+  useCreateOntologyMutation,
+  useProjectOntologyQuery,
+} from "../../hooks";
 import type { OntologyCreatePayload } from "../../types";
 import { OntologyEditorView } from "../ontology-editor/ontology-editor-view";
 import { CreateOntologyDialog } from "./create-ontology-dialog";
-import { OntologyCard } from "./ontology-card";
 
 interface OntologyListViewProps {
   projectId: string;
 }
 
 export function OntologyListView({ projectId }: OntologyListViewProps) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const query = useProjectOntologiesQuery(projectId);
+  const query = useProjectOntologyQuery(projectId);
   const create = useCreateOntologyMutation(projectId);
-  const selected = query.data?.find((ontology) => ontology.id === selectedId);
 
-  if (selected) {
+  if (query.data) {
     return (
       <OntologyEditorView
-        ontology={selected}
+        ontology={query.data}
         projectId={projectId}
-        onBack={() => setSelectedId(null)}
+        onBack={() => {}}
       />
     );
   }
@@ -75,25 +81,15 @@ export function OntologyListView({ projectId }: OntologyListViewProps) {
                 Thử lại
               </Button>
             </div>
-          ) : query.data?.length ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {query.data.map((ontology) => (
-                <OntologyCard
-                  key={ontology.id}
-                  ontology={ontology}
-                  onOpen={() => setSelectedId(ontology.id)}
-                />
-              ))}
-            </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center dark:border-slate-700">
               <Boxes
                 className="mx-auto size-9 text-slate-400"
                 aria-hidden="true"
               />
-              <h3 className="mt-3 font-semibold">Chưa có Ontology</h3>
+              <h3 className="mt-3 font-semibold">Chưa có Schema Ontology</h3>
               <p className="mt-1 text-sm text-slate-500">
-                Tạo Ontology đầu tiên hoặc dùng bản mẫu sau khi mở Draft.
+                Khởi tạo bộ nhãn và schema cho dự án để bắt đầu cấu hình.
               </p>
               <Button
                 type="button"
@@ -102,7 +98,7 @@ export function OntologyListView({ projectId }: OntologyListViewProps) {
                 onClick={() => setCreateOpen(true)}
               >
                 <Plus className="mr-2 size-4" aria-hidden="true" />
-                Tạo Ontology
+                Khởi tạo Schema
               </Button>
             </div>
           )}
@@ -114,8 +110,9 @@ export function OntologyListView({ projectId }: OntologyListViewProps) {
         pending={create.isPending}
         onClose={() => setCreateOpen(false)}
         onSubmit={async (payload: OntologyCreatePayload) => {
-          const ontology = await create.mutateAsync(payload);
-          setSelectedId(ontology.id);
+          await create.mutateAsync(payload);
+          await query.refetch();
+          setCreateOpen(false);
         }}
       />
     </section>

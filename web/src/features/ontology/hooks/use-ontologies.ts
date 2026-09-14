@@ -1,11 +1,51 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createCategoryNodeFromForm, createDraftVersion, createInputNodeFromForm, createOntologyFromForm, createOutputNodeFromForm, exportVersionSchema, loadCategoryNodes, loadInputNodes, loadInputTypeOptions, loadOntologyVersions, loadOntologyWorkspace, loadOutputNodes, loadOutputTypeOptions, loadProjectOntologies, loadVersionWorkspace, publishDraftVersion, removeCategoryNode, removeDraftVersion, removeInputNode, removeOntology, removeOutputNode, renameDraftVersion, saveVersionGraph, updateCategoryNodeFromForm, updateInputNodeFromForm, updateOntologyFromForm, updateOutputNodeFromForm, validateDraftVersion } from "../api";
-import type { CategoryForm, InputDefinition, InputNodeForm, OntologyCompositionPayload, OntologyCreatePayload, OutputDefinition, OutputNodeForm } from "../types";
+import {
+  createCategoryNodeFromForm,
+  createDraftVersion,
+  createInputNodeFromForm,
+  createOntologyFromForm,
+  createOutputNodeFromForm,
+  exportVersionSchema,
+  loadCategoryNodes,
+  loadInputNodes,
+  loadInputTypeOptions,
+  loadOntologyVersions,
+  loadOntologyWorkspace,
+  loadOutputNodes,
+  loadOutputTypeOptions,
+  loadProjectOntologies,
+  loadProjectOntology,
+  loadVersionWorkspace,
+  publishDraftVersion,
+  removeCategoryNode,
+  removeDraftVersion,
+  removeInputNode,
+  removeOntology,
+  removeOutputNode,
+  renameDraftVersion,
+  saveVersionGraph,
+  updateCategoryNodeFromForm,
+  updateInputNodeFromForm,
+  updateOntologyFromForm,
+  updateOutputNodeFromForm,
+  validateDraftVersion,
+} from "../api";
+import type {
+  CategoryForm,
+  InputDefinition,
+  InputNodeForm,
+  OntologyCompositionPayload,
+  OntologyCreatePayload,
+  OutputDefinition,
+  OutputNodeForm,
+} from "../types";
 
 export const ONTOLOGY_KEYS = {
   project: (projectId: string) => ["ontologies", projectId] as const,
+  projectSingle: (projectId: string) =>
+    ["ontology", "project", projectId] as const,
   detail: (projectId: string, ontologyId: string) =>
     ["ontology", projectId, ontologyId] as const,
   definitions: ["ontology-definitions"] as const,
@@ -17,11 +57,34 @@ export const ONTOLOGY_KEYS = {
     ["ontology-version", projectId, ontologyId, versionId] as const,
 };
 
+export function useProjectOntologyQuery(projectId: string) {
+  return useQuery({
+    queryKey: ONTOLOGY_KEYS.projectSingle(projectId),
+    queryFn: () => loadProjectOntology(projectId),
+    enabled: Boolean(projectId),
+  });
+}
+
 export function useProjectOntologiesQuery(projectId: string) {
   return useQuery({
     queryKey: ONTOLOGY_KEYS.project(projectId),
     queryFn: () => loadProjectOntologies(projectId),
     enabled: Boolean(projectId),
+  });
+}
+
+export function useOntologySchemaQuery(
+  projectId: string,
+  ontologyId: string,
+  versionId: string
+) {
+  return useQuery({
+    queryKey: [
+      ...ONTOLOGY_KEYS.version(projectId, ontologyId, versionId),
+      "schema",
+    ],
+    queryFn: () => exportVersionSchema(projectId, ontologyId, versionId),
+    enabled: Boolean(projectId && ontologyId && versionId),
   });
 }
 

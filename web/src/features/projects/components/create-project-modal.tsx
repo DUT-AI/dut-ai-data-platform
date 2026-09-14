@@ -10,6 +10,17 @@ import {
   Sparkles,
   Layers,
   FileText,
+  Eye,
+  Type,
+  Mic,
+  MessageSquare,
+  Bot,
+  Table,
+  Activity,
+  Video,
+  Users,
+  Search,
+  Code2,
 } from "lucide-react";
 import { useCreateProjectMutation, useTaskDefinitionsQuery } from "../hooks";
 import { createProjectSchema, CreateProjectFormValues } from "../types";
@@ -34,6 +45,20 @@ interface CreateProjectModalProps {
 
 type TabType = "name" | "config";
 
+// Category Icons Mapping
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  "Computer Vision": <Eye className="h-4 w-4" />,
+  "Natural Language Processing": <Type className="h-4 w-4" />,
+  "Audio/Speech Processing": <Mic className="h-4 w-4" />,
+  "Conversational AI": <MessageSquare className="h-4 w-4" />,
+  Chat: <Bot className="h-4 w-4" />,
+  "Structured Data Parsing": <Table className="h-4 w-4" />,
+  "Time Series Analysis": <Activity className="h-4 w-4" />,
+  Videos: <Video className="h-4 w-4" />,
+  "Generative AI": <Sparkles className="h-4 w-4" />,
+  "Community Contributions": <Users className="h-4 w-4" />,
+};
+
 export function CreateProjectModal({
   open,
   onOpenChange,
@@ -51,6 +76,7 @@ export function CreateProjectModal({
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
     "semantic-segmentation-with-polygons"
   );
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedProvider, setSelectedProvider] =
     useState<string>("label_studio");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -71,20 +97,19 @@ export function CreateProjectModal({
 
   // Map template selection to backend TaskDefinition / Template Version
   const matchedTaskInfo = useMemo(() => {
-    // 1. Determine task key by group & template id
     let taskKey = "cv.object_detection";
+    const tId = selectedTemplateId.toLowerCase();
+
     if (selectedGroup === "Computer Vision") {
       if (
-        selectedTemplateId.includes("segmentation") ||
-        selectedTemplateId.includes("polygon")
+        tId.includes("segmentation") ||
+        tId.includes("polygon") ||
+        tId.includes("mask")
       ) {
         taskKey = "cv.semantic_segmentation";
-      } else if (selectedTemplateId.includes("classification")) {
+      } else if (tId.includes("classification")) {
         taskKey = "cv.image_classification";
-      } else if (
-        selectedTemplateId.includes("ocr") ||
-        selectedTemplateId.includes("text-extraction")
-      ) {
+      } else if (tId.includes("ocr") || tId.includes("text-extraction")) {
         taskKey = "cv.ocr";
       } else {
         taskKey = "cv.object_detection";
@@ -92,22 +117,28 @@ export function CreateProjectModal({
     } else if (
       selectedGroup === "Natural Language Processing" ||
       selectedGroup === "Generative AI" ||
-      selectedGroup === "Conversational AI"
+      selectedGroup === "Conversational AI" ||
+      selectedGroup === "Chat"
     ) {
       if (
-        selectedTemplateId.includes("entity") ||
-        selectedTemplateId.includes("ner") ||
-        selectedTemplateId.includes("span")
+        tId.includes("entity") ||
+        tId.includes("ner") ||
+        tId.includes("span") ||
+        tId.includes("tagging")
       ) {
         taskKey = "nlp.named_entity_recognition";
       } else {
         taskKey = "nlp.text_classification";
       }
+    } else if (selectedGroup === "Audio/Speech Processing") {
+      taskKey = "audio.speech_transcription";
+    } else if (selectedGroup === "Structured Data Parsing") {
+      taskKey = "tabular.data_labeling";
     } else {
       taskKey = "cv.object_detection";
     }
 
-    // Find in backend tasks list
+    // Find in backend tasks list (or fallback to first available task)
     const foundTask = tasks.find((t) => t.key === taskKey) || tasks[0];
     const taskVersion = foundTask?.versions?.[0];
     const template = foundTask?.templates?.[0];
@@ -143,10 +174,27 @@ export function CreateProjectModal({
     }
   }, [matchedTaskInfo, selectedProvider, form]);
 
-  // Filter templates for current selected group
+  // Filter templates for current selected group & search query
   const currentTemplates = useMemo(() => {
-    return templatesData.templates.filter((t) => t.group === selectedGroup);
-  }, [selectedGroup]);
+    let list = templatesData.templates.filter((t) => t.group === selectedGroup);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) || t.id.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [selectedGroup, searchQuery]);
+
+  // Selected template object
+  const activeTemplate = useMemo(() => {
+    return (
+      templatesData.templates.find((t) => t.id === selectedTemplateId) ||
+      currentTemplates[0] ||
+      null
+    );
+  }, [selectedTemplateId, currentTemplates]);
 
   const onSubmit = async (values: CreateProjectFormValues) => {
     setErrorMsg(null);
@@ -187,11 +235,11 @@ export function CreateProjectModal({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      className="w-[95vw] max-w-6xl"
+      className="w-[96vw] max-w-7xl"
     >
       <DialogContent
         onClose={() => onOpenChange(false)}
-        className="flex h-[88vh] max-h-[850px] w-full flex-col gap-0 overflow-hidden p-0"
+        className="flex h-[90vh] max-h-[900px] w-full flex-col gap-0 overflow-hidden p-0"
       >
         <Form {...form}>
           <form
@@ -212,7 +260,7 @@ export function CreateProjectModal({
                   }`}
                 >
                   <FileText className="h-4 w-4" />
-                  Project Info
+                  1. Project Info
                 </button>
                 <button
                   type="button"
@@ -224,7 +272,7 @@ export function CreateProjectModal({
                   }`}
                 >
                   <Layers className="h-4 w-4" />
-                  Labeling Setup
+                  2. Labeling Setup (Templates)
                 </button>
               </div>
 
@@ -240,15 +288,15 @@ export function CreateProjectModal({
                 <Button
                   type="submit"
                   disabled={createMutation.isPending || isTasksLoading}
-                  className="bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+                  className="bg-blue-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
                 >
                   {createMutation.isPending ? (
                     <>
                       <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                      Creating...
+                      Creating Project...
                     </>
                   ) : (
-                    "Create Project"
+                    "Save & Create Project"
                   )}
                 </Button>
               </div>
@@ -316,10 +364,10 @@ export function CreateProjectModal({
                       {[
                         {
                           key: "label_studio",
-                          label: "Label Studio (Default)",
+                          label: "Label Studio (Default Engine)",
                         },
                         { key: "cvat", label: "CVAT (Computer Vision)" },
-                        { key: "doccano", label: "Doccano (NLP)" },
+                        { key: "doccano", label: "Doccano (Text & Spans)" },
                       ].map((p) => {
                         const isSelected = selectedProvider === p.key;
                         return (
@@ -353,29 +401,44 @@ export function CreateProjectModal({
                 </div>
               )}
 
-              {/* TAB 2: LABELING SETUP */}
+              {/* TAB 2: LABELING SETUP (3-COLUMN LABEL STUDIO LAYOUT) */}
               {activeTab === "config" && (
-                <div className="flex h-full min-h-[500px]">
-                  {/* Left Sidebar: Groups */}
-                  <aside className="w-64 shrink-0 border-r border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950/30">
+                <div className="flex h-full min-h-[560px]">
+                  {/* Left Column: Task Categories */}
+                  <aside className="w-64 shrink-0 border-r border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40">
                     <h4 className="mb-3 px-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                       Task Categories
                     </h4>
                     <ul className="space-y-1">
                       {templatesData.groups.map((group) => {
                         const isActive = selectedGroup === group;
+                        const icon = CATEGORY_ICONS[group] || (
+                          <Layers className="h-4 w-4" />
+                        );
                         return (
                           <li key={group}>
                             <button
                               type="button"
-                              onClick={() => setSelectedGroup(group)}
+                              onClick={() => {
+                                setSelectedGroup(group);
+                                setSearchQuery("");
+                              }}
                               className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-xs font-medium transition ${
                                 isActive
-                                  ? "shadow-xs bg-blue-600 font-semibold text-white"
+                                  ? "bg-blue-600 font-semibold text-white shadow-sm"
                                   : "text-slate-700 hover:bg-slate-200/60 dark:text-slate-300 dark:hover:bg-slate-800/60"
                               }`}
                             >
-                              <span className="truncate">{group}</span>
+                              <div className="flex items-center space-x-2.5 truncate">
+                                <span
+                                  className={
+                                    isActive ? "text-white" : "text-slate-400"
+                                  }
+                                >
+                                  {icon}
+                                </span>
+                                <span className="truncate">{group}</span>
+                              </div>
                               <ChevronRight
                                 className={`h-3.5 w-3.5 shrink-0 ${
                                   isActive ? "text-white" : "text-slate-400"
@@ -388,26 +451,34 @@ export function CreateProjectModal({
                     </ul>
                   </aside>
 
-                  {/* Right: Templates Grid */}
-                  <main className="flex flex-1 flex-col overflow-y-auto p-6">
-                    <div className="mb-4 flex items-center justify-between">
+                  {/* Middle Column: Templates Grid */}
+                  <main className="flex flex-1 flex-col overflow-y-auto border-r border-slate-200 p-6 dark:border-slate-800">
+                    {/* Filter & Header */}
+                    <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                       <div>
                         <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
                           {selectedGroup}
                         </h3>
                         <p className="text-xs text-slate-500">
-                          Chọn cấu hình gán nhãn mẫu phù hợp với dữ liệu của
-                          bạn.
+                          Chọn cấu hình gán nhãn mẫu phù hợp với dữ liệu bài
+                          toán của bạn.
                         </p>
                       </div>
-                      {matchedTaskInfo.task && (
-                        <span className="rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300">
-                          Backend Task: {matchedTaskInfo.task.name}
-                        </span>
-                      )}
+
+                      {/* Search templates input */}
+                      <div className="relative w-64">
+                        <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                        <Input
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Tìm mẫu gán nhãn..."
+                          className="h-8 border-slate-200 bg-white pl-8 text-xs dark:border-slate-800 dark:bg-slate-900"
+                        />
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                    {/* Grid of Templates */}
+                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
                       {currentTemplates.map((tpl) => {
                         const isSelected = selectedTemplateId === tpl.id;
                         const isEnterprise = tpl.type === "enterprise";
@@ -418,19 +489,19 @@ export function CreateProjectModal({
                             onClick={() => setSelectedTemplateId(tpl.id)}
                             className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-white transition hover:shadow-md dark:bg-slate-900 ${
                               isSelected
-                                ? "border-blue-600 ring-2 ring-blue-500/20"
+                                ? "border-blue-600 shadow-sm ring-2 ring-blue-500/20"
                                 : "border-slate-200 hover:border-slate-300 dark:border-slate-800"
                             }`}
                           >
                             {/* Selected Checkmark Badge */}
                             {isSelected && (
-                              <div className="shadow-xs absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white">
-                                <Check className="h-3.5 w-3.5" />
+                              <div className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm">
+                                <Check className="h-3.5 w-3.5 stroke-[3]" />
                               </div>
                             )}
 
                             {/* Image preview */}
-                            <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                               {tpl.image ? (
                                 <img
                                   src={tpl.image}
@@ -443,20 +514,20 @@ export function CreateProjectModal({
                                 />
                               ) : (
                                 <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-400">
-                                  No Preview
+                                  Template Preview
                                 </div>
                               )}
                             </div>
 
                             {/* Card Content */}
-                            <div className="flex flex-1 flex-col items-center justify-center p-3 text-center">
+                            <div className="flex flex-1 flex-col justify-between p-3">
                               <h3 className="line-clamp-2 text-xs font-bold text-slate-800 dark:text-slate-200">
                                 {tpl.title}
                               </h3>
                               {isEnterprise && (
-                                <span className="mt-1.5 inline-flex items-center gap-1 rounded-sm bg-orange-500/10 px-2 py-0.5 text-[10px] font-semibold text-orange-600">
+                                <span className="mt-1.5 inline-flex w-fit items-center gap-1 rounded bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
                                   <Sparkles className="h-2.5 w-2.5" />
-                                  Enterprise
+                                  Enterprise Ready
                                 </span>
                               )}
                             </div>
@@ -465,6 +536,63 @@ export function CreateProjectModal({
                       })}
                     </div>
                   </main>
+
+                  {/* Right Column: Template Detail & Schema Preview */}
+                  <aside className="w-80 shrink-0 overflow-y-auto bg-slate-50/50 p-5 dark:bg-slate-950/30">
+                    <div className="space-y-5">
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="rounded bg-blue-600/10 px-2 py-0.5 text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+                            {selectedGroup}
+                          </span>
+                          {matchedTaskInfo.task && (
+                            <span className="rounded bg-slate-200 px-2 py-0.5 font-mono text-[10px] text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                              {matchedTaskInfo.task.key}
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="mt-2 text-sm font-bold text-slate-900 dark:text-slate-100">
+                          {activeTemplate?.title || "Chưa chọn mẫu"}
+                        </h4>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Tự động sinh cấu hình Ontology Input/Output tương ứng
+                          cho dự án mới.
+                        </p>
+                      </div>
+
+                      {/* Backend Task Definition Info */}
+                      <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+                        <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                          Backend Task Binding
+                        </div>
+                        <div className="mt-1.5 flex items-center justify-between text-xs">
+                          <span className="text-slate-500">Task Name:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
+                            {matchedTaskInfo.task?.name || "Auto Detected"}
+                          </span>
+                        </div>
+                        <div className="mt-1 flex items-center justify-between text-xs">
+                          <span className="text-slate-500">Modality:</span>
+                          <span className="font-mono text-slate-800 dark:text-slate-200">
+                            {matchedTaskInfo.task?.modality || "multi-modal"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* XML/JSON Schema Config Preview */}
+                      {activeTemplate?.config && (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            <Code2 className="h-3.5 w-3.5 text-slate-400" />
+                            <span>Label Studio Config (XML/Schema):</span>
+                          </div>
+                          <pre className="max-h-64 overflow-x-auto rounded-lg border border-slate-200 bg-slate-100 p-2.5 font-mono text-[10px] leading-tight text-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+                            {activeTemplate.config.trim()}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  </aside>
                 </div>
               )}
             </div>

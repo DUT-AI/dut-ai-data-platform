@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import { Check, Copy, Download } from "lucide-react";
-import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui";
 import type { ExportedOntologySchema } from "../../types";
 
 interface SchemaExportDialogProps {

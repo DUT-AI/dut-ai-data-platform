@@ -1,7 +1,7 @@
 from typing import Any
 
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import APIRouter, Body, status
+from fastapi import APIRouter, Body, Query, status
 
 from apps.api.deps.auth import CurrentUser
 from modules.annotation.dtos.annotation_dtos import (
@@ -41,15 +41,17 @@ async def list_asset_annotations(
     asset_id: str,
     current_user: CurrentUser,
     use_case: FromDishka[ListAssetAnnotationsUseCase],
+    target_type: str | None = Query(None, description="Filter by target type (FULL_ASSET, RECORD, TEXT_SPAN...)"),
 ):
-    return await use_case.execute(asset_id)
+    return await use_case.execute(asset_id, target_type=target_type)
 
 
 @router.post(
     "/api/v1/assets/{asset_id}/open-in-label-studio",
     response_model=OpenInLabelStudioResponseDTO,
     status_code=status.HTTP_200_OK,
-    summary="Open asset in Label Studio",
+    summary="Open asset in Label Studio (Legacy/External)",
+    deprecated=True,
 )
 @inject
 async def open_asset_in_label_studio(
@@ -170,7 +172,8 @@ async def get_revision_detail(
     "/api/v1/annotations/sync",
     response_model=AnnotationRevisionResponseDTO | None,
     status_code=status.HTTP_200_OK,
-    summary="Webhook endpoint for Label Studio sync",
+    summary="Webhook endpoint for Label Studio sync (Legacy)",
+    deprecated=True,
 )
 @inject
 async def sync_label_studio_webhook(

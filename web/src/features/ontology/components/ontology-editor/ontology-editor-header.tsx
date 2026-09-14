@@ -1,6 +1,15 @@
 "use client";
 
-import { ArrowLeft, Braces, CheckCircle2, CopyPlus, Pencil, Save, Send, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Braces,
+  CheckCircle2,
+  CopyPlus,
+  Pencil,
+  Save,
+  Send,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui";
 import type { OntologyVersion, VersionStatus } from "../../types";
 

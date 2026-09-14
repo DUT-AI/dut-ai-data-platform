@@ -50,6 +50,16 @@ class IDatasetRepository(Protocol):
         self, version_id: str, limit: int = 100, offset: int = 0
     ) -> Sequence[AssetEntity]: ...
 
+    async def list_assets_by_version_cursor(
+        self, version_id: str, limit: int = 100, cursor_id: str | None = None
+    ) -> tuple[Sequence[AssetEntity], str | None]: ...
+
+    async def get_all_assets_by_version(
+        self, version_id: str
+    ) -> Sequence[AssetEntity]: ...
+
     async def get_version_asset_link(
         self, version_id: str, asset_id: str
     ) -> DatasetVersionAssetEntity | None: ...
+
+    async def count_active_version_links_by_asset(self, asset_id: str) -> int: ...

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Card } from "@/components/ui";
+import { Badge, Button, Card } from "@/components/ui";
 import { Asset } from "../types";
 import { useRemoveVersionAssetMutation } from "../hooks";
 import { AssetDetailModal } from "./asset-detail-modal";
@@ -9,6 +9,8 @@ import { AssetDetailModal } from "./asset-detail-modal";
 interface AssetGalleryGridProps {
   versionId: string;
   assets: Asset[];
+  totalAssetsCount?: number;
+  onResetFilters?: () => void;
   isEditable: boolean;
   projectId?: string;
   ontologyVersionId?: string;
@@ -17,6 +19,8 @@ interface AssetGalleryGridProps {
 export function AssetGalleryGrid({
   versionId,
   assets,
+  totalAssetsCount,
+  onResetFilters,
   isEditable,
   projectId,
   ontologyVersionId,
@@ -39,6 +43,27 @@ export function AssetGalleryGrid({
   };
 
   if (assets.length === 0) {
+    if (totalAssetsCount && totalAssetsCount > 0) {
+      return (
+        <div className="space-y-3 rounded-xl border-2 border-dashed border-slate-200 p-12 text-center text-slate-400 dark:border-slate-800">
+          <div className="text-3xl">🔍</div>
+          <p className="text-[13px] font-medium text-slate-700 dark:text-slate-300">
+            Không tìm thấy tập tin nào phù hợp với bộ lọc
+          </p>
+          {onResetFilters && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onResetFilters}
+              className="text-xs"
+            >
+              Xóa bộ lọc để xem lại tất cả ({totalAssetsCount}) tập tin
+            </Button>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-2 rounded-xl border-2 border-dashed border-slate-200 p-12 text-center text-slate-400 dark:border-slate-800">
         <div className="text-3xl">📦</div>

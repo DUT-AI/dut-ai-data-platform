@@ -1,15 +1,33 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Badge, Button, Card } from "@/components/ui";
-import { Dataset } from "../types";
+import React, { useMemo, useState } from "react";
+import {
+  Badge,
+  Button,
+  Card,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+} from "@/components/ui";
+import { Dataset, DatasetVersion } from "../types";
 import {
   useCreateDatasetVersionMutation,
   useDatasetVersionQuery,
   usePublishDatasetVersionMutation,
+  useUpdateDatasetMutation,
   useVersionAssetsQuery,
 } from "../hooks";
+import {
+  AssetFilterToolbar,
+  DateOption,
+  FileTypeOption,
+} from "./asset-filter-toolbar";
 import { UploadDropzoneModal } from "./upload-dropzone-modal";
+import { InheritVersionModal } from "./inherit-version-modal";
 import { AssetGalleryGrid } from "./asset-gallery-grid";
 import { AssetListTable } from "./asset-list-table";
 import { AnnotationStatsBar } from "@/features/annotation";
@@ -30,6 +48,15 @@ export function DatasetVersionView({
   );
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isInheritOpen, setIsInheritOpen] = useState(false);
+  const [isEditDatasetOpen, setIsEditDatasetOpen] = useState(false);
+  const [editName, setEditName] = useState(dataset.name);
+  const [editDescription, setEditDescription] = useState(dataset.description || "");
+
+  // Search & Filter States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFileType, setSelectedFileType] = useState("all");
+  const [selectedDate, setSelectedDate] = useState("all");
 
   const activeVersionId = selectedVersionId || versions[0]?.id || "";
 
@@ -48,12 +75,118 @@ export function DatasetVersionView({
     const ontologyVersions = firstOntology.versions || [];
     // Ưu tiên bản published hoặc bản đầu tiên
     const activeVer =
-      ontologyVersions.find((v) => v.status === "published") ||
+      ontologyVersions.find((v: { status: string; id: string }) => v.status === "published") ||
       ontologyVersions[0];
     return activeVer?.id;
   }, [ontologies]);
 
+  // Computed available file types present in the current dataset version assets
+  const fileTypeOptions = useMemo<FileTypeOption[]>(() => {
+    if (!assets || assets.length === 0) return [];
+    const map = new Map<string, { label: string; count: number }>();
+
+    assets.forEach((asset) => {
+      const mime = asset.mime_type || "application/octet-stream";
+      const ext = asset.filename.includes(".")
+        ? asset.filename.split(".").pop()?.toLowerCase() || ""
+        : mime.split("/")[1] || "file";
+
+      const displayLabel = ext ? ext.toUpperCase() : mime;
+
+      if (map.has(mime)) {
+        map.get(mime)!.count += 1;
+      } else {
+        map.set(mime, { label: displayLabel, count: 1 });
+      }
+    });
+
+    return Array.from(map.entries()).map(([mimeType, val]) => ({
+      mimeType,
+      label: val.label,
+      count: val.count,
+    }));
+  }, [assets]);
+
+  // Computed available dates present in the dataset version assets
+  const dateOptions = useMemo<DateOption[]>(() => {
+    if (!assets || assets.length === 0) return [];
+    const map = new Map<string, { displayLabel: string; count: number }>();
+
+    assets.forEach((asset) => {
+      if (!asset.created_at) return;
+      const dateObj = new Date(asset.created_at);
+      if (isNaN(dateObj.getTime())) return;
+
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const dd = String(dateObj.getDate()).padStart(2, "0");
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const displayLabel = `${dd}/${mm}/${yyyy}`;
+
+      if (map.has(dateStr)) {
+        map.get(dateStr)!.count += 1;
+      } else {
+        map.set(dateStr, { displayLabel, count: 1 });
+      }
+    });
+
+    return Array.from(map.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([dateStr, val]) => ({
+        dateStr,
+        displayLabel: val.displayLabel,
+        count: val.count,
+      }));
+  }, [assets]);
+
+  // Filtered assets list based on search and selected filters
+  const filteredAssets = useMemo(() => {
+    if (!assets) return [];
+    return assets.filter((asset) => {
+      // 1. Filename search filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        if (!asset.filename.toLowerCase().includes(q)) {
+          return false;
+        }
+      }
+
+      // 2. File type filter
+      if (selectedFileType !== "all") {
+        if (asset.mime_type !== selectedFileType) {
+          return false;
+        }
+      }
+
+      // 3. Date filter
+      if (selectedDate !== "all") {
+        if (!asset.created_at) return false;
+        const dateObj = new Date(asset.created_at);
+        if (isNaN(dateObj.getTime())) return false;
+        const yyyy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+        const dd = String(dateObj.getDate()).padStart(2, "0");
+        const dateStr = `${yyyy}-${mm}-${dd}`;
+        if (dateStr !== selectedDate) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [assets, searchQuery, selectedFileType, selectedDate]);
+
+  const handleResetFilters = () => {
+    setSearchQuery("");
+    setSelectedFileType("all");
+    setSelectedDate("all");
+  };
+
   const createVersionMutation = useCreateDatasetVersionMutation(
+    dataset.id,
+    projectId
+  );
+  const updateDatasetMutation = useUpdateDatasetMutation(
     dataset.id,
     projectId
   );
@@ -61,6 +194,20 @@ export function DatasetVersionView({
     activeVersionId,
     projectId
   );
+
+  const handleEditDatasetSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editName.trim()) return;
+
+    updateDatasetMutation.mutate(
+      { name: editName.trim(), description: editDescription.trim() || undefined },
+      {
+        onSuccess: () => {
+          setIsEditDatasetOpen(false);
+        },
+      }
+    );
+  };
 
   const handleCreateVersion = () => {
     const nextVerStr = `v1.${versions.length}.0`;
@@ -72,7 +219,7 @@ export function DatasetVersionView({
       createVersionMutation.mutate(
         { version: newVer.trim() },
         {
-          onSuccess: (created) => {
+          onSuccess: (created: { id: string }) => {
             setSelectedVersionId(created.id);
           },
         }
@@ -102,7 +249,33 @@ export function DatasetVersionView({
               <span className="text-xs font-medium text-slate-400">
                 Dataset
               </span>
-              <h2 className="text-lg font-bold">{dataset.name}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold">{dataset.name}</h2>
+                <button
+                  onClick={() => {
+                    setEditName(dataset.name);
+                    setEditDescription(dataset.description || "");
+                    setIsEditDatasetOpen(true);
+                  }}
+                  title="Đổi tên / Chỉnh sửa Dataset"
+                  className="flex items-center gap-1.5 rounded-md border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-xs font-medium text-slate-200 shadow-sm transition-colors hover:border-slate-600 hover:bg-slate-700 hover:text-white"
+                >
+                  <svg
+                    className="h-3.5 w-3.5 text-slate-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                    />
+                  </svg>
+                  <span>Sửa Dataset ✏️</span>
+                </button>
+              </div>
             </div>
 
             {/* Version Selector Dropdown */}
@@ -113,7 +286,7 @@ export function DatasetVersionView({
                 onChange={(e) => setSelectedVersionId(e.target.value)}
                 className="focus:ring-primary-500 rounded border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2"
               >
-                {versions.map((v) => (
+                {versions.map((v: DatasetVersion) => (
                   <option key={v.id} value={v.id}>
                     {v.version} ({v.status.toUpperCase()}) - {v.asset_count}{" "}
                     assets
@@ -172,6 +345,15 @@ export function DatasetVersionView({
                 <Button
                   size="sm"
                   variant="outline"
+                  onClick={() => setIsInheritOpen(true)}
+                  className="border-slate-700 text-slate-200 hover:bg-slate-800"
+                >
+                  🔄 Kế thừa phiên bản
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={() => setIsUploadOpen(true)}
                   className="border-slate-700 text-slate-200 hover:bg-slate-800"
                 >
@@ -198,6 +380,23 @@ export function DatasetVersionView({
         annotatedAssets={assets?.length ? Math.round(assets.length * 0.4) : 0}
       />
 
+      {/* Search & Filter Toolbar */}
+      {assets && assets.length > 0 && (
+        <AssetFilterToolbar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedFileType={selectedFileType}
+          onFileTypeChange={setSelectedFileType}
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+          fileTypeOptions={fileTypeOptions}
+          dateOptions={dateOptions}
+          totalAssetsCount={assets.length}
+          filteredAssetsCount={filteredAssets.length}
+          onResetFilters={handleResetFilters}
+        />
+      )}
+
       {/* Asset Gallery Body */}
       {isVerLoading || isAssetsLoading ? (
         <div className="p-12 text-center text-sm text-slate-500">
@@ -207,7 +406,9 @@ export function DatasetVersionView({
         viewMode === "grid" ? (
           <AssetGalleryGrid
             versionId={activeVersionId}
-            assets={assets}
+            assets={filteredAssets}
+            totalAssetsCount={assets.length}
+            onResetFilters={handleResetFilters}
             isEditable={isEditable}
             projectId={projectId}
             ontologyVersionId={ontologyVersionId}
@@ -215,7 +416,9 @@ export function DatasetVersionView({
         ) : (
           <AssetListTable
             versionId={activeVersionId}
-            assets={assets}
+            assets={filteredAssets}
+            totalAssetsCount={assets.length}
+            onResetFilters={handleResetFilters}
             isEditable={isEditable}
             projectId={projectId}
             ontologyVersionId={ontologyVersionId}
@@ -228,6 +431,75 @@ export function DatasetVersionView({
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
       />
+
+      <InheritVersionModal
+        versionId={activeVersionId}
+        currentVersionString={
+          versionDetail?.version ||
+          versions.find((v) => v.id === activeVersionId)?.version ||
+          ""
+        }
+        datasetVersions={versions}
+        isOpen={isInheritOpen}
+        onClose={() => setIsInheritOpen(false)}
+        projectId={projectId}
+      />
+
+      {/* Edit Dataset Modal */}
+      <Dialog
+        open={isEditDatasetOpen}
+        onOpenChange={(open) => !open && setIsEditDatasetOpen(false)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa bộ Dữ liệu (Dataset)</DialogTitle>
+            <DialogDescription>
+              Cập nhật tên hiển thị và mô tả cho bộ dữ liệu này.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleEditDatasetSubmit} className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                Tên Dataset <span className="text-rose-500">*</span>
+              </label>
+              <Input
+                placeholder="Nhập tên Dataset..."
+                value={editName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                Mô tả
+              </label>
+              <textarea
+                placeholder="Nhập mô tả Dataset..."
+                value={editDescription}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditDescription(e.target.value)}
+                rows={3}
+                className="focus:ring-primary-500 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              />
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditDatasetOpen(false)}
+                disabled={updateDatasetMutation.isPending}
+              >
+                Hủy
+              </Button>
+              <Button type="submit" isLoading={updateDatasetMutation.isPending}>
+                Lưu thay đổi
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

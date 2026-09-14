@@ -137,8 +137,15 @@ async def test_annotation_full_lifecycle():
         draft_ver_id = d_res.json()["versions"][0]["id"]
 
         # 4. Upload an Asset
+        import io
+        from PIL import Image
+
+        buf = io.BytesIO()
+        Image.new("RGB", (10, 10), "red").save(buf, format="PNG")
+        valid_png_content = buf.getvalue()
+
         files_data = [
-            ("files", ("traffic_01.png", b"fake_png_data", "image/png")),
+            ("files", ("traffic_01.png", valid_png_content, "image/png")),
         ]
         upload_res = await client.post(
             f"/api/v1/dataset-versions/{draft_ver_id}/assets",

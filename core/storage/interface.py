@@ -22,6 +22,12 @@ class IStorageProvider(ABC):
         """Generate a presigned GET URL for temporary downloading."""
 
     @abstractmethod
+    async def get_presigned_upload_url(
+        self, bucket: str, key: str, content_type: str | None = None, expires: int = 3600
+    ) -> str:
+        """Generate a presigned PUT URL for temporary uploading."""
+
+    @abstractmethod
     async def delete(self, bucket: str, key: str) -> None:
         """Delete an object from bucket."""
 

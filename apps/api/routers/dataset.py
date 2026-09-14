@@ -7,22 +7,37 @@ from modules.dataset.dtos.dataset_dtos import (
     AssetDownloadUrlResponseDTO,
     AssetResponseDTO,
     BatchUploadResultDTO,
+    CursorPageAssetResponseDTO,
     DatasetCreateDTO,
     DatasetResponseDTO,
+    DatasetUpdateDTO,
     DatasetVersionCreateDTO,
     DatasetVersionResponseDTO,
+    FinalizeAssetImportRequestDTO,
+    FinalizeAssetImportResponseDTO,
+    InheritDatasetVersionRequestDTO,
+    InheritDatasetVersionResponseDTO,
+    PrepareUploadRequestDTO,
+    PrepareUploadResponseDTO,
 )
 from modules.dataset.use_cases import (
+    ArchiveDatasetUseCase,
     CreateDatasetUseCase,
     CreateDatasetVersionUseCase,
+    FinalizeAssetImportUseCase,
     GetAssetDetailUseCase,
     GetAssetDownloadUrlUseCase,
     GetDatasetDetailUseCase,
     GetDatasetVersionDetailUseCase,
+    InheritDatasetVersionUseCase,
     ListProjectDatasetsUseCase,
+    ListVersionAssetsCursorUseCase,
     ListVersionAssetsUseCase,
+    PrepareAssetUploadUseCase,
     PublishDatasetVersionUseCase,
     RemoveVersionAssetUseCase,
+    RetireAssetUseCase,
+    UpdateDatasetUseCase,
     UploadVersionAssetsUseCase,
 )
 
@@ -77,6 +92,21 @@ async def get_dataset_detail(
     return await use_case.execute(dataset_id)
 
 
+@router.patch(
+    "/api/v1/datasets/{dataset_id}",
+    response_model=DatasetResponseDTO,
+    summary="Update dataset metadata (name, description, tags)",
+)
+@inject
+async def update_dataset(
+    dataset_id: str,
+    payload: DatasetUpdateDTO,
+    current_user: CurrentUser,
+    use_case: FromDishka[UpdateDatasetUseCase],
+):
+    return await use_case.execute(dataset_id, payload)
+
+
 @router.post(
     "/api/v1/datasets/{dataset_id}/versions",
     response_model=DatasetVersionResponseDTO,
@@ -107,10 +137,26 @@ async def get_dataset_version_detail(
     return await use_case.execute(version_id)
 
 
+@router.post(
+    "/api/v1/dataset-versions/{version_id}/inherit",
+    response_model=InheritDatasetVersionResponseDTO,
+    status_code=status.HTTP_200_OK,
+    summary="Inherit assets from another version in the same dataset",
+)
+@inject
+async def inherit_dataset_version(
+    version_id: str,
+    payload: InheritDatasetVersionRequestDTO,
+    current_user: CurrentUser,
+    use_case: FromDishka[InheritDatasetVersionUseCase],
+):
+    return await use_case.execute(version_id, payload)
+
+
 @router.get(
     "/api/v1/dataset-versions/{version_id}/assets",
     response_model=list[AssetResponseDTO],
-    summary="List all assets belonging to a dataset version",
+    summary="List all assets belonging to a dataset version (Offset-based)",
 )
 @inject
 async def list_version_assets(
@@ -123,11 +169,62 @@ async def list_version_assets(
     return await use_case.execute(version_id, limit=limit, offset=offset)
 
 
+@router.get(
+    "/api/v1/dataset-versions/{version_id}/assets/cursor",
+    response_model=CursorPageAssetResponseDTO,
+    summary="List assets belonging to a dataset version using Cursor Pagination (Spec v1)",
+)
+@inject
+async def list_version_assets_cursor(
+    version_id: str,
+    current_user: CurrentUser,
+    use_case: FromDishka[ListVersionAssetsCursorUseCase],
+    limit: int = Query(100, ge=1, le=500),
+    cursor: str | None = Query(None, description="Last Asset ID for next page"),
+):
+    return await use_case.execute(version_id, limit=limit, cursor_id=cursor)
+
+
+@router.post(
+    "/api/v1/dataset-versions/{version_id}/prepare-upload",
+    response_model=PrepareUploadResponseDTO,
+    status_code=status.HTTP_200_OK,
+    summary="Get presigned S3 upload URLs for assets (Spec v1)",
+)
+@inject
+async def prepare_asset_upload(
+    version_id: str,
+    payload: PrepareUploadRequestDTO,
+    current_user: CurrentUser,
+    use_case: FromDishka[PrepareAssetUploadUseCase],
+):
+    return await use_case.execute(version_id, payload)
+
+
+@router.post(
+    "/api/v1/dataset-versions/{version_id}/finalize-import",
+    response_model=FinalizeAssetImportResponseDTO,
+    status_code=status.HTTP_201_CREATED,
+    summary="Finalize asset import after S3 presigned upload (Spec v1)",
+)
+@inject
+async def finalize_asset_import(
+    version_id: str,
+    payload: FinalizeAssetImportRequestDTO,
+    current_user: CurrentUser,
+    use_case: FromDishka[FinalizeAssetImportUseCase],
+):
+    return await use_case.execute(
+        version_id, payload, created_by=str(current_user.id)
+    )
+
+
 @router.post(
     "/api/v1/dataset-versions/{version_id}/assets",
     response_model=BatchUploadResultDTO,
     status_code=status.HTTP_201_CREATED,
-    summary="Batch upload assets to a draft dataset version",
+    summary="Batch upload assets directly (Deprecated - Use prepare-upload & finalize-import)",
+    deprecated=True,
 )
 @inject
 async def upload_version_assets(
@@ -201,3 +298,31 @@ async def get_asset_download_url(
     expires_in_seconds: int = Query(3600, ge=60, le=86400),
 ):
     return await use_case.execute(asset_id, expires_in_seconds=expires_in_seconds)
+
+
+@router.put(
+    "/api/v1/datasets/{dataset_id}/archive",
+    response_model=DatasetResponseDTO,
+    summary="Archive a dataset (prevents creating new versions)",
+)
+@inject
+async def archive_dataset(
+    dataset_id: str,
+    current_user: CurrentUser,
+    use_case: FromDishka[ArchiveDatasetUseCase],
+):
+    return await use_case.execute(dataset_id)
+
+
+@router.put(
+    "/api/v1/assets/{asset_id}/retire",
+    response_model=AssetResponseDTO,
+    summary="Retire an asset (if no protected references exist)",
+)
+@inject
+async def retire_asset(
+    asset_id: str,
+    current_user: CurrentUser,
+    use_case: FromDishka[RetireAssetUseCase],
+):
+    return await use_case.execute(asset_id)

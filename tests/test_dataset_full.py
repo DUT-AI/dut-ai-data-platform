@@ -53,11 +53,16 @@ async def test_dataset_full_lifecycle():
         assert dataset["versions"][0]["status"] == "draft"
 
         # 3. Batch Upload Files to Version
-        file1_content = b"fake_png_image_binary_data_12345"
+        import io
+        from PIL import Image
+
+        buf = io.BytesIO()
+        Image.new("RGB", (10, 10), "red").save(buf, format="PNG")
+        valid_png_content = buf.getvalue()
         file2_content = b"fake_pdf_document_binary_data_67890"
 
         files_data = [
-            ("files", ("car_01.png", file1_content, "image/png")),
+            ("files", ("car_01.png", valid_png_content, "image/png")),
             ("files", ("doc_info.pdf", file2_content, "application/pdf")),
         ]
 
@@ -74,9 +79,9 @@ async def test_dataset_full_lifecycle():
         asset_1 = upload_data["uploaded_assets"][0]
         asset_2 = upload_data["uploaded_assets"][1]
 
-        # 4. Verify SHA256 Deduplication: Upload file1_content again
+        # 4. Verify SHA256 Deduplication: Upload valid_png_content again
         dup_files_data = [
-            ("files", ("duplicate_car.png", file1_content, "image/png")),
+            ("files", ("duplicate_car.png", valid_png_content, "image/png")),
         ]
         dup_upload_res = await client.post(
             f"/api/v1/dataset-versions/{draft_ver_id}/assets",

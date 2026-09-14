@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Button,
@@ -81,6 +82,8 @@ function AssetDetailContent({
     );
   };
 
+  const [hasImageError, setHasImageError] = useState(false);
+
   return (
     <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col">
       <DialogHeader>
@@ -95,13 +98,24 @@ function AssetDetailContent({
       <div className="flex-1 space-y-4 overflow-y-auto py-2">
         {/* File Preview Area */}
         <div className="flex min-h-[220px] items-center justify-center rounded-xl border border-slate-800 bg-slate-900 p-4">
-          {isImage && downloadData?.download_url ? (
+          {isImage && downloadData?.download_url && !hasImageError ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={downloadData.download_url}
               alt={asset.filename}
+              onError={() => setHasImageError(true)}
               className="max-h-64 rounded object-contain"
             />
+          ) : hasImageError ? (
+            <div className="space-y-2 text-center text-amber-400">
+              <div className="text-4xl">⚠️</div>
+              <p className="text-xs font-semibold text-amber-300">
+                Tập tin hình ảnh bị hỏng hoặc không thể xem trước
+              </p>
+              <p className="font-mono text-[11px] text-slate-400">
+                {asset.filename}
+              </p>
+            </div>
           ) : isPdf && downloadData?.download_url ? (
             <iframe
               src={downloadData.download_url}

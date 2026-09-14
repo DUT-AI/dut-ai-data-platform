@@ -5,8 +5,10 @@ import {
   BatchUploadResult,
   Dataset,
   DatasetCreatePayload,
+  DatasetUpdatePayload,
   DatasetVersion,
   DatasetVersionCreatePayload,
+  InheritDatasetVersionResponse,
 } from "../types";
 
 export const datasetApi = {
@@ -25,6 +27,14 @@ export const datasetApi = {
       `/projects/${projectId}/datasets`,
       payload
     );
+    return response.data;
+  },
+
+  updateDataset: async (
+    datasetId: string,
+    payload: DatasetUpdatePayload
+  ): Promise<Dataset> => {
+    const response = await api.patch<Dataset>(`/datasets/${datasetId}`, payload);
     return response.data;
   },
 
@@ -105,6 +115,17 @@ export const datasetApi = {
   ): Promise<AssetDownloadUrlResponse> => {
     const response = await api.get<AssetDownloadUrlResponse>(
       `/assets/${assetId}/download`
+    );
+    return response.data;
+  },
+
+  inheritDatasetVersion: async (
+    versionId: string,
+    sourceVersionId: string
+  ): Promise<InheritDatasetVersionResponse> => {
+    const response = await api.post<InheritDatasetVersionResponse>(
+      `/dataset-versions/${versionId}/inherit`,
+      { source_version_id: sourceVersionId }
     );
     return response.data;
   },

@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { Badge, Button } from "@/components/ui";
 import { useProjectQuery } from "../hooks";
-import { PROJECT_TYPE_OPTIONS } from "../types";
 import { ProjectOverviewTab } from "./project-overview-tab";
 import { ProjectMembersTab } from "./project-members-tab";
 import { ProjectSettingsTab } from "./project-settings-tab";
@@ -50,10 +49,6 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
     );
   }
 
-  const typeOption = PROJECT_TYPE_OPTIONS.find(
-    (opt) => opt.value === project.project_type
-  );
-
   return (
     <div className="space-y-6">
       {/* Header & Back Nav */}
@@ -74,21 +69,13 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
               <Badge
                 variant={project.status === "active" ? "success" : "secondary"}
               >
-                {project.status.toUpperCase()}
+                {project.status === "active" ? "Hoạt động" : "Lưu trữ"}
               </Badge>
             </div>
             <p className="mt-1 text-sm text-slate-500">
               {project.description || "Chưa có mô tả."}
             </p>
           </div>
-
-          {typeOption && (
-            <span
-              className={`self-start rounded-full border px-3 py-1 text-xs font-semibold md:self-auto ${typeOption.badgeColor}`}
-            >
-              {typeOption.label}
-            </span>
-          )}
         </div>
 
         {/* Tab Switcher */}

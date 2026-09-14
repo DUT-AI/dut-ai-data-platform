@@ -9,25 +9,17 @@ from modules.project.domain.events import (
 )
 from modules.project.domain.interfaces import IProjectRepository
 from modules.project.integrations.access_checker import LegacyProjectAccessChecker
-from modules.project.repository.catalog_repository import SqlProjectCatalogRepository
-from modules.project.repository.project_repository import SqlProjectRepository
+from modules.project.repository import InMemoryProjectCatalogRepository, SqlProjectRepository
 from modules.project.use_cases import (
     AddProjectMemberUseCase,
     ArchiveProjectUseCase,
-    ChangeProjectTemplateVersionStatusUseCase,
-    ChangeTaskDefinitionVersionStatusUseCase,
-    CreateProjectTemplateUseCase,
-    CreateProjectTemplateVersionUseCase,
     CreateProjectUseCase,
-    CreateTaskDefinitionUseCase,
-    CreateTaskDefinitionVersionUseCase,
     GetProjectConfigUseCase,
     GetProjectTemplateUseCase,
-    GetProjectTemplateVersionUseCase,
     GetProjectUseCase,
-    GetTaskDefinitionUseCase,
     ListProjectMembersUseCase,
-    ListTaskDefinitionsUseCase,
+    ListProjectTemplatesUseCase,
+    ListTemplateGroupsUseCase,
     ListUserProjectsUseCase,
     RemoveProjectMemberUseCase,
     RestoreProjectUseCase,
@@ -47,10 +39,8 @@ class ProjectProvider(Provider):
         return SqlProjectRepository(session)
 
     @provide
-    def get_catalog_repository(
-        self, session: AsyncSession
-    ) -> IProjectCatalogRepository:
-        return SqlProjectCatalogRepository(session)
+    def get_catalog_repository(self) -> IProjectCatalogRepository:
+        return InMemoryProjectCatalogRepository()
 
     @provide
     def get_access_checker(self, session: AsyncSession) -> IProjectAccessChecker:
@@ -66,20 +56,10 @@ class ProjectProvider(Provider):
     update_project_uc = provide(UpdateProjectUseCase)
     archive_project_uc = provide(ArchiveProjectUseCase)
     restore_project_uc = provide(RestoreProjectUseCase)
-    list_task_definitions_uc = provide(ListTaskDefinitionsUseCase)
-    get_task_definition_uc = provide(GetTaskDefinitionUseCase)
+    list_project_templates_uc = provide(ListProjectTemplatesUseCase)
+    list_template_groups_uc = provide(ListTemplateGroupsUseCase)
     get_project_template_uc = provide(GetProjectTemplateUseCase)
-    get_project_template_version_uc = provide(GetProjectTemplateVersionUseCase)
-    create_task_definition_uc = provide(CreateTaskDefinitionUseCase)
-    create_task_definition_version_uc = provide(CreateTaskDefinitionVersionUseCase)
-    change_task_definition_version_status_uc = provide(
-        ChangeTaskDefinitionVersionStatusUseCase
-    )
-    create_project_template_uc = provide(CreateProjectTemplateUseCase)
-    create_project_template_version_uc = provide(CreateProjectTemplateVersionUseCase)
-    change_project_template_version_status_uc = provide(
-        ChangeProjectTemplateVersionStatusUseCase
-    )
+
 
     add_project_member_uc = provide(AddProjectMemberUseCase)
     list_project_members_uc = provide(ListProjectMembersUseCase)
@@ -88,3 +68,4 @@ class ProjectProvider(Provider):
 
     get_project_config_uc = provide(GetProjectConfigUseCase)
     update_project_config_uc = provide(UpdateProjectConfigUseCase)
+

@@ -9,7 +9,6 @@ from core.utils.id_generator import generate_ulid
 class ProjectConfigurationEntity:
     project_id: str
     id: str = field(default_factory=generate_ulid)
-    annotation_provider_key: str = "label_studio"
     storage_provider_key: str = "minio"
     default_workflow_ref: str | None = None
     settings: dict[str, Any] = field(default_factory=dict)
@@ -32,14 +31,22 @@ class ProjectMemberEntity:
 class ProjectEntity:
     name: str
     created_by: str
-    task_definition_version_id: str | None = None
+    template_id: str | None = None
     description: str | None = None
-    project_template_version_id: str | None = None
     status: str = "active"
     id: str = field(default_factory=generate_ulid)
     created_at: datetime | None = None
     updated_at: datetime | None = None
     archived_at: datetime | None = None
+
+    @property
+    def project_template_version_id(self) -> str | None:
+        return self.template_id
+
+    @property
+    def task_definition_version_id(self) -> str | None:
+        return self.template_id
+
 
     @property
     def owner_id(self) -> str:

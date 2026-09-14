@@ -160,8 +160,17 @@ export function useCanvasViewport({
     [imageLayout]
   );
 
+  const naturalDimensions = React.useMemo(() => {
+    if (!imageObj) return { width: 0, height: 0 };
+    return {
+      width: imageObj.naturalWidth || imageObj.width || 0,
+      height: imageObj.naturalHeight || imageObj.height || 0,
+    };
+  }, [imageObj]);
+
   return {
     dimensions,
+    naturalDimensions,
     stageScale,
     setStageScale,
     stagePos,

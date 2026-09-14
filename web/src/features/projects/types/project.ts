@@ -1,74 +1,44 @@
 import { z } from "zod";
 
-export const projectTypeSchema = z.enum([
-  "detection",
-  "ocr",
-  "nlp",
-  "classification",
-  "segmentation",
-  "captioning",
-]);
-export type ProjectType = z.infer<typeof projectTypeSchema>;
-
 export const projectStatusSchema = z.enum(["active", "archived"]);
 export type ProjectStatus = z.infer<typeof projectStatusSchema>;
 
-export const taskDefinitionVersionSchema = z.object({
-  id: z.string(),
-  task_definition_id: z.string(),
-  version: z.string(),
-  input_schema: z.record(z.string(), z.unknown()),
-  capability_schema: z.record(z.string(), z.unknown()),
-  constraints: z.record(z.string(), z.unknown()).optional(),
-  status: z.string(),
-  published_at: z.string().nullable().optional(),
-});
-export type TaskDefinitionVersion = z.infer<typeof taskDefinitionVersionSchema>;
-
-export const projectTemplateVersionSchema = z.object({
-  id: z.string(),
-  project_template_id: z.string(),
-  version: z.string(),
-  default_project_configuration: z.record(z.string(), z.unknown()),
-  ontology_template_ref: z.string().nullable().optional(),
-  status: z.string(),
-  providers: z.array(z.string()),
-  published_at: z.string().nullable().optional(),
-});
-export type ProjectTemplateVersion = z.infer<
-  typeof projectTemplateVersionSchema
->;
-
-export const projectTemplateSchema = z.object({
-  id: z.string(),
-  key: z.string(),
+// Rich Catalog Template Schema (SSOT from Backend)
+export const templateToolSchema = z.object({
   name: z.string(),
-  description: z.string().nullable(),
-  task_definition_id: z.string(),
-  status: z.string().optional(),
-  versions: z.array(projectTemplateVersionSchema),
+  desc: z.string().optional(),
+  type: z.string(),
 });
-export type ProjectTemplate = z.infer<typeof projectTemplateSchema>;
+export type TemplateTool = z.infer<typeof templateToolSchema>;
 
-export const taskDefinitionSchema = z.object({
-  id: z.string(),
-  key: z.string(),
+export const templateLabelSchema = z.object({
   name: z.string(),
-  description: z.string().nullable(),
-  category: z.string(),
+  color: z.string().optional(),
+});
+export type TemplateLabel = z.infer<typeof templateLabelSchema>;
+
+export const catalogTemplateSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  group: z.string(),
+  order: z.number().optional(),
+  image: z.string().optional(),
+  type: z.string().optional(),
   modality: z.string(),
-  status: z.string().optional(),
-  versions: z.array(taskDefinitionVersionSchema),
-  templates: z.array(projectTemplateSchema),
+  description: z.string().optional(),
+  tools: z.array(templateToolSchema).optional(),
+  labels: z.array(templateLabelSchema).optional(),
+  default_project_configuration: z.record(z.string(), z.unknown()).optional(),
 });
-export type TaskDefinition = z.infer<typeof taskDefinitionSchema>;
+export type CatalogTemplate = z.infer<typeof catalogTemplateSchema>;
+export type ProjectTemplate = CatalogTemplate;
 
 export const projectSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().nullable(),
-  task_definition_version_id: z.string().nullable(),
-  project_template_version_id: z.string().nullable(),
+  template_id: z.string().nullable().optional(),
+  project_template_version_id: z.string().nullable().optional(),
   created_by: z.string(),
   status: projectStatusSchema,
   created_at: z.string().nullable(),
@@ -89,13 +59,11 @@ export const createProjectSchema = z.object({
     .string()
     .max(2000, "Mô tả không được vượt quá 2000 ký tự")
     .optional(),
-  task_definition_version_id: z.string().min(1),
-  project_template_version_id: z.string().optional(),
-  annotation_provider_key: z.string().min(1),
-  storage_provider_key: z.string().min(1),
+  template_id: z.string().min(1, "Vui lòng chọn mẫu bài toán"),
+  storage_provider_key: z.string(),
 });
 export type ProjectCreatePayload = z.infer<typeof createProjectSchema>;
-export type CreateProjectFormValues = ProjectCreatePayload;
+export type CreateProjectFormValues = z.infer<typeof createProjectSchema>;
 
 export const updateProjectSchema = z.object({
   name: z.string().trim().min(1).max(255).optional(),
@@ -105,43 +73,11 @@ export type ProjectUpdatePayload = z.infer<typeof updateProjectSchema>;
 
 export const projectConfigSchema = z.object({
   project_id: z.string(),
-  annotation_provider_key: z.string(),
   storage_provider_key: z.string(),
-  default_workflow_ref: z.string().nullable(),
+  default_workflow_ref: z.string().nullable().optional(),
   settings: z.record(z.string(), z.unknown()),
   settings_schema_version: z.string(),
 });
 export type ProjectConfig = z.infer<typeof projectConfigSchema>;
 
-export const PROJECT_TYPE_OPTIONS = [
-  {
-    value: "detection",
-    label: "Object Detection",
-    description: "Bounding box",
-    badgeColor: "border-amber-200 bg-amber-50 text-amber-700",
-  },
-  {
-    value: "ocr",
-    label: "OCR",
-    description: "Region and text",
-    badgeColor: "border-blue-200 bg-blue-50 text-blue-700",
-  },
-  {
-    value: "nlp",
-    label: "NLP",
-    description: "Text processing",
-    badgeColor: "border-purple-200 bg-purple-50 text-purple-700",
-  },
-  {
-    value: "classification",
-    label: "Classification",
-    description: "Single or multiple choice",
-    badgeColor: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  },
-  {
-    value: "segmentation",
-    label: "Segmentation",
-    description: "Polygon or mask",
-    badgeColor: "border-rose-200 bg-rose-50 text-rose-700",
-  },
-] as const;
+

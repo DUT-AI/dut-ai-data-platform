@@ -1,3 +1,3 @@
 from modules.project.repository.project_repository import SqlProjectRepository
-
-__all__ = ["SqlProjectRepository"]
+from .catalog_repository import InMemoryProjectCatalogRepository
+__all__ = ["SqlProjectRepository", "InMemoryProjectCatalogRepository"]

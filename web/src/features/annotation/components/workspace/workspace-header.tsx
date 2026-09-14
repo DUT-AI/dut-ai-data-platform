@@ -134,17 +134,15 @@ export function WorkspaceHeader({
           <span>{isFullscreen ? "🗗 Thu nhỏ" : "🗖 Toàn màn hình"}</span>
         </button>
 
-        {activeAnnotation && (
-          <Button
-            size="sm"
-            variant="default"
-            disabled={isSubmitting}
-            onClick={onSaveRevision}
-            className="h-8 text-xs font-medium"
-          >
-            {isSubmitting ? "Đang lưu..." : "💾 Lưu Revision (Mod+S)"}
-          </Button>
-        )}
+        <Button
+          size="sm"
+          variant="default"
+          disabled={isSubmitting}
+          onClick={onSaveRevision}
+          className="h-8 text-xs font-semibold bg-blue-600 text-white hover:bg-blue-500 shadow-sm"
+        >
+          {isSubmitting ? "Đang lưu..." : "💾 Lưu (Mod+S)"}
+        </Button>
 
         <Button
           size="sm"

@@ -16,7 +16,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { logout } = useAuth();
   const isAnnotateScreen = pathname?.includes("/annotate/");
-  if (isAnnotateScreen) {
+  const isNewProjectScreen = pathname === "/projects/new";
+  if (isAnnotateScreen || isNewProjectScreen) {
     return <>{children}</>;
   }
 

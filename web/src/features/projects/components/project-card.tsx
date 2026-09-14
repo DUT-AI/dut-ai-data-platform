@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Folder, ArrowRight, Calendar, User } from "lucide-react";
-import { Project, PROJECT_TYPE_OPTIONS } from "../types";
+import { Folder, ArrowRight, Calendar, User, Tag } from "lucide-react";
+import { Project } from "../types";
 import {
   Badge,
   Card,
@@ -19,10 +19,6 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
-  const typeOption = PROJECT_TYPE_OPTIONS.find(
-    (opt) => opt.value === project.project_type
-  );
-
   const formattedDate = project.created_at
     ? new Date(project.created_at).toLocaleDateString("vi-VN", {
         year: "numeric",
@@ -49,14 +45,12 @@ export function ProjectCard({ project }: ProjectCardProps) {
             <Badge
               variant="outline"
               className={
-                typeOption?.badgeColor ??
-                "border-slate-200 bg-slate-100 text-slate-700"
+                project.status === "active"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-400"
+                  : "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
               }
             >
-              {typeOption?.label ??
-                (project.task_definition_version_id
-                  ? `Task ${project.task_definition_version_id.slice(0, 8)}`
-                  : "Legacy project")}
+              {project.status === "active" ? "Active" : "Archived"}
             </Badge>
           </div>
 

@@ -25,10 +25,10 @@ class ProjectModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
     owner_id: Mapped[str] = mapped_column(String(255), nullable=False)
     created_by: Mapped[str] = mapped_column(String(255), nullable=False)
     task_definition_version_id: Mapped[str | None] = mapped_column(
-        String(26), ForeignKey("task_definition_versions.id"), nullable=True
+        String(255), nullable=True
     )
     project_template_version_id: Mapped[str | None] = mapped_column(
-        String(26), ForeignKey("project_template_versions.id"), nullable=True
+        String(255), nullable=True
     )
     status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -45,8 +45,7 @@ class ProjectModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
             id=self.id,
             name=self.name,
             description=self.description,
-            task_definition_version_id=self.task_definition_version_id,
-            project_template_version_id=self.project_template_version_id,
+            template_id=self.project_template_version_id or self.task_definition_version_id,
             created_by=self.created_by,
             status=self.status,
             created_at=self.created_at,
@@ -63,8 +62,8 @@ class ProjectModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
             project_type=None,
             owner_id=entity.created_by,
             created_by=entity.created_by,
-            task_definition_version_id=entity.task_definition_version_id,
-            project_template_version_id=entity.project_template_version_id,
+            task_definition_version_id=entity.template_id,
+            project_template_version_id=entity.template_id,
             status=entity.status,
             archived_at=entity.archived_at,
         )
@@ -124,7 +123,9 @@ class ProjectConfigurationModel(Base, ULIDPrimaryKeyMixin):
         nullable=False,
     )
     settings: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
-    annotation_provider_key: Mapped[str] = mapped_column(String(100), nullable=False)
+    annotation_provider_key: Mapped[str | None] = mapped_column(
+        String(100), default="dut_native", nullable=True
+    )
     storage_provider_key: Mapped[str] = mapped_column(String(100), nullable=False)
     default_workflow_ref: Mapped[str | None] = mapped_column(String(255))
     settings_schema_version: Mapped[str] = mapped_column(

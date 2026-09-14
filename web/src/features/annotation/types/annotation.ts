@@ -27,6 +27,7 @@ export interface AnnotationResult {
   } | null;
   payload?: Record<string, unknown> | null;
   attributes?: Record<string, unknown> | null;
+  confidence?: number;
   created_at?: string;
 }
 

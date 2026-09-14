@@ -20,7 +20,16 @@ export interface KonvaAnnotationCanvasProps {
   categoryColors?: Record<string, string>;
   categoryNames?: Record<string, string>;
   selectedCategoryId?: string | null;
+  availableCategories?: Array<{
+    id: string;
+    name: string;
+    color?: string | null;
+    key: string;
+  }>;
   readOnly?: boolean;
+  selectedShapeId?: string | null;
+  onSelectShapeId?: (id: string | null) => void;
+  onSelectCategory?: (categoryId: string) => void;
   onChange?: (results: AnnotationResult[]) => void;
 }
 

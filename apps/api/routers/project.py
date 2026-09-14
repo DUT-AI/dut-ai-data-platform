@@ -19,11 +19,8 @@ from modules.project.use_cases import (
     ArchiveProjectUseCase,
     CreateProjectUseCase,
     GetProjectConfigUseCase,
-    GetProjectTemplateUseCase,
     GetProjectUseCase,
-    GetTaskDefinitionUseCase,
     ListProjectMembersUseCase,
-    ListTaskDefinitionsUseCase,
     ListUserProjectsUseCase,
     RemoveProjectMemberUseCase,
     RestoreProjectUseCase,
@@ -33,12 +30,6 @@ from modules.project.use_cases import (
 )
 
 router = APIRouter(prefix="/api/v1/projects", tags=["Projects"])
-
-
-# ---------------------------------------------------------------------------
-# Project CRUD
-# ---------------------------------------------------------------------------
-
 
 @router.post(
     "",
@@ -163,46 +154,8 @@ async def restore_project(
     return await use_case.execute(project_id)
 
 
-@router.get("/catalog/task-categories")
-async def list_task_categories():
-    return [
-        "computer_vision",
-        "natural_language_processing",
-        "audio_speech",
-        "video",
-        "structured_data",
-        "llm_evaluation",
-    ]
 
 
-@router.get("/catalog/task-definitions")
-@inject
-async def list_task_definitions(
-    use_case: FromDishka[ListTaskDefinitionsUseCase],
-    category: str | None = None,
-    modality: str | None = None,
-    provider: str | None = None,
-    search: str | None = None,
-):
-    return await use_case.execute(
-        category=category, modality=modality, provider_key=provider, search=search
-    )
-
-
-@router.get("/catalog/task-definitions/{task_key}")
-@inject
-async def get_task_definition(
-    task_key: str, use_case: FromDishka[GetTaskDefinitionUseCase]
-):
-    return await use_case.execute(task_key)
-
-
-@router.get("/catalog/project-templates/{template_id}")
-@inject
-async def get_project_template(
-    template_id: str, use_case: FromDishka[GetProjectTemplateUseCase]
-):
-    return await use_case.execute(template_id)
 
 
 # ---------------------------------------------------------------------------

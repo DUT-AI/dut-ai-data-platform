@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import dynamic from "next/dynamic";
 import Konva from "konva";
 import { AnnotationResult } from "../types";
 import {
@@ -14,32 +13,18 @@ import {
   ShapeRenderer,
 } from "./canvas";
 
-// Dynamic import React-Konva components for Next.js SSR compatibility
-const Stage = dynamic(() => import("react-konva").then((mod) => mod.Stage), {
-  ssr: false,
-});
-const Layer = dynamic(() => import("react-konva").then((mod) => mod.Layer), {
-  ssr: false,
-});
-const Rect = dynamic(() => import("react-konva").then((mod) => mod.Rect), {
-  ssr: false,
-});
-const Line = dynamic(() => import("react-konva").then((mod) => mod.Line), {
-  ssr: false,
-});
-const Circle = dynamic(() => import("react-konva").then((mod) => mod.Circle), {
-  ssr: false,
-});
-const Image = dynamic(() => import("react-konva").then((mod) => mod.Image), {
-  ssr: false,
-});
-const Transformer = dynamic(
-  () => import("react-konva").then((mod) => mod.Transformer),
-  { ssr: false }
-);
-const Group = dynamic(() => import("react-konva").then((mod) => mod.Group), {
-  ssr: false,
-});
+import {
+  Stage,
+  Layer,
+  Image as KonvaImage,
+  Rect,
+  Line,
+  Circle,
+  Transformer,
+  Group,
+  Text as KonvaText,
+} from "react-konva";
+
 
 export function KonvaAnnotationCanvas({
   imageUrl,
@@ -47,16 +32,22 @@ export function KonvaAnnotationCanvas({
   categoryColors = {},
   categoryNames = {},
   selectedCategoryId,
+  availableCategories = [],
   readOnly = false,
+  selectedShapeId: externalSelectedShapeId,
+  onSelectShapeId,
+  onSelectCategory,
   onChange,
 }: KonvaAnnotationCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage | null>(null);
   const transformerRef = useRef<Konva.Transformer | null>(null);
+  const prevToolRef = useRef<ToolMode>("select");
 
   // Viewport, Zoom, Pan and Image layout hook
   const {
     dimensions,
+    naturalDimensions,
     stageScale,
     stagePos,
     imageObj,
@@ -72,7 +63,20 @@ export function KonvaAnnotationCanvas({
 
   // Tool and selection state
   const [currentTool, setCurrentTool] = useState<ToolMode>("select");
-  const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
+  const [internalSelectedShapeId, setInternalSelectedShapeId] = useState<string | null>(null);
+
+  const selectedShapeId =
+    externalSelectedShapeId !== undefined
+      ? externalSelectedShapeId
+      : internalSelectedShapeId;
+
+  const setSelectedShapeId = useCallback(
+    (id: string | null) => {
+      setInternalSelectedShapeId(id);
+      onSelectShapeId?.(id);
+    },
+    [onSelectShapeId]
+  );
 
   // Drawing states
   const [newRect, setNewRect] = useState<{
@@ -115,6 +119,92 @@ export function KonvaAnnotationCanvas({
     [categoryColors]
   );
 
+  // Keyboard shortcuts engine
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore when user is typing in inputs or textareas
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.key === "r" || e.key === "R") {
+        setCurrentTool("bbox");
+        setPolygonPoints([]);
+      } else if (e.key === "v" || e.key === "V") {
+        setCurrentTool("select");
+      } else if (e.key === "h" || e.key === "H") {
+        setCurrentTool("pan");
+      } else if (e.key === "p" || e.key === "P") {
+        setCurrentTool("polygon");
+      } else if (e.key === "k" || e.key === "K") {
+        setCurrentTool("point");
+      } else if (e.key === "Delete" || e.key === "Backspace") {
+        if (selectedShapeId && !readOnly) {
+          const updated = results.filter((r) => r.id !== selectedShapeId);
+          onChange?.(updated);
+          setSelectedShapeId(null);
+        }
+      } else if (e.key === "Escape") {
+        setNewRect(null);
+        setPolygonPoints([]);
+        setSelectedShapeId(null);
+        setCurrentTool("select");
+      } else if (e.code === "Space" && !e.repeat) {
+        prevToolRef.current = currentTool;
+        setCurrentTool("pan");
+      } else if (
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        /^[1-9]$/.test(e.key) &&
+        availableCategories.length > 0
+      ) {
+        const catIdx = parseInt(e.key, 10) - 1;
+        if (catIdx < availableCategories.length) {
+          const targetCat = availableCategories[catIdx];
+          onSelectCategory?.(targetCat.id);
+
+          // If a shape is currently selected, reassign its category immediately
+          if (selectedShapeId && !readOnly) {
+            const updated = results.map((r) => {
+              if (r.id === selectedShapeId) {
+                return { ...r, category_id: targetCat.id };
+              }
+              return r;
+            });
+            onChange?.(updated);
+          }
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        setCurrentTool(prevToolRef.current);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [
+    currentTool,
+    selectedShapeId,
+    readOnly,
+    results,
+    availableCategories,
+    onSelectCategory,
+    setSelectedShapeId,
+    onChange,
+  ]);
+
   // Finish polygon drawing
   const finishPolygon = useCallback(() => {
     if (polygonPoints.length >= 3) {
@@ -147,6 +237,7 @@ export function KonvaAnnotationCanvas({
     selectedCategoryId,
     results,
     onChange,
+    setSelectedShapeId,
   ]);
 
   // Stage Mouse Down
@@ -217,6 +308,8 @@ export function KonvaAnnotationCanvas({
     const pointer = stage?.getRelativePointerPosition();
     if (!pointer) return;
 
+    setCurrentMousePos({ x: pointer.x, y: pointer.y });
+
     if (currentTool === "bbox" && newRect && !readOnly) {
       const currentX = pointer.x;
       const currentY = pointer.y;
@@ -233,10 +326,6 @@ export function KonvaAnnotationCanvas({
         width,
         height,
       });
-    }
-
-    if (currentTool === "polygon" && polygonPoints.length > 0) {
-      setCurrentMousePos({ x: pointer.x, y: pointer.y });
     }
   };
 
@@ -400,7 +489,7 @@ export function KonvaAnnotationCanvas({
             <Layer>
               {/* Background Main Image */}
               {/* eslint-disable-next-line jsx-a11y/alt-text */}
-              <Image
+              <KonvaImage
                 name="main-image"
                 image={imageObj}
                 x={imageLayout.x}
@@ -437,19 +526,73 @@ export function KonvaAnnotationCanvas({
                 );
               })}
 
-              {/* In-progress drawing rectangle */}
+              {/* Crosshair Guides for Pixel Precision in BBox mode */}
+              {currentTool === "bbox" && currentMousePos && !readOnly && imageObj && (
+                <Group opacity={0.4} listening={false}>
+                  {/* Horizontal crosshair */}
+                  <Line
+                    points={[
+                      imageLayout.x,
+                      currentMousePos.y,
+                      imageLayout.x + imageLayout.width,
+                      currentMousePos.y,
+                    ]}
+                    stroke="#38BDF8"
+                    strokeWidth={1 / stageScale}
+                    dash={[4 / stageScale, 4 / stageScale]}
+                  />
+                  {/* Vertical crosshair */}
+                  <Line
+                    points={[
+                      currentMousePos.x,
+                      imageLayout.y,
+                      currentMousePos.x,
+                      imageLayout.y + imageLayout.height,
+                    ]}
+                    stroke="#38BDF8"
+                    strokeWidth={1 / stageScale}
+                    dash={[4 / stageScale, 4 / stageScale]}
+                  />
+                </Group>
+              )}
+
+              {/* In-progress drawing rectangle with live Dimension HUD */}
               {newRect && (
-                <Rect
-                  x={newRect.x}
-                  y={newRect.y}
-                  width={newRect.width}
-                  height={newRect.height}
-                  stroke={getColor(selectedCategoryId)}
-                  strokeWidth={2 / stageScale}
-                  dash={[4 / stageScale, 4 / stageScale]}
-                  fill={getColor(selectedCategoryId)}
-                  opacity={0.25}
-                />
+                <Group>
+                  <Rect
+                    x={newRect.x}
+                    y={newRect.y}
+                    width={newRect.width}
+                    height={newRect.height}
+                    stroke={getColor(selectedCategoryId)}
+                    strokeWidth={2 / stageScale}
+                    dash={[4 / stageScale, 4 / stageScale]}
+                    fill={getColor(selectedCategoryId)}
+                    opacity={0.25}
+                  />
+                  {newRect.width > 5 && newRect.height > 5 && naturalDimensions.width > 0 && (
+                    <Group
+                      x={newRect.x + newRect.width + 4 / stageScale}
+                      y={newRect.y + newRect.height + 4 / stageScale}
+                    >
+                      <Rect
+                        width={90 / stageScale}
+                        height={18 / stageScale}
+                        fill="#0F172A"
+                        opacity={0.9}
+                        cornerRadius={2 / stageScale}
+                      />
+                      <KonvaText
+                        x={4 / stageScale}
+                        y={4 / stageScale}
+                        text={`${Math.round((newRect.width / imageLayout.width) * naturalDimensions.width)} × ${Math.round((newRect.height / imageLayout.height) * naturalDimensions.height)} px`}
+                        fontSize={10 / stageScale}
+                        fill="#38BDF8"
+                        fontFamily="monospace"
+                      />
+                    </Group>
+                  )}
+                </Group>
               )}
 
               {/* In-progress drawing Polygon lines and vertices */}
@@ -512,6 +655,12 @@ export function KonvaAnnotationCanvas({
         currentTool={currentTool}
         resultsCount={results.length}
         stageScale={stageScale}
+        naturalDimensions={naturalDimensions}
+        cursorNormPos={
+          currentMousePos
+            ? screenToNormalized(currentMousePos.x, currentMousePos.y)
+            : null
+        }
       />
     </div>
   );

@@ -29,7 +29,7 @@ import {
   WorkspaceCategoryBar,
   WorkspaceSidebar,
 } from "./workspace";
-import { createRevision } from "../api";
+import { createAnnotation, createRevision } from "../api";
 
 interface AnnotationWorkspaceViewProps {
   projectId: string;
@@ -116,10 +116,16 @@ function AnnotationWorkspaceInner({
 
   const downloadUrl = downloadData?.download_url;
   const activeAnnotation = annotations?.[0];
-  const revisions = useMemo(
-    () => activeAnnotation?.revisions || [],
-    [activeAnnotation]
-  );
+  const revisions = useMemo(() => {
+    if (!activeAnnotation) return [];
+    const list = activeAnnotation.revisions ? [...activeAnnotation.revisions] : [];
+    if (list.length === 0 && activeAnnotation.latest_revision) {
+      list.push(activeAnnotation.latest_revision);
+    }
+    // Sort descending so the latest revision is always first (index 0)
+    list.sort((a, b) => (b.revision_number || 0) - (a.revision_number || 0));
+    return list;
+  }, [activeAnnotation]);
 
   const [selectedRevisionId, setSelectedRevisionId] = useState<string>("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -191,13 +197,17 @@ function AnnotationWorkspaceInner({
   const [zoomScale, setZoomScale] = useState(1);
   const [isPanActive, setIsPanActive] = useState(false);
 
-  // Active revision selector
+  // Active revision selector (defaults to the newest/latest revision)
   const activeRevision = useMemo(() => {
     if (selectedRevisionId) {
-      return revisions.find((r) => r.id === selectedRevisionId) || revisions[0];
+      return (
+        revisions.find((r) => r.id === selectedRevisionId) ||
+        revisions[0] ||
+        activeAnnotation?.latest_revision
+      );
     }
-    return revisions[0];
-  }, [revisions, selectedRevisionId]);
+    return revisions[0] || activeAnnotation?.latest_revision;
+  }, [revisions, selectedRevisionId, activeAnnotation]);
 
   // Working results and relations custom hook
   const {
@@ -219,10 +229,15 @@ function AnnotationWorkspaceInner({
     handleToggleRelationVisibility,
   } = useWorkspaceAnnotationState(activeRevision?.results || []);
 
-  // Sync results when active revision changes
+  // Sync results when active revision or its results change
+  const activeRevisionId = activeRevision?.id || "";
+  const activeResultsHash = JSON.stringify(activeRevision?.results || []);
+
   useEffect(() => {
-    syncResults(activeRevision?.results || []);
-  }, [activeRevision, syncResults]);
+    if (activeRevision?.results && activeRevision.results.length > 0) {
+      syncResults(activeRevision.results);
+    }
+  }, [activeRevisionId, activeResultsHash, syncResults]);
 
   // Set default selected category from ontology
   useEffect(() => {
@@ -246,20 +261,35 @@ function AnnotationWorkspaceInner({
   };
 
   const handleQuickSubmitNewRevision = async () => {
-    if (!activeAnnotation || !effectiveOntologyVersionId) return;
+    if (!effectiveOntologyVersionId) {
+      setFeedbackMsg("Lỗi: Không tìm thấy Ontology Version của dự án.");
+      return;
+    }
     setIsSubmitting(true);
     setFeedbackMsg(null);
     try {
-      await createRevision(activeAnnotation.id, {
-        ontology_version_id: effectiveOntologyVersionId,
-        source: "human",
-        results: workingResults,
-      });
-      setFeedbackMsg("Đã lưu phiên bản gán nhãn mới thành công!");
+      if (activeAnnotation) {
+        await createRevision(activeAnnotation.id, {
+          ontology_version_id: effectiveOntologyVersionId,
+          source: "human",
+          results: workingResults,
+        });
+      } else {
+        await createAnnotation({
+          asset_id: assetId,
+          project_id: projectId,
+          ontology_version_id: effectiveOntologyVersionId,
+          target_type: "FULL_ASSET",
+          target_selector: {},
+          source: "human",
+          results: workingResults,
+        });
+      }
+      setFeedbackMsg("Đã lưu kết quả gán nhãn thành công!");
       await refetchAnnotations();
     } catch (err: unknown) {
       const errorMsg =
-        err instanceof Error ? err.message : "Lỗi khi lưu revision";
+        err instanceof Error ? err.message : "Lỗi khi lưu kết quả gán nhãn";
       setFeedbackMsg(`Lỗi: ${errorMsg}`);
     } finally {
       setIsSubmitting(false);
@@ -363,11 +393,23 @@ function AnnotationWorkspaceInner({
             </div>
           ) : (
             <div className="flex h-full w-full max-w-5xl flex-col space-y-2">
-              {/* Category Legend & Selector Bar Sub-Component */}
+              {/* Category Legend, Label Selector & Quick Action Bar */}
               <WorkspaceCategoryBar
                 categories={availableCategories}
                 activeCategoryId={activeCategoryId}
                 onSelectCategory={(id) => setActiveCategoryId(id)}
+                onSaveRevision={handleQuickSubmitNewRevision}
+                isSubmitting={isSubmitting}
+                onOpenHotkeySettings={() => setIsHotkeySettingsOpen(true)}
+                onOpenInstructions={() => setIsInstructionsOpen(true)}
+                hasPrev={hasPrev}
+                hasNext={hasNext}
+                onNavigatePrev={() =>
+                  hasPrev && assets && navigateToAsset(assets[currentAssetIdx - 1].id)
+                }
+                onNavigateNext={() =>
+                  hasNext && assets && navigateToAsset(assets[currentAssetIdx + 1].id)
+                }
               />
 
               {/* Dynamic Annotation Canvas Workspace */}
@@ -381,6 +423,9 @@ function AnnotationWorkspaceInner({
                   categoryNames={categoryNames}
                   selectedCategoryId={activeCategoryId}
                   availableCategories={availableCategories}
+                  selectedShapeId={selectedRegionId}
+                  onSelectShapeId={setSelectedRegionId}
+                  onSelectCategory={setActiveCategoryId}
                   onChange={(newVisibleResults) =>
                     setWorkingResults(newVisibleResults)
                   }

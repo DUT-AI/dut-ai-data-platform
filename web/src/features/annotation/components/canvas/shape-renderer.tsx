@@ -1,25 +1,11 @@
 "use client";
 
 import React from "react";
-import dynamic from "next/dynamic";
 import Konva from "konva";
 import { AnnotationResult } from "../../types";
 
-const Group = dynamic(() => import("react-konva").then((mod) => mod.Group), {
-  ssr: false,
-});
-const Rect = dynamic(() => import("react-konva").then((mod) => mod.Rect), {
-  ssr: false,
-});
-const Line = dynamic(() => import("react-konva").then((mod) => mod.Line), {
-  ssr: false,
-});
-const Circle = dynamic(() => import("react-konva").then((mod) => mod.Circle), {
-  ssr: false,
-});
-const Text = dynamic(() => import("react-konva").then((mod) => mod.Text), {
-  ssr: false,
-});
+import { Group, Rect, Line, Circle, Text } from "react-konva";
+
 
 interface ShapeRendererProps {
   result: AnnotationResult;
@@ -59,10 +45,25 @@ export function ShapeRenderer({
 }: ShapeRendererProps) {
   const shapeId = result.id || `shape_${index}`;
 
-  // 1. Render Bounding Box
-  if (result.result_type === "bbox" && result.geometry) {
+  // 1. Render Bounding Box (handles "bbox" and "bounding_box")
+  if (
+    (result.result_type === "bbox" || result.result_type === "bounding_box") &&
+    result.geometry
+  ) {
     const { x = 0, y = 0, width = 0, height = 0 } = result.geometry;
     const coords = normalizedToScreen(x, y, width, height);
+    const confidenceText =
+      result.confidence !== undefined && result.confidence !== null
+        ? ` ${(result.confidence * (result.confidence <= 1 ? 100 : 1)).toFixed(0)}%`
+        : "";
+    const displayText = `${labelName}${confidenceText}`;
+    const badgeWidth = Math.max(50, displayText.length * 7.5 + 8) / stageScale;
+    const badgeHeight = 18 / stageScale;
+    
+    // Position badge above bbox, or inside if too close to top edge
+    const badgeY = coords.y >= badgeHeight + 2 / stageScale
+      ? coords.y - badgeHeight
+      : coords.y;
 
     return (
       <Group key={shapeId}>
@@ -75,26 +76,40 @@ export function ShapeRenderer({
           stroke={color}
           strokeWidth={isSelected ? 3 / stageScale : 2 / stageScale}
           fill={color}
-          opacity={isSelected ? 0.35 : 0.18}
+          opacity={isSelected ? 0.35 : 0.15}
+          dash={result.confidence !== undefined ? [6 / stageScale, 3 / stageScale] : undefined}
           draggable={currentTool === "select" && !readOnly}
           onClick={() => {
             if (currentTool === "select") onSelect(shapeId);
           }}
+          onMouseEnter={(e) => {
+            if (currentTool === "select") {
+              const stage = e.target.getStage();
+              if (stage) stage.container().style.cursor = "pointer";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (currentTool === "select") {
+              const stage = e.target.getStage();
+              if (stage) stage.container().style.cursor = "default";
+            }
+          }}
           onDragEnd={(e) => onDragEnd(shapeId, e)}
           onTransformEnd={(e) => onTransformEnd(shapeId, e)}
         />
+        {/* Category & Confidence Badge */}
         <Rect
           x={coords.x}
-          y={coords.y - 18 / stageScale}
-          width={Math.max(45, labelName.length * 7) / stageScale}
-          height={16 / stageScale}
+          y={badgeY}
+          width={badgeWidth}
+          height={badgeHeight}
           fill={color}
-          cornerRadius={2 / stageScale}
+          cornerRadius={[2 / stageScale, 2 / stageScale, 0, 0]}
         />
         <Text
-          x={coords.x + 3 / stageScale}
-          y={coords.y - 15 / stageScale}
-          text={labelName}
+          x={coords.x + 4 / stageScale}
+          y={badgeY + 3.5 / stageScale}
+          text={displayText}
           fontSize={11 / stageScale}
           fill="#FFFFFF"
           fontStyle="bold"
@@ -103,18 +118,21 @@ export function ShapeRenderer({
     );
   }
 
-  // 2. Render Polygon
-  if (result.result_type === "polygon" && result.geometry?.points) {
+  // 2. Render Polygon (handles "polygon" and "segmentation")
+  if (
+    (result.result_type === "polygon" || result.result_type === "segmentation") &&
+    result.geometry?.points &&
+    Array.isArray(result.geometry.points) &&
+    result.geometry.points.length > 0
+  ) {
+    const pointsList = result.geometry.points as number[][];
     const screenPoints: number[] = [];
-    (result.geometry.points as number[][]).forEach(([px, py]) => {
+    pointsList.forEach(([px, py]) => {
       const screenP = pointNormToScreen(px, py);
       screenPoints.push(screenP.x, screenP.y);
     });
 
-    const firstP = pointNormToScreen(
-      (result.geometry.points as number[][])[0][0],
-      (result.geometry.points as number[][])[0][1]
-    );
+    const firstP = pointNormToScreen(pointsList[0][0], pointsList[0][1]);
 
     return (
       <Group key={shapeId}>
@@ -150,8 +168,11 @@ export function ShapeRenderer({
     );
   }
 
-  // 3. Render Keypoint
-  if (result.result_type === "keypoint" && result.geometry) {
+  // 3. Render Keypoint (handles "keypoint" and "point")
+  if (
+    (result.result_type === "keypoint" || result.result_type === "point") &&
+    result.geometry
+  ) {
     const { x = 0, y = 0 } = result.geometry;
     const screenP = pointNormToScreen(x, y);
 

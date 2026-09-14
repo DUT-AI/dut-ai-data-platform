@@ -1,17 +1,16 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Search, FolderKanban, Filter, RefreshCw } from "lucide-react";
 import { useProjectsQuery } from "../hooks";
-import { PROJECT_TYPE_OPTIONS } from "../types";
 import { ProjectCard } from "./project-card";
-import { CreateProjectModal } from "./create-project-modal";
 import { Button, Input } from "@/components/ui";
 
 export function ProjectList() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedType, setSelectedType] = useState<string>("all");
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
   const {
     data: projects = [],
@@ -20,7 +19,7 @@ export function ProjectList() {
     refetch,
   } = useProjectsQuery();
 
-  // Filter projects by search query and AI type
+  // Filter projects by search query and status
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
       const matchesSearch =
@@ -30,12 +29,12 @@ export function ProjectList() {
             .toLowerCase()
             .includes(searchQuery.toLowerCase()));
 
-      const matchesType =
-        selectedType === "all" || project.project_type === selectedType;
+      const matchesStatus =
+        selectedStatus === "all" || project.status === selectedStatus;
 
-      return matchesSearch && matchesType;
+      return matchesSearch && matchesStatus;
     });
-  }, [projects, searchQuery, selectedType]);
+  }, [projects, searchQuery, selectedStatus]);
 
   return (
     <div className="space-y-6">
@@ -53,7 +52,7 @@ export function ProjectList() {
         </div>
 
         <Button
-          onClick={() => setIsCreateModalOpen(true)}
+          onClick={() => router.push("/projects/new")}
           className="flex items-center gap-2 bg-blue-600 text-white shadow-md hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500"
         >
           <Plus className="h-4 w-4" />
@@ -76,16 +75,13 @@ export function ProjectList() {
         <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
           <Filter className="h-4 w-4 shrink-0 text-slate-400" />
           <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
             className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 outline-none hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
           >
-            <option value="all">Tất cả loại dự án ({projects.length})</option>
-            {PROJECT_TYPE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
+            <option value="all">Tất cả trạng thái ({projects.length})</option>
+            <option value="active">Đang hoạt động</option>
+            <option value="archived">Đã lưu trữ</option>
           </select>
 
           <Button
@@ -132,18 +128,18 @@ export function ProjectList() {
             <FolderKanban className="h-6 w-6" />
           </div>
           <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-slate-100">
-            {searchQuery || selectedType !== "all"
+            {searchQuery || selectedStatus !== "all"
               ? "Không tìm thấy dự án phù hợp"
               : "Chưa có dự án nào"}
           </h3>
           <p className="mt-1 max-w-sm text-xs text-slate-500 dark:text-slate-400">
-            {searchQuery || selectedType !== "all"
-              ? "Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc loại tác vụ AI."
+            {searchQuery || selectedStatus !== "all"
+              ? "Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc trạng thái."
               : "Bắt đầu tạo dự án AI đầu tiên của bạn để gán nhãn dữ liệu."}
           </p>
-          {!searchQuery && selectedType === "all" && (
+          {!searchQuery && selectedStatus === "all" && (
             <Button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => router.push("/projects/new")}
               className="mt-5 bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600"
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -158,12 +154,6 @@ export function ProjectList() {
           ))}
         </div>
       )}
-
-      {/* Modal tạo dự án */}
-      <CreateProjectModal
-        open={isCreateModalOpen}
-        onOpenChange={setIsCreateModalOpen}
-      />
     </div>
   );
 }

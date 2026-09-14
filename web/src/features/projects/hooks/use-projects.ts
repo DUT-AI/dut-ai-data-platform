@@ -12,7 +12,9 @@ export const PROJECT_KEYS = {
   details: () => [...PROJECT_KEYS.all, "detail"] as const,
   detail: (id: string) => [...PROJECT_KEYS.details(), id] as const,
   config: (id: string) => [...PROJECT_KEYS.detail(id), "config"] as const,
-  catalog: () => [...PROJECT_KEYS.all, "catalog"] as const,
+  templates: (params?: { group?: string; modality?: string; search?: string }) =>
+    [...PROJECT_KEYS.all, "templates", params] as const,
+  templateGroups: () => [...PROJECT_KEYS.all, "templateGroups"] as const,
 };
 
 export function useProjectsQuery(page = 1, pageSize = 50) {
@@ -42,10 +44,21 @@ export function useCreateProjectMutation() {
   });
 }
 
-export function useTaskDefinitionsQuery() {
+export function useProjectTemplatesQuery(params?: {
+  group?: string;
+  modality?: string;
+  search?: string;
+}) {
   return useQuery({
-    queryKey: PROJECT_KEYS.catalog(),
-    queryFn: projectApi.getTaskDefinitions,
+    queryKey: PROJECT_KEYS.templates(params),
+    queryFn: () => projectApi.getProjectTemplates(params),
+  });
+}
+
+export function useProjectTemplateGroupsQuery() {
+  return useQuery({
+    queryKey: PROJECT_KEYS.templateGroups(),
+    queryFn: projectApi.getProjectTemplateGroups,
   });
 }
 

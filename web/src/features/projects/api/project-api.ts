@@ -1,10 +1,10 @@
 import { api } from "@/lib/api";
 import {
+  CatalogTemplate,
   Project,
   ProjectConfig,
   ProjectCreatePayload,
   ProjectUpdatePayload,
-  TaskDefinition,
 } from "../types";
 
 export const projectApi = {
@@ -43,8 +43,19 @@ export const projectApi = {
     return response.data;
   },
 
-  getTaskDefinitions: async (): Promise<TaskDefinition[]> => {
-    const response = await api.get<TaskDefinition[]>("/task-definitions");
+  getProjectTemplates: async (params?: {
+    group?: string;
+    modality?: string;
+    search?: string;
+  }): Promise<CatalogTemplate[]> => {
+    const response = await api.get<CatalogTemplate[]>("/project-templates", {
+      params,
+    });
+    return response.data;
+  },
+
+  getProjectTemplateGroups: async (): Promise<string[]> => {
+    const response = await api.get<string[]>("/project-template-groups");
     return response.data;
   },
 

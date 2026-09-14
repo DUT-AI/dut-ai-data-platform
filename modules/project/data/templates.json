@@ -1,0 +1,2660 @@
+{
+  "groups": [
+    "Computer Vision",
+    "Natural Language Processing",
+    "Audio/Speech Processing",
+    "Conversational AI",
+    "Chat",
+    "Ranking & Scoring",
+    "Structured Data Parsing",
+    "Time Series Analysis",
+    "Videos",
+    "Generative AI",
+    "Community Contributions"
+  ],
+  "templates": [
+    {
+      "id": "automatic-speech-recognition",
+      "title": "Automatic Speech Recognition",
+      "group": "Audio/Speech Processing",
+      "order": 999,
+      "image": "/static/templates/automatic-speech-recognition.png",
+      "type": "community",
+      "modality": "audio",
+      "description": "Mẫu bài toán Automatic Speech Recognition thuộc nhóm Audio/Speech Processing tối ưu cho dữ liệu AUDIO.",
+      "tools": [
+        {
+          "name": "Audio Waveform",
+          "desc": "Phân đoạn mốc thời gian trên sóng âm",
+          "type": "audio_waveform"
+        },
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Transcribe the audio",
+          "color": "#2563eb"
+        }
+      ]
+    },
+    {
+      "id": "automatic-speech-recognition-using-segments",
+      "title": "Automatic Speech Recognition using Segments",
+      "group": "Audio/Speech Processing",
+      "order": 999,
+      "image": "/static/templates/automatic-speech-recognition-using-segments.png",
+      "type": "community",
+      "modality": "audio",
+      "description": "Mẫu bài toán Automatic Speech Recognition using Segments thuộc nhóm Audio/Speech Processing tối ưu cho dữ liệu AUDIO.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        },
+        {
+          "name": "Audio Waveform",
+          "desc": "Phân đoạn mốc thời gian trên sóng âm",
+          "type": "audio_waveform"
+        },
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Speech",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Noise",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "conversational-analysis",
+      "title": "Conversational Analysis",
+      "group": "Audio/Speech Processing",
+      "order": 999,
+      "image": "/static/templates/thumbnail-conversation-sentiment.png",
+      "type": "community",
+      "modality": "audio",
+      "description": "Mẫu bài toán Conversational Analysis thuộc nhóm Audio/Speech Processing tối ưu cho dữ liệu AUDIO.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        },
+        {
+          "name": "Audio Waveform",
+          "desc": "Phân đoạn mốc thời gian trên sóng âm",
+          "type": "audio_waveform"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Transcript",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Sentiment Labels",
+          "color": "#059669"
+        },
+        {
+          "name": "Positive1",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Negative",
+          "color": "#d97706"
+        }
+      ]
+    },
+    {
+      "id": "intent-classification",
+      "title": "Intent Classification",
+      "group": "Audio/Speech Processing",
+      "order": 999,
+      "image": "/static/templates/intent-classification.png",
+      "type": "community",
+      "modality": "audio",
+      "description": "Mẫu bài toán Intent Classification thuộc nhóm Audio/Speech Processing tối ưu cho dữ liệu AUDIO.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        },
+        {
+          "name": "Audio Waveform",
+          "desc": "Phân đoạn mốc thời gian trên sóng âm",
+          "type": "audio_waveform"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Segment",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Question",
+          "color": "#059669"
+        },
+        {
+          "name": "Request",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Satisfied",
+          "color": "#d97706"
+        },
+        {
+          "name": "Interested",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "Unsatisfied",
+          "color": "#db2777"
+        }
+      ]
+    },
+    {
+      "id": "signal-quality-detection",
+      "title": "Signal Quality Detection",
+      "group": "Audio/Speech Processing",
+      "order": 999,
+      "image": "/static/templates/signal-quality-detection.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Signal Quality Detection thuộc nhóm Audio/Speech Processing tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Bounding Box",
+          "desc": "Khoanh vùng chữ nhật định vị đối tượng",
+          "type": "bounding_box"
+        },
+        {
+          "name": "Audio Waveform",
+          "desc": "Phân đoạn mốc thời gian trên sóng âm",
+          "type": "audio_waveform"
+        },
+        {
+          "name": "Rating & Scoring",
+          "desc": "Chấm điểm chất lượng theo thang đo",
+          "type": "rating"
+        }
+      ],
+      "labels": []
+    },
+    {
+      "id": "sound-event-detection",
+      "title": "Sound Event Detection",
+      "group": "Audio/Speech Processing",
+      "order": 999,
+      "image": "/static/templates/sound-event-detection.png",
+      "type": "community",
+      "modality": "audio",
+      "description": "Mẫu bài toán Sound Event Detection thuộc nhóm Audio/Speech Processing tối ưu cho dữ liệu AUDIO.",
+      "tools": [
+        {
+          "name": "Bounding Box",
+          "desc": "Khoanh vùng chữ nhật định vị đối tượng",
+          "type": "bounding_box"
+        },
+        {
+          "name": "Audio Waveform",
+          "desc": "Phân đoạn mốc thời gian trên sóng âm",
+          "type": "audio_waveform"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Event A",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Event B",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "speaker-segmentation",
+      "title": "Speaker Segmentation",
+      "group": "Audio/Speech Processing",
+      "order": 999,
+      "image": "/static/templates/speaker-segmentation.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Speaker Segmentation thuộc nhóm Audio/Speech Processing tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Polygon",
+          "desc": "Khoanh vùng đa giác tự do chính xác",
+          "type": "polygon"
+        },
+        {
+          "name": "Audio Waveform",
+          "desc": "Phân đoạn mốc thời gian trên sóng âm",
+          "type": "audio_waveform"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Speaker one",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Speaker two",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "speech-transcription",
+      "title": "Speech Transcription",
+      "group": "Audio/Speech Processing",
+      "order": 999,
+      "image": "/static/templates/thumbnail-audio-sentiment.png",
+      "type": "community",
+      "modality": "audio",
+      "description": "Mẫu bài toán Speech Transcription thuộc nhóm Audio/Speech Processing tối ưu cho dữ liệu AUDIO.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        },
+        {
+          "name": "Audio Waveform",
+          "desc": "Phân đoạn mốc thời gian trên sóng âm",
+          "type": "audio_waveform"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        },
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Speech",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Noise",
+          "color": "#059669"
+        },
+        {
+          "name": "Positive",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Neutral",
+          "color": "#d97706"
+        },
+        {
+          "name": "Negative",
+          "color": "#7c3aed"
+        }
+      ]
+    },
+    {
+      "id": "chatbot",
+      "title": "Chatbot Evaluation",
+      "group": "Chat",
+      "order": 1,
+      "image": "/static/templates/chat-evaluate-agent.png",
+      "type": "enterprise",
+      "modality": "chat",
+      "description": "Mẫu bài toán Chatbot Evaluation thuộc nhóm Chat tối ưu cho dữ liệu CHAT.",
+      "tools": [
+        {
+          "name": "Dialogue Evaluator",
+          "desc": "Đánh giá chất lượng và nội dung hội thoại",
+          "type": "chat_eval"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        },
+        {
+          "name": "Rating & Scoring",
+          "desc": "Chấm điểm chất lượng theo thang đo",
+          "type": "rating"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Response Accuracy",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Documentation Provided",
+          "color": "#059669"
+        },
+        {
+          "name": "Answered question",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Yes",
+          "color": "#d97706"
+        },
+        {
+          "name": "No",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "Partial",
+          "color": "#db2777"
+        },
+        {
+          "name": "Tone/Style",
+          "color": "#0891b2"
+        },
+        {
+          "name": "Too verbose",
+          "color": "#4f46e5"
+        }
+      ]
+    },
+    {
+      "id": "chat_llm_eval",
+      "title": "Fine-Tune an Agent with an LLM",
+      "group": "Chat",
+      "order": 2,
+      "image": "/static/templates/chat-llm-eval.png",
+      "type": "enterprise",
+      "modality": "chat",
+      "description": "Mẫu bài toán Fine-Tune an Agent with an LLM thuộc nhóm Chat tối ưu cho dữ liệu CHAT.",
+      "tools": [
+        {
+          "name": "Dialogue Evaluator",
+          "desc": "Đánh giá chất lượng và nội dung hội thoại",
+          "type": "chat_eval"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        },
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Chat evaluation",
+          "color": "#2563eb"
+        },
+        {
+          "name": "3 - Mixed - some yes, some no",
+          "color": "#059669"
+        },
+        {
+          "name": "Project Setup",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Billing",
+          "color": "#d97706"
+        },
+        {
+          "name": "Request Live Support",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "Labeling Config",
+          "color": "#db2777"
+        },
+        {
+          "name": "Integrations/SDK",
+          "color": "#0891b2"
+        },
+        {
+          "name": "Bug/Issue",
+          "color": "#4f46e5"
+        }
+      ]
+    },
+    {
+      "id": "chat_eval",
+      "title": "Fine-Tune an Agent without an LLM",
+      "group": "Chat",
+      "order": 3,
+      "image": "/static/templates/chat-eval.png",
+      "type": "enterprise",
+      "modality": "chat",
+      "description": "Mẫu bài toán Fine-Tune an Agent without an LLM thuộc nhóm Chat tối ưu cho dữ liệu CHAT.",
+      "tools": [
+        {
+          "name": "Dialogue Evaluator",
+          "desc": "Đánh giá chất lượng và nội dung hội thoại",
+          "type": "chat_eval"
+        }
+      ],
+      "labels": []
+    },
+    {
+      "id": "chat_red_team",
+      "title": "Red-Teaming in Chat",
+      "group": "Chat",
+      "order": 4,
+      "image": "/static/templates/chat-red-team-exercises.png",
+      "type": "enterprise",
+      "modality": "chat",
+      "description": "Mẫu bài toán Red-Teaming in Chat thuộc nhóm Chat tối ưu cho dữ liệu CHAT.",
+      "tools": [
+        {
+          "name": "Dialogue Evaluator",
+          "desc": "Đánh giá chất lượng và nội dung hội thoại",
+          "type": "chat_eval"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Harm / Safety risk (select 1)",
+          "color": "#2563eb"
+        },
+        {
+          "name": "0 - Benign",
+          "color": "#059669"
+        },
+        {
+          "name": "1 - Borderline",
+          "color": "#dc2626"
+        },
+        {
+          "name": "2 - Risky",
+          "color": "#d97706"
+        },
+        {
+          "name": "3 - Clear risk",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "Jailbreak tactic",
+          "color": "#db2777"
+        },
+        {
+          "name": "Role play",
+          "color": "#0891b2"
+        },
+        {
+          "name": "Indirect prompt",
+          "color": "#4f46e5"
+        }
+      ]
+    },
+    {
+      "id": "chat_rlhf",
+      "title": "Evaluate Production Conversations for RLHF",
+      "group": "Chat",
+      "order": 5,
+      "image": "/static/templates/chat-rlhf.png",
+      "type": "enterprise",
+      "modality": "chat",
+      "description": "Mẫu bài toán Evaluate Production Conversations for RLHF thuộc nhóm Chat tối ưu cho dữ liệu CHAT.",
+      "tools": [
+        {
+          "name": "Dialogue Evaluator",
+          "desc": "Đánh giá chất lượng và nội dung hội thoại",
+          "type": "chat_eval"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        },
+        {
+          "name": "Rating & Scoring",
+          "desc": "Chấm điểm chất lượng theo thang đo",
+          "type": "rating"
+        },
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Add a comment (optional)",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Response Accuracy",
+          "color": "#059669"
+        },
+        {
+          "name": "Relevance",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Highly relevant",
+          "color": "#d97706"
+        },
+        {
+          "name": "Somewhat relevant",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "Not relevant",
+          "color": "#db2777"
+        },
+        {
+          "name": "Correctness",
+          "color": "#0891b2"
+        },
+        {
+          "name": "Accurate and factual",
+          "color": "#4f46e5"
+        }
+      ]
+    },
+    {
+      "id": "breast-cancer-mammogram-classification",
+      "title": "Breast Cancer Mammogram Classification",
+      "group": "Community Contributions",
+      "order": 999,
+      "image": "/static/templates/community-contributions/breast-cancer-mammogram-classification.jpg",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Breast Cancer Mammogram Classification thuộc nhóm Community Contributions tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        },
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Left CC",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Right CC",
+          "color": "#059669"
+        },
+        {
+          "name": "Left MLO",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Right MLO",
+          "color": "#d97706"
+        },
+        {
+          "name": "0 - Incomplete",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "1 - Negative",
+          "color": "#db2777"
+        },
+        {
+          "name": "2 - Benign",
+          "color": "#0891b2"
+        },
+        {
+          "name": "3 - Probably Benign",
+          "color": "#4f46e5"
+        }
+      ]
+    },
+    {
+      "id": "html-ner-tagging-person-and-organization",
+      "title": "HTML NER Tagging",
+      "group": "Community Contributions",
+      "order": 999,
+      "image": "/static/templates/community-contributions/html-ner-tagging-person-and-organization.jpg",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán HTML NER Tagging thuộc nhóm Community Contributions tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Person",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Organization",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "ner-tagging-invoices-bio-format",
+      "title": "NER Tagging for Invoices (BIO Format)",
+      "group": "Community Contributions",
+      "order": 999,
+      "image": "/static/templates/community-contributions/ner-tagging-invoices-bio-format.jpg",
+      "type": "community",
+      "modality": "audio",
+      "description": "Mẫu bài toán NER Tagging for Invoices (BIO Format) thuộc nhóm Community Contributions tối ưu cho dữ liệu AUDIO.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        }
+      ],
+      "labels": [
+        {
+          "name": "NER Tags",
+          "color": "#2563eb"
+        },
+        {
+          "name": "B-NIF",
+          "color": "#059669"
+        },
+        {
+          "name": "B-FORN",
+          "color": "#dc2626"
+        },
+        {
+          "name": "B-DATA",
+          "color": "#d97706"
+        },
+        {
+          "name": "B-VALOR",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "B-NUMFAT",
+          "color": "#db2777"
+        },
+        {
+          "name": "I-NIF",
+          "color": "#0891b2"
+        },
+        {
+          "name": "I-FORN",
+          "color": "#4f46e5"
+        }
+      ]
+    },
+    {
+      "id": "ocr-invoices-pre-ner-bio-format",
+      "title": "OCR Invoices Pre-NER BIO Format",
+      "group": "Community Contributions",
+      "order": 999,
+      "image": "/static/templates/community-contributions/ocr-invoices-pre-ner-bio-format.jpg",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán OCR Invoices Pre-NER BIO Format thuộc nhóm Community Contributions tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Bounding Box",
+          "desc": "Khoanh vùng chữ nhật định vị đối tượng",
+          "type": "bounding_box"
+        },
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "O",
+          "color": "#2563eb"
+        }
+      ]
+    },
+    {
+      "id": "two-level-sentiment-analysis-of-x-twitter-posts",
+      "title": "Two-Level Sentiment Analysis of X / Twitter posts",
+      "group": "Community Contributions",
+      "order": 999,
+      "image": "/static/templates/community-contributions/two-level-sentiment-analysis-of-x-twitter-posts.jpg",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Two-Level Sentiment Analysis of X / Twitter posts thuộc nhóm Community Contributions tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "John Doe",
+          "color": "#2563eb"
+        },
+        {
+          "name": "@johndoe",
+          "color": "#059669"
+        },
+        {
+          "name": "· 2 hrs ago",
+          "color": "#dc2626"
+        },
+        {
+          "name": "$tweet",
+          "color": "#d97706"
+        },
+        {
+          "name": "💬 10",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "🔁 3",
+          "color": "#db2777"
+        },
+        {
+          "name": "❤️ 7",
+          "color": "#0891b2"
+        },
+        {
+          "name": "📊 134",
+          "color": "#4f46e5"
+        }
+      ]
+    },
+    {
+      "id": "semantic-segmentation-with-polygons",
+      "title": "Semantic Segmentation with Polygons",
+      "group": "Computer Vision",
+      "order": 1,
+      "image": "/static/templates/semantic-segmentation-with-polygons.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Semantic Segmentation with Polygons thuộc nhóm Computer Vision tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Polygon",
+          "desc": "Khoanh vùng đa giác tự do chính xác",
+          "type": "polygon"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Airplane",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Car",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "semantic-segmentation-with-masks",
+      "title": "Semantic Segmentation with Masks",
+      "group": "Computer Vision",
+      "order": 2,
+      "image": "/static/templates/semantic-segmentation-with-masks.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Semantic Segmentation with Masks thuộc nhóm Computer Vision tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Polygon",
+          "desc": "Khoanh vùng đa giác tự do chính xác",
+          "type": "polygon"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Airplane",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Car",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "object-detection-with-bounding-boxes",
+      "title": "Object Detection with Bounding Boxes",
+      "group": "Computer Vision",
+      "order": 3,
+      "image": "/static/templates/object-detection-with-bounding-boxes.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Object Detection with Bounding Boxes thuộc nhóm Computer Vision tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Bounding Box",
+          "desc": "Khoanh vùng chữ nhật định vị đối tượng",
+          "type": "bounding_box"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Airplane",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Car",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "pdf_ocr",
+      "title": "OCR Labeling for PDFs",
+      "group": "Computer Vision",
+      "order": 10,
+      "image": "/static/templates/pdf-ocr.png",
+      "type": "enterprise",
+      "modality": "image",
+      "description": "Mẫu bài toán OCR Labeling for PDFs thuộc nhóm Computer Vision tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Select text to correct",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Typo",
+          "color": "#059669"
+        },
+        {
+          "name": "Incorrect Amount",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Incorrect Name",
+          "color": "#d97706"
+        },
+        {
+          "name": "$pdf",
+          "color": "#7c3aed"
+        }
+      ]
+    },
+    {
+      "id": "image-captioning",
+      "title": "Image Captioning",
+      "group": "Computer Vision",
+      "order": 999,
+      "image": "/static/templates/image-captioning.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Image Captioning thuộc nhóm Computer Vision tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$captioning",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Describe the image:",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "image-classification",
+      "title": "Image Classification",
+      "group": "Computer Vision",
+      "order": 999,
+      "image": "/static/templates/image-classification.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Image Classification thuộc nhóm Computer Vision tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Adult content",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Weapons",
+          "color": "#059669"
+        },
+        {
+          "name": "Violence",
+          "color": "#dc2626"
+        }
+      ]
+    },
+    {
+      "id": "inventory-tracking",
+      "title": "Inventory Tracking",
+      "group": "Computer Vision",
+      "order": 999,
+      "image": "/static/templates/inventory-tracking.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Inventory Tracking thuộc nhóm Computer Vision tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Bounding Box",
+          "desc": "Khoanh vùng chữ nhật định vị đối tượng",
+          "type": "bounding_box"
+        },
+        {
+          "name": "Polygon",
+          "desc": "Khoanh vùng đa giác tự do chính xác",
+          "type": "polygon"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$objects",
+          "color": "#2563eb"
+        }
+      ]
+    },
+    {
+      "id": "medical-image-classification-with-bboxes",
+      "title": "Medical Image Classification with Bounding Boxes",
+      "group": "Computer Vision",
+      "order": 999,
+      "image": "/static/templates/medical-image-classification.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Medical Image Classification with Bounding Boxes thuộc nhóm Computer Vision tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Bounding Box",
+          "desc": "Khoanh vùng chữ nhật định vị đối tượng",
+          "type": "bounding_box"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Tumor",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Benign",
+          "color": "#059669"
+        },
+        {
+          "name": "Malignant",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Normal",
+          "color": "#d97706"
+        }
+      ]
+    },
+    {
+      "id": "multipage-documents",
+      "title": "Multi-page document annotation",
+      "group": "Computer Vision",
+      "order": 999,
+      "image": "/static/templates/multipage.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Multi-page document annotation thuộc nhóm Computer Vision tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Bounding Box",
+          "desc": "Khoanh vùng chữ nhật định vị đối tượng",
+          "type": "bounding_box"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Title",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Date",
+          "color": "#059669"
+        },
+        {
+          "name": "Author",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Organization",
+          "color": "#d97706"
+        },
+        {
+          "name": "Amount",
+          "color": "#7c3aed"
+        }
+      ]
+    },
+    {
+      "id": "optical-character-recognition",
+      "title": "Optical Character Recognition",
+      "group": "Computer Vision",
+      "order": 999,
+      "image": "/static/templates/optical-character-recognition.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Optical Character Recognition thuộc nhóm Computer Vision tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        },
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$ocr",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Text",
+          "color": "#059669"
+        },
+        {
+          "name": "Handwriting",
+          "color": "#dc2626"
+        }
+      ]
+    },
+    {
+      "id": "visual-genome",
+      "title": "Visual Genome",
+      "group": "Computer Vision",
+      "order": 999,
+      "image": "/static/templates/visual-genome.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Visual Genome thuộc nhóm Computer Vision tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Bounding Box",
+          "desc": "Khoanh vùng chữ nhật định vị đối tượng",
+          "type": "bounding_box"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Regions",
+          "color": "#2563eb"
+        },
+        {
+          "name": "$regions",
+          "color": "#059669"
+        },
+        {
+          "name": "Attributes",
+          "color": "#dc2626"
+        },
+        {
+          "name": "$attributes",
+          "color": "#d97706"
+        },
+        {
+          "name": "Relationships",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "$relationships",
+          "color": "#db2777"
+        }
+      ]
+    },
+    {
+      "id": "visual-question-answering",
+      "title": "Visual Question Answering",
+      "group": "Computer Vision",
+      "order": 999,
+      "image": "/static/templates/visual-question-answering.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Visual Question Answering thuộc nhóm Computer Vision tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        },
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "attribute identification",
+          "color": "#2563eb"
+        },
+        {
+          "name": "counting",
+          "color": "#059669"
+        },
+        {
+          "name": "comparison",
+          "color": "#dc2626"
+        },
+        {
+          "name": "multiple attention",
+          "color": "#d97706"
+        },
+        {
+          "name": "logical operations",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "Q1:",
+          "color": "#db2777"
+        },
+        {
+          "name": "$q1",
+          "color": "#0891b2"
+        },
+        {
+          "name": "A1:",
+          "color": "#4f46e5"
+        }
+      ]
+    },
+    {
+      "id": "keypoints",
+      "title": "Keypoint Labeling",
+      "group": "Computer Vision",
+      "order": 10000,
+      "image": "/static/templates/keypoints.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Keypoint Labeling thuộc nhóm Computer Vision tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Keypoint",
+          "desc": "Đánh dấu tọa độ mốc đặc trưng",
+          "type": "keypoint"
+        },
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Face",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Nose",
+          "color": "#059669"
+        },
+        {
+          "name": "$img",
+          "color": "#dc2626"
+        }
+      ]
+    },
+    {
+      "id": "coreference-resolution-and-entity-linking",
+      "title": "Coreference Resolution & Entity Linking",
+      "group": "Conversational AI",
+      "order": 999,
+      "image": "/static/templates/coreference-resolution-and-entity-linking.png",
+      "type": "community",
+      "modality": "chat",
+      "description": "Mẫu bài toán Coreference Resolution & Entity Linking thuộc nhóm Conversational AI tối ưu cho dữ liệu CHAT.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Noun",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Pronoun",
+          "color": "#059669"
+        },
+        {
+          "name": "$corefText",
+          "color": "#dc2626"
+        }
+      ]
+    },
+    {
+      "id": "intent-classification-and-slot-filling",
+      "title": "Intent Classification and Slot Filling",
+      "group": "Conversational AI",
+      "order": 999,
+      "image": "/static/templates/intent-classification-and-slot-filling.png",
+      "type": "community",
+      "modality": "chat",
+      "description": "Mẫu bài toán Intent Classification and Slot Filling thuộc nhóm Conversational AI tối ưu cho dữ liệu CHAT.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Person",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Organization",
+          "color": "#059669"
+        },
+        {
+          "name": "Location",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Datetime",
+          "color": "#d97706"
+        },
+        {
+          "name": "Quantity",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "$humanMachineDialogue",
+          "color": "#db2777"
+        },
+        {
+          "name": "Greeting",
+          "color": "#0891b2"
+        },
+        {
+          "name": "Customer request",
+          "color": "#4f46e5"
+        }
+      ]
+    },
+    {
+      "id": "response-generation",
+      "title": "Response Generation",
+      "group": "Conversational AI",
+      "order": 999,
+      "image": "/static/templates/response-generation.png",
+      "type": "community",
+      "modality": "chat",
+      "description": "Mẫu bài toán Response Generation thuộc nhóm Conversational AI tối ưu cho dữ liệu CHAT.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        },
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$dialogue",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Provide response",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "response-selection",
+      "title": "Response Selection",
+      "group": "Conversational AI",
+      "order": 999,
+      "image": "/static/templates/response-selection.png",
+      "type": "community",
+      "modality": "chat",
+      "description": "Mẫu bài toán Response Selection thuộc nhóm Conversational AI tối ưu cho dữ liệu CHAT.",
+      "tools": [
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$humanMachineDialogue",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Choose response",
+          "color": "#059669"
+        },
+        {
+          "name": "$respone",
+          "color": "#dc2626"
+        },
+        {
+          "name": "$resptwo",
+          "color": "#d97706"
+        },
+        {
+          "name": "$respthree",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "One",
+          "color": "#db2777"
+        },
+        {
+          "name": "Two",
+          "color": "#0891b2"
+        },
+        {
+          "name": "Three",
+          "color": "#4f46e5"
+        }
+      ]
+    },
+    {
+      "id": "supervised-llm",
+      "title": "\"Supervised Language Model Fine-tuning\"",
+      "group": "Generative AI",
+      "order": 1,
+      "image": "/static/templates/generative-supervised-llm.png",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán \"Supervised Language Model Fine-tuning\" thuộc nhóm Generative AI tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$prompt",
+          "color": "#2563eb"
+        }
+      ]
+    },
+    {
+      "id": "human-feedback-collection",
+      "title": "\"Human Preference collection for RLHF\"",
+      "group": "Generative AI",
+      "order": 2,
+      "image": "/static/templates/generative-pairwise-human-preference.png",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán \"Human Preference collection for RLHF\" thuộc nhóm Generative AI tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Specialized Annotation",
+          "desc": "Bộ công cụ gán nhãn tiêu chuẩn DUT-AI",
+          "type": "custom"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$prompt",
+          "color": "#2563eb"
+        },
+        {
+          "name": "$answer1",
+          "color": "#059669"
+        },
+        {
+          "name": "$answer2",
+          "color": "#dc2626"
+        }
+      ]
+    },
+    {
+      "id": "chatbot-assessment",
+      "title": "\"Chatbot Model Assessment\"",
+      "group": "Generative AI",
+      "order": 3,
+      "image": "/static/templates/generative-chatbot-assessment.png",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán \"Chatbot Model Assessment\" thuộc nhóm Generative AI tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Dialogue Evaluator",
+          "desc": "Đánh giá chất lượng và nội dung hội thoại",
+          "type": "chat_eval"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        },
+        {
+          "name": "Rating & Scoring",
+          "desc": "Chấm điểm chất lượng theo thang đo",
+          "type": "rating"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$messages",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Yes",
+          "color": "#059669"
+        },
+        {
+          "name": "No",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Yes",
+          "color": "#d97706"
+        },
+        {
+          "name": "No",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "Hallucination",
+          "color": "#db2777"
+        },
+        {
+          "name": "Yes",
+          "color": "#0891b2"
+        },
+        {
+          "name": "No",
+          "color": "#4f46e5"
+        }
+      ]
+    },
+    {
+      "id": "llm-ranker",
+      "title": "\"LLM Ranker\"",
+      "group": "Generative AI",
+      "order": 4,
+      "image": "/static/templates/llm-ranker.png",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán \"LLM Ranker\" thuộc nhóm Generative AI tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Specialized Annotation",
+          "desc": "Bộ công cụ gán nhãn tiêu chuẩn DUT-AI",
+          "type": "custom"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Task: ",
+          "color": "#2563eb"
+        },
+        {
+          "name": "$task",
+          "color": "#059669"
+        },
+        {
+          "name": "Prompt: ",
+          "color": "#dc2626"
+        },
+        {
+          "name": "$prompt",
+          "color": "#d97706"
+        },
+        {
+          "name": "$items",
+          "color": "#7c3aed"
+        }
+      ]
+    },
+    {
+      "id": "visual-ranker",
+      "title": "\"Visual Ranker\"",
+      "group": "Generative AI",
+      "order": 5,
+      "image": "/static/templates/visual-ranker.png",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán \"Visual Ranker\" thuộc nhóm Generative AI tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Specialized Annotation",
+          "desc": "Bộ công cụ gán nhãn tiêu chuẩn DUT-AI",
+          "type": "custom"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$prompt",
+          "color": "#2563eb"
+        },
+        {
+          "name": "$images",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "response-grading",
+      "title": "LLM Response Grading",
+      "group": "Generative AI",
+      "order": 6,
+      "image": "/static/templates/response-grading.png",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán LLM Response Grading thuộc nhóm Generative AI tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Rating & Scoring",
+          "desc": "Chấm điểm chất lượng theo thang đo",
+          "type": "rating"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Long Document",
+          "color": "#2563eb"
+        },
+        {
+          "name": "$document",
+          "color": "#059669"
+        },
+        {
+          "name": "Short Summary",
+          "color": "#dc2626"
+        },
+        {
+          "name": "$summary",
+          "color": "#d97706"
+        },
+        {
+          "name": "Rate the Document Summary:",
+          "color": "#7c3aed"
+        }
+      ]
+    },
+    {
+      "id": "question-answering",
+      "title": "Question Answering",
+      "group": "Natural Language Processing",
+      "order": 1,
+      "image": "/static/templates/question-answering.png",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán Question Answering thuộc nhóm Natural Language Processing tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Please read the passage",
+          "color": "#2563eb"
+        },
+        {
+          "name": "$question",
+          "color": "#059669"
+        },
+        {
+          "name": "Answer",
+          "color": "#dc2626"
+        }
+      ]
+    },
+    {
+      "id": "text-classification",
+      "title": "Text Classification",
+      "group": "Natural Language Processing",
+      "order": 2,
+      "image": "/static/templates/text-classification.png",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán Text Classification thuộc nhóm Natural Language Processing tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Choose text sentiment",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Positive",
+          "color": "#059669"
+        },
+        {
+          "name": "Negative",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Neutral",
+          "color": "#d97706"
+        }
+      ]
+    },
+    {
+      "id": "named-entity-recognition",
+      "title": "Named Entity Recognition",
+      "group": "Natural Language Processing",
+      "order": 3,
+      "image": "/static/templates/named-entity-recognition.png",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán Named Entity Recognition thuộc nhóm Natural Language Processing tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        }
+      ],
+      "labels": [
+        {
+          "name": "PER",
+          "color": "#2563eb"
+        },
+        {
+          "name": "ORG",
+          "color": "#059669"
+        },
+        {
+          "name": "LOC",
+          "color": "#dc2626"
+        },
+        {
+          "name": "MISC",
+          "color": "#d97706"
+        }
+      ]
+    },
+    {
+      "id": "taxonomy",
+      "title": "Taxonomy",
+      "group": "Natural Language Processing",
+      "order": 4,
+      "image": "/static/templates/taxonomy.png",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán Taxonomy thuộc nhóm Natural Language Processing tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Specialized Annotation",
+          "desc": "Bộ công cụ gán nhãn tiêu chuẩn DUT-AI",
+          "type": "custom"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Archaea",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Bacteria",
+          "color": "#059669"
+        },
+        {
+          "name": "Eukarya",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Human",
+          "color": "#d97706"
+        },
+        {
+          "name": "Oppossum",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "Extraterrestial",
+          "color": "#db2777"
+        }
+      ]
+    },
+    {
+      "id": "relation-extraction",
+      "title": "Relation Extraction",
+      "group": "Natural Language Processing",
+      "order": 5,
+      "image": "/static/templates/relation-extraction.png",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán Relation Extraction thuộc nhóm Natural Language Processing tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        }
+      ],
+      "labels": [
+        {
+          "name": "org:founded_by",
+          "color": "#2563eb"
+        },
+        {
+          "name": "org:founded",
+          "color": "#059669"
+        },
+        {
+          "name": "Organization",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Person",
+          "color": "#d97706"
+        },
+        {
+          "name": "Datetime",
+          "color": "#7c3aed"
+        }
+      ]
+    },
+    {
+      "id": "content-moderation",
+      "title": "Content Moderation",
+      "group": "Natural Language Processing",
+      "order": 999,
+      "image": "/static/templates/content-moderation.png",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán Content Moderation thuộc nhóm Natural Language Processing tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        },
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Toxic",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Severely Toxic",
+          "color": "#059669"
+        },
+        {
+          "name": "Obscene",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Threat",
+          "color": "#d97706"
+        },
+        {
+          "name": "Insult",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "Hate",
+          "color": "#db2777"
+        }
+      ]
+    },
+    {
+      "id": "machine-translation",
+      "title": "Machine Translation",
+      "group": "Natural Language Processing",
+      "order": 999,
+      "image": "/static/templates/machine-translation.png",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán Machine Translation thuộc nhóm Natural Language Processing tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Read the sentence in English",
+          "color": "#2563eb"
+        },
+        {
+          "name": "$english",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "text-summarization",
+      "title": "Text Summarization",
+      "group": "Natural Language Processing",
+      "order": 999,
+      "image": "/static/templates/text-summarization.png",
+      "type": "community",
+      "modality": "document",
+      "description": "Mẫu bài toán Text Summarization thuộc nhóm Natural Language Processing tối ưu cho dữ liệu DOCUMENT.",
+      "tools": [
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Please read the text",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Provide one sentence summary",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "asr-hypotheses",
+      "title": "ASR Hypotheses Selection",
+      "group": "Ranking & Scoring",
+      "order": 999,
+      "image": "/static/templates/asr-hypotheses.png",
+      "type": "community",
+      "modality": "tabular",
+      "description": "Mẫu bài toán ASR Hypotheses Selection thuộc nhóm Ranking & Scoring tối ưu cho dữ liệu TABULAR.",
+      "tools": [
+        {
+          "name": "Audio Waveform",
+          "desc": "Phân đoạn mốc thời gian trên sóng âm",
+          "type": "audio_waveform"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$transcriptions",
+          "color": "#2563eb"
+        }
+      ]
+    },
+    {
+      "id": "content-based-image-search",
+      "title": "Content-based Image Retrieval",
+      "group": "Ranking & Scoring",
+      "order": 999,
+      "image": "/static/templates/content-based-image-search.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Content-based Image Retrieval thuộc nhóm Ranking & Scoring tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$query_image",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Choose similar images:",
+          "color": "#059669"
+        },
+        {
+          "name": "$image1",
+          "color": "#dc2626"
+        },
+        {
+          "name": "$image2",
+          "color": "#d97706"
+        },
+        {
+          "name": "$image3",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "One",
+          "color": "#db2777"
+        },
+        {
+          "name": "Two",
+          "color": "#0891b2"
+        },
+        {
+          "name": "Three",
+          "color": "#4f46e5"
+        }
+      ]
+    },
+    {
+      "id": "document-retrieval",
+      "title": "Document Retrieval",
+      "group": "Ranking & Scoring",
+      "order": 999,
+      "image": "/static/templates/document-retrieval.png",
+      "type": "community",
+      "modality": "tabular",
+      "description": "Mẫu bài toán Document Retrieval thuộc nhóm Ranking & Scoring tối ưu cho dữ liệu TABULAR.",
+      "tools": [
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$query",
+          "color": "#2563eb"
+        },
+        {
+          "name": "$text1",
+          "color": "#059669"
+        },
+        {
+          "name": "$text2",
+          "color": "#dc2626"
+        },
+        {
+          "name": "$text3",
+          "color": "#d97706"
+        },
+        {
+          "name": "One",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "Two",
+          "color": "#db2777"
+        },
+        {
+          "name": "Two",
+          "color": "#0891b2"
+        }
+      ]
+    },
+    {
+      "id": "pairwise-classification",
+      "title": "Pairwise classification",
+      "group": "Ranking & Scoring",
+      "order": 999,
+      "image": "/static/templates/pairwise-classification.png",
+      "type": "community",
+      "modality": "tabular",
+      "description": "Mẫu bài toán Pairwise classification thuộc nhóm Ranking & Scoring tối ưu cho dữ liệu TABULAR.",
+      "tools": [
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$pairText1",
+          "color": "#2563eb"
+        },
+        {
+          "name": "$pairText2",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "pairwise-regression",
+      "title": "Pairwise regression",
+      "group": "Ranking & Scoring",
+      "order": 999,
+      "image": "/static/templates/pairwise-regression.png",
+      "type": "community",
+      "modality": "tabular",
+      "description": "Mẫu bài toán Pairwise regression thuộc nhóm Ranking & Scoring tối ưu cho dữ liệu TABULAR.",
+      "tools": [
+        {
+          "name": "Rating & Scoring",
+          "desc": "Chấm điểm chất lượng theo thang đo",
+          "type": "rating"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$image1",
+          "color": "#2563eb"
+        },
+        {
+          "name": "$image2",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "serp-ranking",
+      "title": "Search Page Ranking",
+      "group": "Ranking & Scoring",
+      "order": 999,
+      "image": "/static/templates/serp-ranking.png",
+      "type": "community",
+      "modality": "tabular",
+      "description": "Mẫu bài toán Search Page Ranking thuộc nhóm Ranking & Scoring tối ưu cho dữ liệu TABULAR.",
+      "tools": [
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        },
+        {
+          "name": "Rating & Scoring",
+          "desc": "Chấm điểm chất lượng theo thang đo",
+          "type": "rating"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$options",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Search Quality",
+          "color": "#059669"
+        },
+        {
+          "name": "Labeling Confidence",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Low",
+          "color": "#d97706"
+        },
+        {
+          "name": "High",
+          "color": "#7c3aed"
+        }
+      ]
+    },
+    {
+      "id": "text-to-image",
+      "title": "Text-to-Image Generation",
+      "group": "Ranking & Scoring",
+      "order": 999,
+      "image": "/static/templates/text-to-image.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Text-to-Image Generation thuộc nhóm Ranking & Scoring tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$prompt",
+          "color": "#2563eb"
+        },
+        {
+          "name": "$images",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "freeform-metadata",
+      "title": "Freeform Metadata",
+      "group": "Structured Data Parsing",
+      "order": 999,
+      "image": "/static/templates/freeform-metadata.png",
+      "type": "community",
+      "modality": "tabular",
+      "description": "Mẫu bài toán Freeform Metadata thuộc nhóm Structured Data Parsing tối ưu cho dữ liệu TABULAR.",
+      "tools": [
+        {
+          "name": "Transcription & Free Text",
+          "desc": "Nhập văn bản bóc tách hoặc dịch thuật",
+          "type": "text_input"
+        }
+      ],
+      "labels": []
+    },
+    {
+      "id": "html-entity-recognition",
+      "title": "HTML Entity Recognition",
+      "group": "Structured Data Parsing",
+      "order": 999,
+      "image": "/static/templates/html-entity-recognition.png",
+      "type": "community",
+      "modality": "tabular",
+      "description": "Mẫu bài toán HTML Entity Recognition thuộc nhóm Structured Data Parsing tối ưu cho dữ liệu TABULAR.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Title",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Author",
+          "color": "#059669"
+        },
+        {
+          "name": "Body",
+          "color": "#dc2626"
+        },
+        {
+          "name": "$html",
+          "color": "#d97706"
+        }
+      ]
+    },
+    {
+      "id": "pdf-classification",
+      "title": "PDF Classification",
+      "group": "Structured Data Parsing",
+      "order": 999,
+      "image": "/static/templates/pdf-classification.png",
+      "type": "community",
+      "modality": "tabular",
+      "description": "Mẫu bài toán PDF Classification thuộc nhóm Structured Data Parsing tối ưu cho dữ liệu TABULAR.",
+      "tools": [
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        },
+        {
+          "name": "Rating & Scoring",
+          "desc": "Chấm điểm chất lượng theo thang đo",
+          "type": "rating"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Rate this article",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Important article",
+          "color": "#059669"
+        },
+        {
+          "name": "Yellow press",
+          "color": "#dc2626"
+        },
+        {
+          "name": "$pdf",
+          "color": "#d97706"
+        }
+      ]
+    },
+    {
+      "id": "tabular-data",
+      "title": "Tabular Data",
+      "group": "Structured Data Parsing",
+      "order": 999,
+      "image": "/static/templates/tabular-data.png",
+      "type": "community",
+      "modality": "tabular",
+      "description": "Mẫu bài toán Tabular Data thuộc nhóm Structured Data Parsing tối ưu cho dữ liệu TABULAR.",
+      "tools": [
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Table with {key: value} pairs",
+          "color": "#2563eb"
+        },
+        {
+          "name": "$item",
+          "color": "#059669"
+        },
+        {
+          "name": "Correct",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Incorrect",
+          "color": "#d97706"
+        }
+      ]
+    },
+    {
+      "id": "activity-recognition",
+      "title": "Activity Recognition",
+      "group": "Time Series Analysis",
+      "order": 999,
+      "image": "/static/templates/activity-recognition.png",
+      "type": "community",
+      "modality": "timeseries",
+      "description": "Mẫu bài toán Activity Recognition thuộc nhóm Time Series Analysis tối ưu cho dữ liệu TIMESERIES.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Run",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Walk",
+          "color": "#059669"
+        },
+        {
+          "name": "Fly",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Swim",
+          "color": "#d97706"
+        },
+        {
+          "name": "Ride",
+          "color": "#7c3aed"
+        },
+        {
+          "name": "$timeseriesUrl",
+          "color": "#db2777"
+        }
+      ]
+    },
+    {
+      "id": "change-point-detection",
+      "title": "Change Point Detection",
+      "group": "Time Series Analysis",
+      "order": 999,
+      "image": "/static/templates/change-point-detection.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Change Point Detection thuộc nhóm Time Series Analysis tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Bounding Box",
+          "desc": "Khoanh vùng chữ nhật định vị đối tượng",
+          "type": "bounding_box"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Change",
+          "color": "#2563eb"
+        }
+      ]
+    },
+    {
+      "id": "outliers-anomaly-detection",
+      "title": "Outliers & Anomaly Detection",
+      "group": "Time Series Analysis",
+      "order": 999,
+      "image": "/static/templates/outliers-anomaly-detection.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Outliers & Anomaly Detection thuộc nhóm Time Series Analysis tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Bounding Box",
+          "desc": "Khoanh vùng chữ nhật định vị đối tượng",
+          "type": "bounding_box"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Region",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Outlier",
+          "color": "#059669"
+        },
+        {
+          "name": "Anomaly",
+          "color": "#dc2626"
+        }
+      ]
+    },
+    {
+      "id": "signal-quality",
+      "title": "Signal Quality",
+      "group": "Time Series Analysis",
+      "order": 999,
+      "image": "/static/templates/signal-quality.png",
+      "type": "community",
+      "modality": "timeseries",
+      "description": "Mẫu bài toán Signal Quality thuộc nhóm Time Series Analysis tối ưu cho dữ liệu TIMESERIES.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        },
+        {
+          "name": "Rating & Scoring",
+          "desc": "Chấm điểm chất lượng theo thang đo",
+          "type": "rating"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Region",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Good",
+          "color": "#059669"
+        },
+        {
+          "name": "Medium",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Poor",
+          "color": "#d97706"
+        }
+      ]
+    },
+    {
+      "id": "time-series-forecasting",
+      "title": "Time Series Forecasting",
+      "group": "Time Series Analysis",
+      "order": 999,
+      "image": "/static/templates/time-series-forecasting.png",
+      "type": "community",
+      "modality": "timeseries",
+      "description": "Mẫu bài toán Time Series Forecasting thuộc nhóm Time Series Analysis tối ưu cho dữ liệu TIMESERIES.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Regions",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Forecast next trend:",
+          "color": "#059669"
+        },
+        {
+          "name": "Up",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Down",
+          "color": "#d97706"
+        },
+        {
+          "name": "Steady",
+          "color": "#7c3aed"
+        }
+      ]
+    },
+    {
+      "id": "video-classification",
+      "title": "Video Classification",
+      "group": "Videos",
+      "order": 999,
+      "image": "/static/templates/video-classification.png",
+      "type": "community",
+      "modality": "video",
+      "description": "Mẫu bài toán Video Classification thuộc nhóm Videos tối ưu cho dữ liệu VIDEO.",
+      "tools": [
+        {
+          "name": "Video Timeline",
+          "desc": "Đánh dấu khung hình & đối tượng theo thời gian",
+          "type": "video_timeline"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Blurry",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Sharp",
+          "color": "#059669"
+        }
+      ]
+    },
+    {
+      "id": "video-frame-classification",
+      "title": "Video Frame Classification",
+      "group": "Videos",
+      "order": 999,
+      "image": "/static/templates/video-frame-classification.png",
+      "type": "community",
+      "modality": "video",
+      "description": "Mẫu bài toán Video Frame Classification thuộc nhóm Videos tối ưu cho dữ liệu VIDEO.",
+      "tools": [
+        {
+          "name": "Text Spans / NER",
+          "desc": "Bôi đen từ và gán nhãn thực thể",
+          "type": "text_span"
+        },
+        {
+          "name": "Video Timeline",
+          "desc": "Đánh dấu khung hình & đối tượng theo thời gian",
+          "type": "video_timeline"
+        },
+        {
+          "name": "Classification",
+          "desc": "Gán nhãn phân loại toàn phần hoặc theo phân đoạn",
+          "type": "classification"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Movement",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Still",
+          "color": "#059669"
+        },
+        {
+          "name": "Slow Motion",
+          "color": "#dc2626"
+        }
+      ]
+    },
+    {
+      "id": "video-object-tracking",
+      "title": "Video Object Tracking",
+      "group": "Videos",
+      "order": 999,
+      "image": "/static/templates/video-object-tracking.png",
+      "type": "community",
+      "modality": "video",
+      "description": "Mẫu bài toán Video Object Tracking thuộc nhóm Videos tối ưu cho dữ liệu VIDEO.",
+      "tools": [
+        {
+          "name": "Bounding Box",
+          "desc": "Khoanh vùng chữ nhật định vị đối tượng",
+          "type": "bounding_box"
+        },
+        {
+          "name": "Video Timeline",
+          "desc": "Đánh dấu khung hình & đối tượng theo thời gian",
+          "type": "video_timeline"
+        }
+      ],
+      "labels": [
+        {
+          "name": "Man",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Woman",
+          "color": "#059669"
+        },
+        {
+          "name": "Other",
+          "color": "#dc2626"
+        }
+      ]
+    },
+    {
+      "id": "video-timeline-segmentation",
+      "title": "Video Timeline Segmentation",
+      "group": "Videos",
+      "order": 999,
+      "image": "/static/templates/video-timeline-segmentation.png",
+      "type": "community",
+      "modality": "image",
+      "description": "Mẫu bài toán Video Timeline Segmentation thuộc nhóm Videos tối ưu cho dữ liệu IMAGE.",
+      "tools": [
+        {
+          "name": "Polygon",
+          "desc": "Khoanh vùng đa giác tự do chính xác",
+          "type": "polygon"
+        },
+        {
+          "name": "Audio Waveform",
+          "desc": "Phân đoạn mốc thời gian trên sóng âm",
+          "type": "audio_waveform"
+        },
+        {
+          "name": "Video Timeline",
+          "desc": "Đánh dấu khung hình & đối tượng theo thời gian",
+          "type": "video_timeline"
+        }
+      ],
+      "labels": [
+        {
+          "name": "$video_url",
+          "color": "#2563eb"
+        },
+        {
+          "name": "Kickflip",
+          "color": "#059669"
+        },
+        {
+          "name": "360 Flip",
+          "color": "#dc2626"
+        },
+        {
+          "name": "Trick",
+          "color": "#d97706"
+        },
+        {
+          "name": "$video_url",
+          "color": "#7c3aed"
+        }
+      ]
+    }
+  ]
+}

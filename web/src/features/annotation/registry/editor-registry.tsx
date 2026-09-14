@@ -1,11 +1,29 @@
+"use client";
+
 import React from "react";
+import dynamic from "next/dynamic";
 import { AnnotationResult } from "../types";
 import { InputDefinition } from "@/features/ontology/types";
-import { KonvaAnnotationCanvas } from "../components/konva-annotation-canvas";
 import { TextAnnotationCanvas } from "../components/text-annotation-canvas";
 import { TableAnnotationCanvas } from "../components/table-annotation-canvas";
 import { AudioAnnotationCanvas } from "../components/audio-annotation-canvas";
 import { ClassificationEditor } from "../components/classification-editor";
+
+const KonvaAnnotationCanvas = dynamic(
+  () =>
+    import("../components/konva-annotation-canvas").then(
+      (mod) => mod.KonvaAnnotationCanvas
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full w-full items-center justify-center bg-slate-900 text-xs text-slate-400">
+        Đang tải Canvas gán nhãn...
+      </div>
+    ),
+  }
+);
+
 
 /**
  * Standardized Props that every Editor Component in the Registry must accept
@@ -23,6 +41,9 @@ export interface BaseEditorComponentProps {
     key: string;
   }>;
   readOnly?: boolean;
+  selectedShapeId?: string | null;
+  onSelectShapeId?: (id: string | null) => void;
+  onSelectCategory?: (categoryId: string) => void;
   onChange?: (results: AnnotationResult[]) => void;
   metadata?: Record<string, unknown>;
 }

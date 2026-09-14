@@ -175,7 +175,6 @@ class SqlProjectRepository(IProjectRepository):
         if not model:
             return None
         return {
-            "annotation_provider_key": model.annotation_provider_key,
             "storage_provider_key": model.storage_provider_key,
             "default_workflow_ref": model.default_workflow_ref,
             "settings": model.settings,
@@ -190,9 +189,6 @@ class SqlProjectRepository(IProjectRepository):
         model = result.scalar_one_or_none()
         if model:
             model.settings = settings.get("settings", model.settings)
-            model.annotation_provider_key = settings.get(
-                "annotation_provider_key", model.annotation_provider_key
-            )
             model.storage_provider_key = settings.get(
                 "storage_provider_key", model.storage_provider_key
             )
@@ -206,9 +202,6 @@ class SqlProjectRepository(IProjectRepository):
             model = ProjectConfigurationModel(
                 project_id=project_id,
                 settings=settings.get("settings", {}),
-                annotation_provider_key=settings.get(
-                    "annotation_provider_key", "label_studio"
-                ),
                 storage_provider_key=settings.get("storage_provider_key", "minio"),
                 default_workflow_ref=settings.get("default_workflow_ref"),
                 settings_schema_version=settings.get("settings_schema_version", "1.0"),
@@ -216,7 +209,6 @@ class SqlProjectRepository(IProjectRepository):
             self.session.add(model)
         await self.session.flush()
         return {
-            "annotation_provider_key": model.annotation_provider_key,
             "storage_provider_key": model.storage_provider_key,
             "default_workflow_ref": model.default_workflow_ref,
             "settings": model.settings,

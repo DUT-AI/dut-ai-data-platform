@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui";
-import { PROJECT_TYPE_OPTIONS, Project } from "../types";
+import { Project } from "../types";
 import { useArchiveProjectMutation } from "../hooks";
 
 interface ProjectOverviewTabProps {
@@ -17,9 +17,6 @@ interface ProjectOverviewTabProps {
 
 export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
   const archiveMutation = useArchiveProjectMutation(project.id);
-  const typeOption = PROJECT_TYPE_OPTIONS.find(
-    (opt) => opt.value === project.project_type
-  );
 
   const handleArchive = () => {
     if (
@@ -42,15 +39,8 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
               <Badge
                 variant={project.status === "active" ? "success" : "secondary"}
               >
-                {project.status.toUpperCase()}
+                {project.status === "active" ? "Hoạt động" : "Lưu trữ"}
               </Badge>
-              {typeOption && (
-                <span
-                  className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${typeOption.badgeColor}`}
-                >
-                  {typeOption.label}
-                </span>
-              )}
             </div>
           </div>
         </CardHeader>

@@ -2,7 +2,7 @@ export * from "./types";
 export * from "./api";
 export * from "./hooks";
 export * from "./components/project-card";
-export * from "./components/create-project-modal";
+export * from "./components/create-project-view";
 export * from "./components/project-list";
 export * from "./components/project-detail-view";
 export * from "./components/project-overview-tab";

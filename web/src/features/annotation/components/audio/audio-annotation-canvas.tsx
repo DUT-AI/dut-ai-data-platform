@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { AnnotationResult } from "../types";
+import { AnnotationResult } from "../../types";
 import { Play, Pause, RotateCcw, Trash2, Headphones } from "lucide-react";
 
 export interface AudioAnnotationCanvasProps {

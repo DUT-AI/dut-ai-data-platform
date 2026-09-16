@@ -153,6 +153,7 @@ function AnnotationWorkspaceInner({
     isClassificationOnly,
     isSpatialVision,
     isAudio,
+    isVideo,
   } = useMemo(() => {
     const inputType = exportedSchema?.inputs?.[0]?.schema?.type;
     const outputType = exportedSchema?.outputs?.[0]?.type;
@@ -161,6 +162,7 @@ function AnnotationWorkspaceInner({
     const filename = (currentAsset?.filename || "").toLowerCase();
     if (!effInput) {
       if (filename.match(/\.(mp3|wav|ogg|m4a|aac)$/)) effInput = "audio";
+      else if (filename.match(/\.(mp4|webm|avi|mov|mkv)$/)) effInput = "video";
       else if (filename.match(/\.(csv|json|tsv)$/)) effInput = "tabular";
       else if (filename.match(/\.(txt|md|log|docx?)$/)) effInput = "document";
       else effInput = "image";
@@ -176,6 +178,8 @@ function AnnotationWorkspaceInner({
       effInput === "image";
     const isAud =
       effInput === "audio" || (outputType as string) === "audio_segment";
+    const isVid =
+      effInput === "video" || (outputType as string) === "video_segment";
 
     return {
       effectiveInputType: effInput,
@@ -183,6 +187,7 @@ function AnnotationWorkspaceInner({
       isClassificationOnly: isClassOnly,
       isSpatialVision: isSpatial,
       isAudio: isAud,
+      isVideo: isVid,
     };
   }, [exportedSchema, currentAsset]);
 
@@ -438,7 +443,7 @@ function AnnotationWorkspaceInner({
                 />
 
                 {/* Floating Spatial Controls (Zoom / Pan) for Computer Vision */}
-                {isSpatialVision && !isClassificationOnly && (
+                {isSpatialVision && !isClassificationOnly && !isVideo && (
                   <div className="absolute bottom-3 right-3 z-30">
                     <ZoomPanControls
                       scale={zoomScale}
@@ -518,7 +523,7 @@ function AnnotationWorkspaceInner({
         <WorkspaceSidebar
           isOpen={isSidebarOpen}
           isClassificationOnly={isClassificationOnly}
-          isAudio={isAudio}
+          isAudio={isAudio || isVideo}
           workingResults={workingResults}
           relations={relations}
           revisions={revisions}

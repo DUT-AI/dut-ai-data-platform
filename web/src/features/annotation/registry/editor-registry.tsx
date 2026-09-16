@@ -4,14 +4,15 @@ import React from "react";
 import dynamic from "next/dynamic";
 import { AnnotationResult } from "../types";
 import { InputDefinition } from "@/features/ontology/types";
-import { TextAnnotationCanvas } from "../components/text-annotation-canvas";
-import { TableAnnotationCanvas } from "../components/table-annotation-canvas";
-import { AudioAnnotationCanvas } from "../components/audio-annotation-canvas";
+import { TextAnnotationCanvas } from "../components/text/text-annotation-canvas";
+import { TableAnnotationCanvas } from "../components/tabular/table-annotation-canvas";
+import { AudioAnnotationCanvas } from "../components/audio/audio-annotation-canvas";
+import { VideoAnnotationCanvas } from "../components/video/video-annotation-canvas";
 import { ClassificationEditor } from "../components/classification-editor";
 
 const KonvaAnnotationCanvas = dynamic(
   () =>
-    import("../components/konva-annotation-canvas").then(
+    import("../components/vision/konva-annotation-canvas").then(
       (mod) => mod.KonvaAnnotationCanvas
     ),
   {
@@ -71,6 +72,10 @@ function TabularEditor(props: BaseEditorComponentProps) {
 
 function AudioEditor(props: BaseEditorComponentProps) {
   return <AudioAnnotationCanvas audioUrl={props.assetUrl} {...props} />;
+}
+
+function VideoEditor(props: BaseEditorComponentProps) {
+  return <VideoAnnotationCanvas assetUrl={props.assetUrl} {...props} />;
 }
 
 /**
@@ -133,6 +138,14 @@ export const EDITOR_REGISTRY: Record<string, EditorRegistration> = {
     supportedInputTypes: ["audio"],
     component: AudioEditor,
   },
+  
+  video_segment: {
+    code: "video_segment",
+    label: "Video Segment Editor",
+    description: "Cắt đoạn thời gian và phân loại video",
+    supportedInputTypes: ["video"],
+    component: VideoEditor,
+  },
 
   // 5. Classification & Categories
   classification: {
@@ -164,6 +177,7 @@ export function resolveEditorComponent(
   }
 
   // 2. Fallback match by Input Modality
+  if (inputTypeCode === "video") return EDITOR_REGISTRY["video_segment"].component;
   if (inputTypeCode === "audio")
     return EDITOR_REGISTRY["audio_segment"].component;
   if (inputTypeCode === "tabular") return EDITOR_REGISTRY["tabular"].component;

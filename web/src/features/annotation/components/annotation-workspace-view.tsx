@@ -172,6 +172,8 @@ function AnnotationWorkspaceInner({
     const isSpatial =
       outputType === "bounding_box" ||
       outputType === "polygon" ||
+      (outputType as string) === "brush_mask" ||
+      (outputType as string) === "mask" ||
       (outputType as string) === "keypoint" ||
       effInput === "image";
     const isAud =

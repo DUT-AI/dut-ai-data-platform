@@ -121,17 +121,18 @@ export function VideoAnnotationCanvas({
             );
           }
           break;
-        case "[": // Start Segment
+        case "i":
+        case "I": // Start Segment / Mark In
           if (!readOnly && videoRef.current) {
             e.preventDefault();
             setDragStart(videoRef.current.currentTime);
-            // If we don't have dragEnd yet, or if it's before the new start, clear it or move it
             if (dragEnd !== null && dragEnd <= videoRef.current.currentTime) {
               setDragEnd(null);
             }
           }
           break;
-        case "]": // End Segment
+        case "o":
+        case "O": // End Segment / Mark Out
           if (!readOnly && videoRef.current) {
             e.preventDefault();
             const time = videoRef.current.currentTime;
@@ -248,9 +249,8 @@ export function VideoAnnotationCanvas({
 
   const formatTime = (sec: number) => {
     const mins = Math.floor(sec / 60);
-    const secs = Math.floor(sec % 60);
-    const ms = Math.floor((sec % 1) * 10);
-    return `${mins}:${secs < 10 ? "0" : ""}${secs}.${ms}`;
+    const secs = (sec % 60).toFixed(1);
+    return `${mins}:${Number(secs) < 10 ? "0" : ""}${secs}`;
   };
 
   return (
@@ -263,7 +263,7 @@ export function VideoAnnotationCanvas({
             Video Canvas (Classification & Segmenting)
           </span>
           <span className="text-[11px] text-slate-400">
-            • Phím tắt: [ ] cắt segment, Space phát/dừng, J/L tua nhanh
+            • Phím tắt: <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">I</kbd> chọn bắt đầu, <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">O</kbd> chọn kết thúc & tạo đoạn nhãn, <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">Space</kbd> phát/dừng
           </span>
         </div>
 

@@ -346,6 +346,33 @@ function AnnotationWorkspaceInner({
     if (hasNext && assets) navigateToAsset(assets[currentAssetIdx + 1].id);
   });
 
+  // Fallback Global keydown for [ and ] navigation across all workspace editors
+  useEffect(() => {
+    const handleGlobalNavKeyDown = (e: KeyboardEvent) => {
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        return;
+      }
+
+      if (e.key === "[") {
+        if (hasPrev && assets) {
+          e.preventDefault();
+          navigateToAsset(assets[currentAssetIdx - 1].id);
+        }
+      } else if (e.key === "]") {
+        if (hasNext && assets) {
+          e.preventDefault();
+          navigateToAsset(assets[currentAssetIdx + 1].id);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalNavKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalNavKeyDown);
+  }, [hasPrev, hasNext, assets, currentAssetIdx]);
+
   const isLoading = isAnnoLoading || isDownloadLoading || isAssetsLoading;
   const assetFilename = currentAsset?.filename || "Asset";
 

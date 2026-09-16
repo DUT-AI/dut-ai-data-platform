@@ -36,6 +36,27 @@ OUTPUT_DEFINITIONS = (
         {"type": "object"},
     ),
     ("polygon", "Polygon", "Vùng đa giác.", True, {"type": "object"}),
+    (
+        "keypoint",
+        "Keypoint",
+        "Điểm mốc tọa độ trên ảnh hoặc video.",
+        True,
+        {"type": "object"},
+    ),
+    (
+        "video_segment",
+        "Video Segment",
+        "Phân đoạn thời gian và cắt video.",
+        True,
+        {"type": "object"},
+    ),
+    (
+        "audio_segment",
+        "Audio Segment",
+        "Phân đoạn thời gian sóng âm thanh.",
+        True,
+        {"type": "object"},
+    ),
     ("text", "Text", "Kết quả văn bản.", False, {"type": "string"}),
     (
         "named_entity",

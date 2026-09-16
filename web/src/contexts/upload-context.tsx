@@ -35,6 +35,29 @@ async function computeSha256(file: File): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+async function runWithConcurrencyLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let currentIndex = 0;
+
+  const worker = async () => {
+    while (currentIndex < items.length) {
+      const idx = currentIndex++;
+      results[idx] = await fn(items[idx], idx);
+    }
+  };
+
+  const workers = Array.from(
+    { length: Math.min(limit, items.length) },
+    () => worker()
+  );
+  await Promise.all(workers);
+  return results;
+}
+
 export function UploadProvider({ children }: { children: React.ReactNode }) {
   const [activeJobs, setActiveJobs] = useState<ActiveUploadJob[]>([]);
   const queryClient = useQueryClient();
@@ -83,9 +106,12 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
 
       const prepareRes = await datasetApi.prepareAssetUpload(versionId, preparePayload);
 
-      // Step 2: Concurrently upload to S3 and calculate true binary SHA-256
-      const finalizeItems = await Promise.all(
-        files.map(async (file, index) => {
+      // Step 2: Upload to S3 with controlled concurrency (Max 3 files in parallel to prevent network congestion)
+      const CONCURRENCY_LIMIT = 3;
+      const finalizeItems = await runWithConcurrencyLimit(
+        files,
+        CONCURRENCY_LIMIT,
+        async (file, index) => {
           const presigned = prepareRes.items[index];
 
           const [sha256] = await Promise.all([
@@ -114,8 +140,9 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
             file_size: file.size,
             mime_type: file.type || "application/octet-stream",
           };
-        })
+        }
       );
+
 
       // Step 3: Finalize import & get deduplication stats
       setActiveJobs((prev) =>

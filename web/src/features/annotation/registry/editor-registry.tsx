@@ -8,6 +8,9 @@ import { TextAnnotationCanvas } from "../components/text-annotation-canvas";
 import { TableAnnotationCanvas } from "../components/table-annotation-canvas";
 import { AudioAnnotationCanvas } from "../components/audio-annotation-canvas";
 import { ClassificationEditor } from "../components/classification-editor";
+import { NerAnnotationCanvas } from "../components/ner-annotation-canvas";
+import { TextClassificationCanvas } from "../components/text-classification-canvas";
+import { QaAnnotationCanvas } from "../components/qa-annotation-canvas";
 
 const KonvaAnnotationCanvas = dynamic(
   () =>
@@ -71,6 +74,29 @@ function TabularEditor(props: BaseEditorComponentProps) {
 
 function AudioEditor(props: BaseEditorComponentProps) {
   return <AudioAnnotationCanvas audioUrl={props.assetUrl} {...props} />;
+}
+
+function NerEditor(props: BaseEditorComponentProps) {
+  return (
+    <NerAnnotationCanvas
+      textContent={(props.metadata as Record<string, unknown> | undefined)?.textContent as string | undefined}
+      {...props}
+    />
+  );
+}
+
+function TextClassificationEditor(props: BaseEditorComponentProps) {
+  return (
+    <TextClassificationCanvas
+      textContent={(props.metadata as Record<string, unknown> | undefined)?.textContent as string | undefined}
+      multiple={!!(props.metadata as Record<string, unknown> | undefined)?.multiple}
+      {...props}
+    />
+  );
+}
+
+function QaEditor(props: BaseEditorComponentProps) {
+  return <QaAnnotationCanvas {...props} />;
 }
 
 /**
@@ -148,6 +174,33 @@ export const EDITOR_REGISTRY: Record<string, EditorRegistration> = {
       "object",
     ],
     component: ClassificationEditor,
+  },
+
+  // 6. NLP — Named Entity Recognition (upgraded, with inline popover)
+  named_entity_recognition: {
+    code: "named_entity_recognition",
+    label: "Named Entity Recognition Editor",
+    description: "Bôi đen văn bản, chọn loại thực thể từ popover (PER, LOC, ORG…)",
+    supportedInputTypes: ["document"],
+    component: NerEditor,
+  },
+
+  // 7. NLP — Text Classification (two-column: text + label picker)
+  text_classification: {
+    code: "text_classification",
+    label: "Text Classification Editor",
+    description: "Đọc văn bản và gán nhãn phân loại toàn đoạn (single / multi-label)",
+    supportedInputTypes: ["document"],
+    component: TextClassificationEditor,
+  },
+
+  // 8. NLP — Question Answering (two-column: context + QA panel)
+  question_answering: {
+    code: "question_answering",
+    label: "Question Answering Editor",
+    description: "Highlight đoạn trả lời trong Context cho câu hỏi đã cho",
+    supportedInputTypes: ["document"],
+    component: QaEditor,
   },
 };
 

@@ -9,6 +9,7 @@ import { TableAnnotationCanvas } from "../components/table-annotation-canvas";
 import { AudioAnnotationCanvas } from "../components/audio-annotation-canvas";
 import { ClassificationEditor } from "../components/classification-editor";
 import { ImageClassificationEditor } from "../components/editors/classification/image-classification-editor";
+import type { AudioLabelMode } from "../utils/audio-label-utils";
 
 // Dynamic imports for Canvas-based Micro Editors to avoid SSR window access issues
 const DynamicBoundingBoxEditor = dynamic(
@@ -88,9 +89,14 @@ export interface BaseEditorComponentProps {
     key: string;
   }>;
   readOnly?: boolean;
+  audioLabelMode?: AudioLabelMode;
+  outputId?: string;
+  outputMultiple?: boolean;
+  validationErrors?: string[];
   selectedShapeId?: string | null;
   onSelectShapeId?: (id: string | null) => void;
   onSelectCategory?: (categoryId: string) => void;
+  onDurationChange?: (duration: number) => void;
   onChange?: (results: AnnotationResult[]) => void;
   metadata?: Record<string, unknown>;
 }
@@ -130,7 +136,13 @@ function TabularEditor(props: BaseEditorComponentProps) {
 }
 
 function AudioEditor(props: BaseEditorComponentProps) {
-  return <AudioAnnotationCanvas audioUrl={props.assetUrl} {...props} />;
+  return (
+    <AudioAnnotationCanvas
+      audioUrl={props.assetUrl}
+      mode={props.audioLabelMode}
+      {...props}
+    />
+  );
 }
 
 /**
@@ -255,6 +267,16 @@ export function resolveEditorComponent(
   // 1. Special case: Image classification needs viewport to display image
   if (outputTypeCode === "classification" && inputTypeCode === "image") {
     return ImageClassificationEditor;
+  }
+
+  // Audio text/classification tasks share the player and render task-specific panels.
+  if (
+    inputTypeCode === "audio" &&
+    (outputTypeCode === "text" ||
+      outputTypeCode === "classification" ||
+      outputTypeCode === "audio_segment")
+  ) {
+    return AudioEditor;
   }
 
   // 2. Check if output type is registered

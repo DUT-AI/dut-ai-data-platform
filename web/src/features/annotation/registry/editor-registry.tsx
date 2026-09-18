@@ -11,6 +11,7 @@ import { ClassificationEditor } from "../components/classification-editor";
 import { NerAnnotationCanvas } from "../components/ner-annotation-canvas";
 import { TextClassificationCanvas } from "../components/text-classification-canvas";
 import { QaAnnotationCanvas } from "../components/qa-annotation-canvas";
+// TODO: import { ImageClassificationEditor } from "../components/editors/classification/image-classification-editor"; — component chưa tồn tại, cần implement từ nhánh dev
 
 const KonvaAnnotationCanvas = dynamic(
   () =>
@@ -127,12 +128,15 @@ export const EDITOR_REGISTRY: Record<string, EditorRegistration> = {
   },
 
   // 2. NLP & Text Annotations
+  // `named_entity` is the catalog code (OutputDefinition.code) used by the
+  // ontology schema export. Route it directly to the upgraded NerEditor so that
+  // resolveEditorComponent picks it up correctly.
   named_entity: {
     code: "named_entity",
-    label: "Text NER & Span Editor",
-    description: "Bôi đen văn bản và gán nhãn thực thể (NER, Spans)",
+    label: "Named Entity Recognition Editor",
+    description: "Bôi đen văn bản và gán nhãn thực thể (NER, Spans) — editor nâng cao với inline popover",
     supportedInputTypes: ["document"],
-    component: TextEditor,
+    component: NerEditor,
   },
   text: {
     code: "text",
@@ -176,16 +180,22 @@ export const EDITOR_REGISTRY: Record<string, EditorRegistration> = {
     component: ClassificationEditor,
   },
 
-  // 6. NLP — Named Entity Recognition (upgraded, with inline popover)
+  // 6. NLP — Named Entity Recognition (alias kept for backward-compat)
+  // NOTE: The canonical catalog code is `named_entity` (see above).
+  // `named_entity_recognition` is NOT a valid OutputDefinition.code; it will
+  // only be selected if passed explicitly as outputTypeCode.
   named_entity_recognition: {
     code: "named_entity_recognition",
-    label: "Named Entity Recognition Editor",
+    label: "Named Entity Recognition Editor (alias)",
     description: "Bôi đen văn bản, chọn loại thực thể từ popover (PER, LOC, ORG…)",
     supportedInputTypes: ["document"],
     component: NerEditor,
   },
 
-  // 7. NLP — Text Classification (two-column: text + label picker)
+  // 7. NLP — Text Classification
+  // NOTE: `text_classification` is NOT a valid OutputDefinition.code.
+  // To activate this editor via the registry, add a custom output type to
+  // the ontology schema or pass the code directly as outputTypeCode.
   text_classification: {
     code: "text_classification",
     label: "Text Classification Editor",
@@ -194,7 +204,10 @@ export const EDITOR_REGISTRY: Record<string, EditorRegistration> = {
     component: TextClassificationEditor,
   },
 
-  // 8. NLP — Question Answering (two-column: context + QA panel)
+  // 8. NLP — Question Answering
+  // NOTE: `question_answering` is NOT a valid OutputDefinition.code.
+  // Wire metadata.question from the ontology value_schema before relying on
+  // this editor; see annotation-workspace-view.tsx editorMetadata.
   question_answering: {
     code: "question_answering",
     label: "Question Answering Editor",

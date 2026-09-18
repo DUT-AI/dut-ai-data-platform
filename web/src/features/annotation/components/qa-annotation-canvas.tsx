@@ -12,13 +12,50 @@ import { AnnotationResult } from "../types";
 import { BaseEditorComponentProps } from "../registry/editor-registry";
 
 // ---------------------------------------------------------------------------
+// Offset helper — counts only source-text characters, skipping annotation-UI
+// nodes (✓ markers from confirmed spans) that share the same selectable container.
+// ---------------------------------------------------------------------------
+
+function getSourceOffset(
+  container: HTMLElement,
+  targetNode: Node,
+  targetOffset: number
+): number {
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      let el: Node | null = node.parentElement;
+      while (el && el !== container) {
+        if (
+          el instanceof HTMLElement &&
+          el.dataset.annotationUi === "true"
+        ) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        el = el.parentElement;
+      }
+      return NodeFilter.FILTER_ACCEPT;
+    },
+  });
+
+  let offset = 0;
+  let current = walker.nextNode();
+  while (current) {
+    if (current === targetNode) return offset + targetOffset;
+    offset += current.textContent?.length ?? 0;
+    current = walker.nextNode();
+  }
+  return offset;
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 interface QaSpan {
   id: string;
-  start: number;
-  end: number;
+  /** null for free-text-only answers that have no span in the context */
+  start: number | null;
+  end: number | null;
   answerText: string;
   question: string;
 }
@@ -108,17 +145,21 @@ export function QaAnnotationCanvas({
         .filter(
           (r) =>
             r.result_type === "ner" &&
-            r.geometry &&
-            typeof r.geometry.start === "number" &&
             (r.payload as Record<string, unknown> | null | undefined)?.question !== undefined
         )
         .map((r) => {
           const payload = (r.payload ?? {}) as Record<string, unknown>;
+          const hasGeometry =
+            r.geometry != null && typeof r.geometry.start === "number";
           return {
             id: r.id!,
-            start: Number(r.geometry!.start),
-            end: Number(r.geometry!.end),
-            answerText: String(payload.answer_text ?? r.geometry!.text ?? ""),
+            start: hasGeometry ? Number(r.geometry!.start) : null,
+            end: hasGeometry ? Number(r.geometry!.end) : null,
+            answerText: String(
+              payload.answer_text ??
+              (hasGeometry ? r.geometry!.text : "") ??
+              ""
+            ),
             question: String(payload.question ?? ""),
           };
         }),
@@ -143,10 +184,13 @@ export function QaAnnotationCanvas({
       return;
     }
 
-    const preRange = range.cloneRange();
-    preRange.selectNodeContents(containerRef.current);
-    preRange.setEnd(range.startContainer, range.startOffset);
-    const start = preRange.toString().length;
+    // Compute char offsets — walk text nodes only, skipping annotation-UI nodes
+    // (✓ markers from confirmed spans) so offsets always map to source text.
+    const start = getSourceOffset(
+      containerRef.current,
+      range.startContainer,
+      range.startOffset
+    );
     const end = start + selectedStr.length;
 
     if (start >= end) return;
@@ -213,11 +257,15 @@ export function QaAnnotationCanvas({
 
   const renderContext = useCallback(() => {
     const allSpans = [
-      // Confirmed spans
-      ...qaSpans.map((s) => ({ ...s, isPending: false })),
+      // Only render confirmed spans that have actual geometry (coordinates in context)
+      ...qaSpans
+        .filter((s): s is QaSpan & { start: number; end: number } =>
+          s.start !== null && s.end !== null
+        )
+        .map((s) => ({ ...s, isPending: false as const })),
       // Pending span (in-progress)
       ...(pendingSpan
-        ? [{ id: "__pending__", ...pendingSpan, answerText: pendingSpan.text, question, isPending: true }]
+        ? [{ id: "__pending__", ...pendingSpan, answerText: pendingSpan.text, question, isPending: true as const }]
         : []),
     ].sort((a, b) => a.start - b.start);
 
@@ -248,7 +296,10 @@ export function QaAnnotationCanvas({
         >
           {contextText.slice(span.start, span.end)}
           {!span.isPending && (
-            <span className="ml-1 rounded bg-emerald-700/40 px-1 text-[9px] text-emerald-300">
+            <span
+              className="ml-1 rounded bg-emerald-700/40 px-1 text-[9px] text-emerald-300"
+              data-annotation-ui="true"
+            >
               ✓
             </span>
           )}
@@ -319,6 +370,8 @@ export function QaAnnotationCanvas({
                     <button
                       type="button"
                       onClick={() => handleDeleteAnswer(s.id)}
+                      aria-label="Xóa câu trả lời"
+                      title="Xóa câu trả lời"
                       className="shrink-0 text-slate-600 hover:text-red-400"
                     >
                       <XCircle className="size-3.5" />

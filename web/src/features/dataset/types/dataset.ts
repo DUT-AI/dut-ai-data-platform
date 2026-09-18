@@ -81,3 +81,48 @@ export interface InheritDatasetVersionResponse {
   reused_assets_count: number;
   total_assets_count: number;
 }
+
+export interface PrepareUploadItem {
+  filename: string;
+  content_type?: string;
+}
+
+export interface PrepareUploadPayload {
+  files: PrepareUploadItem[];
+}
+
+export interface PresignedUploadUrlItem {
+  filename: string;
+  asset_id: string;
+  storage_key: string;
+  upload_url: string;
+  expires_in_seconds: number;
+}
+
+export interface PrepareUploadResponse {
+  items: PresignedUploadUrlItem[];
+}
+
+export interface FinalizeAssetImportItem {
+  asset_id: string;
+  filename: string;
+  storage_key: string;
+  sha256: string;
+  file_size: number;
+  mime_type: string;
+  metadata?: Record<string, unknown>;
+  data_format?: string;
+  provenance?: Record<string, unknown>;
+}
+
+export interface FinalizeAssetImportPayload {
+  items: FinalizeAssetImportItem[];
+}
+
+export interface FinalizeAssetImportResponse {
+  imported_assets: Asset[];
+  reused_assets_count: number;
+  new_assets_count: number;
+}
+
+

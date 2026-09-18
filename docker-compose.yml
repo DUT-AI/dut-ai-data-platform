@@ -57,7 +57,7 @@ services:
 
 
   minio:
-    image: minio/minio:latest
+    image: quay.io/minio/minio:latest
     container_name: data-platform-minio
     restart: always
     ports:
@@ -102,7 +102,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   createbuckets:
-    image: minio/mc:latest
+    image: quay.io/minio/mc:latest
     container_name: data-platform-minio-init
     depends_on:
       minio:

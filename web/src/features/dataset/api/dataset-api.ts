@@ -8,7 +8,11 @@ import {
   DatasetUpdatePayload,
   DatasetVersion,
   DatasetVersionCreatePayload,
+  FinalizeAssetImportPayload,
+  FinalizeAssetImportResponse,
   InheritDatasetVersionResponse,
+  PrepareUploadPayload,
+  PrepareUploadResponse,
 } from "../types";
 
 export const datasetApi = {
@@ -78,6 +82,60 @@ export const datasetApi = {
     return response.data;
   },
 
+  prepareAssetUpload: async (
+    versionId: string,
+    payload: PrepareUploadPayload
+  ): Promise<PrepareUploadResponse> => {
+    const response = await api.post<PrepareUploadResponse>(
+      `/dataset-versions/${versionId}/prepare-upload`,
+      payload
+    );
+    return response.data;
+  },
+
+  uploadFileToS3: async (
+    uploadUrl: string,
+    file: File,
+    onProgress?: (percent: number) => void
+  ): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", uploadUrl, true);
+      xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+
+      if (onProgress && xhr.upload) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            onProgress(percent);
+          }
+        };
+      }
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`MinIO S3 upload failed with status ${xhr.status}`));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error("Network error during S3 upload"));
+      xhr.send(file);
+    });
+  },
+
+  finalizeAssetImport: async (
+    versionId: string,
+    payload: FinalizeAssetImportPayload
+  ): Promise<FinalizeAssetImportResponse> => {
+    const response = await api.post<FinalizeAssetImportResponse>(
+      `/dataset-versions/${versionId}/finalize-import`,
+      payload
+    );
+    return response.data;
+  },
+
   uploadVersionAssets: async (
     versionId: string,
     formData: FormData
@@ -133,3 +191,4 @@ export const datasetApi = {
     return response.data;
   },
 };
+

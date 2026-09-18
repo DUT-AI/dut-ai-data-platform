@@ -13,6 +13,7 @@ import {
 } from "@/components/ui";
 import { Asset } from "../types";
 import { useAssetDownloadUrlQuery } from "../hooks";
+import { AssetPreview } from "./asset-preview";
 
 interface AssetDetailModalProps {
   asset: Asset | null;
@@ -72,17 +73,12 @@ function AssetDetailContent({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const isImage = asset.mime_type.startsWith("image/");
-  const isPdf = asset.mime_type === "application/pdf";
-
   const handleStartAnnotation = () => {
     if (!projectId) return;
     router.push(
       `/projects/${projectId}/annotate/${asset.id}?ontologyVersionId=${ontologyVersionId || ""}&datasetVersionId=${datasetVersionId || ""}`
     );
   };
-
-  const [hasImageError, setHasImageError] = useState(false);
 
   return (
     <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col">
@@ -98,36 +94,12 @@ function AssetDetailContent({
       <div className="flex-1 space-y-4 overflow-y-auto py-2">
         {/* File Preview Area */}
         <div className="flex min-h-[220px] items-center justify-center rounded-xl border border-slate-800 bg-slate-900 p-4">
-          {isImage && downloadData?.download_url && !hasImageError ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={downloadData.download_url}
-              alt={asset.filename}
-              onError={() => setHasImageError(true)}
-              className="max-h-64 rounded object-contain"
-            />
-          ) : hasImageError ? (
-            <div className="space-y-2 text-center text-amber-400">
-              <div className="text-4xl">⚠️</div>
-              <p className="text-xs font-semibold text-amber-300">
-                Tập tin hình ảnh bị hỏng hoặc không thể xem trước
-              </p>
-              <p className="font-mono text-[11px] text-slate-400">
-                {asset.filename}
-              </p>
-            </div>
-          ) : isPdf && downloadData?.download_url ? (
-            <iframe
-              src={downloadData.download_url}
-              title={asset.filename}
-              className="h-64 w-full rounded border-0"
-            />
-          ) : (
-            <div className="space-y-2 text-center text-slate-400">
-              <div className="text-4xl">📄</div>
-              <p className="font-mono text-xs">{asset.mime_type}</p>
-            </div>
-          )}
+          <AssetPreview
+            downloadUrl={downloadData?.download_url}
+            filename={asset.filename}
+            mimeType={asset.mime_type}
+            isLoading={isDownloadLoading}
+          />
         </div>
 
         {/* Metadata Table Inspector */}

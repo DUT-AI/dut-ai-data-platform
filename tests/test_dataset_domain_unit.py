@@ -162,8 +162,10 @@ async def test_finalize_asset_import_use_case_success():
 
     repo.get_version_by_id = AsyncMock(return_value=mock_version)
     repo.get_dataset_by_id = AsyncMock(return_value=mock_dataset)
+    repo.find_asset_by_sha256 = AsyncMock(return_value=None)
     repo.save_asset = AsyncMock(side_effect=lambda a: a)
     repo.add_asset_to_version = AsyncMock()
+
 
     use_case = FinalizeAssetImportUseCase(repo=repo, storage_provider=storage)
     payload = FinalizeAssetImportRequestDTO(
@@ -454,6 +456,7 @@ async def test_finalize_asset_import_emits_outbox_event():
 
     repo.get_version_by_id = AsyncMock(return_value=mock_ver)
     repo.get_dataset_by_id = AsyncMock(return_value=mock_dataset)
+    repo.find_asset_by_sha256 = AsyncMock(return_value=None)
     repo.save_asset = AsyncMock(side_effect=lambda a: a)
     repo.add_asset_to_version = AsyncMock()
 
@@ -476,10 +479,69 @@ async def test_finalize_asset_import_emits_outbox_event():
 
     res = await use_case.execute("ver_111", payload)
     assert len(res.imported_assets) == 1
+    assert res.new_assets_count == 1
+    assert res.reused_assets_count == 0
     outbox_repo.save_event.assert_called_once()
     event_arg = outbox_repo.save_event.call_args[0][0]
     assert isinstance(event_arg, AssetReadyEvent)
     assert event_arg.payload["asset_id"] == "ast_999"
+
+
+@pytest.mark.asyncio
+async def test_finalize_asset_import_deduplicates_by_sha256():
+    from modules.dataset.domain.entities import AssetEntity
+    from modules.dataset.dtos.dataset_dtos import (
+        FinalizeAssetImportItemDTO,
+        FinalizeAssetImportRequestDTO,
+    )
+    from modules.dataset.use_cases import FinalizeAssetImportUseCase
+
+    repo = AsyncMock()
+    storage_provider = AsyncMock()
+
+    mock_ver = DatasetVersionEntity(
+        id="ver_111", dataset_id="ds_123", version="v1.0.0", status="draft"
+    )
+    mock_dataset = DatasetEntity(id="ds_123", project_id="proj_456", name="Test")
+    existing_asset = AssetEntity(
+        id="existing_001",
+        project_id="proj_456",
+        filename="original.jpg",
+        uri="/bucket/orig.jpg",
+        mime_type="image/jpeg",
+        file_size=1024,
+        sha256="a" * 64,
+    )
+
+    repo.get_version_by_id = AsyncMock(return_value=mock_ver)
+    repo.get_dataset_by_id = AsyncMock(return_value=mock_dataset)
+    repo.find_asset_by_sha256 = AsyncMock(return_value=existing_asset)
+    repo.add_asset_to_version = AsyncMock()
+
+    use_case = FinalizeAssetImportUseCase(
+        repo=repo, storage_provider=storage_provider
+    )
+
+    payload = FinalizeAssetImportRequestDTO(
+        items=[
+            FinalizeAssetImportItemDTO(
+                asset_id="new_id",
+                filename="renamed.jpg",
+                storage_key="project-proj_456/assets/new_id/renamed.jpg",
+                mime_type="image/jpeg",
+                file_size=1024,
+                sha256="a" * 64,
+            )
+        ]
+    )
+
+    res = await use_case.execute("ver_111", payload)
+    assert len(res.imported_assets) == 1
+    assert res.imported_assets[0].id == "existing_001"
+    assert res.reused_assets_count == 1
+    assert res.new_assets_count == 0
+    repo.add_asset_to_version.assert_called_once_with("ver_111", "existing_001")
+
 
 
 @pytest.mark.asyncio

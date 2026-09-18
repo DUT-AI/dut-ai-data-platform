@@ -5,6 +5,7 @@ import { Badge, Button, Card } from "@/components/ui";
 import { Asset } from "../types";
 import { useRemoveVersionAssetMutation } from "../hooks";
 import { AssetDetailModal } from "./asset-detail-modal";
+import { getAssetCategory } from "./asset-preview";
 
 interface AssetGalleryGridProps {
   versionId: string;
@@ -81,8 +82,16 @@ export function AssetGalleryGrid({
     <>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {assets.map((asset) => {
-          const isImage = asset.mime_type.startsWith("image/");
-          const isPdf = asset.mime_type === "application/pdf";
+          const category = getAssetCategory(asset.filename, asset.mime_type);
+          const iconMap: Record<string, string> = {
+            image: "🖼️",
+            video: "🎥",
+            audio: "🎵",
+            pdf: "📄",
+            tabular: "📊",
+            text: "📝",
+            unknown: "📁",
+          };
 
           return (
             <Card
@@ -92,15 +101,7 @@ export function AssetGalleryGrid({
             >
               {/* Card Thumbnail Box */}
               <div className="relative flex h-32 items-center justify-center overflow-hidden bg-slate-100 dark:bg-slate-950">
-                {isImage ? (
-                  <div className="flex flex-col items-center justify-center text-2xl font-bold text-slate-400">
-                    🖼️
-                  </div>
-                ) : isPdf ? (
-                  <div className="text-3xl">📄</div>
-                ) : (
-                  <div className="text-3xl">📁</div>
-                )}
+                <div className="text-3xl">{iconMap[category] || "📁"}</div>
 
                 <span className="absolute left-2 top-2 rounded bg-slate-900/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-200">
                   {asset.mime_type.split("/")[1] || "file"}

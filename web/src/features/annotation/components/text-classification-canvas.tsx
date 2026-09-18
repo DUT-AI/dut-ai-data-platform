@@ -94,14 +94,26 @@ export function TextClassificationCanvas({
     };
   }, [assetUrl, textContentProp, metadata]);
 
+  // Resolve the active output ID from metadata so all derived state and
+  // mutations are scoped to THIS output only (Copilot High: multi-output safety).
+  const activeOutputId = (metadata as Record<string, unknown> | undefined)
+    ?.outputId as string | undefined;
+
   // ── Derived state ─────────────────────────────────────────────────────────
 
   const selectedIds: string[] = useMemo(
     () =>
       results
-        .filter((r) => r.result_type === "classification" && r.category_id)
+        .filter(
+          (r) =>
+            r.result_type === "classification" &&
+            r.category_id &&
+            // Scope: include results with matching output_id OR legacy results
+            // with no output_id (explicit legacy-result policy).
+            (!activeOutputId || !r.output_id || r.output_id === activeOutputId)
+        )
         .map((r) => r.category_id as string),
-    [results]
+    [results, activeOutputId]
   );
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -111,12 +123,16 @@ export function TextClassificationCanvas({
       if (readOnly) return;
 
       if (isMultiple) {
-        // Checkbox style: toggle independently
+        // Checkbox style: toggle independently — only touch THIS output's results
         if (selectedIds.includes(catId)) {
           onChange?.(
             results.filter(
               (r) =>
-                !(r.result_type === "classification" && r.category_id === catId)
+                !(
+                  r.result_type === "classification" &&
+                  r.category_id === catId &&
+                  (!activeOutputId || !r.output_id || r.output_id === activeOutputId)
+                )
             )
           );
         } else {
@@ -124,6 +140,7 @@ export function TextClassificationCanvas({
             ...results,
             {
               id: generateId(catId),
+              output_id: activeOutputId,
               result_type: "classification",
               category_id: catId,
               value: catId,
@@ -132,18 +149,23 @@ export function TextClassificationCanvas({
           ]);
         }
       } else {
-        // Radio style: selecting new → deselect all previous
-        const withoutClassification = results.filter(
-          (r) => r.result_type !== "classification"
+        // Radio style: deselect only THIS output's classifications, keep others
+        const withoutThisOutputClassification = results.filter(
+          (r) =>
+            !(
+              r.result_type === "classification" &&
+              (!activeOutputId || !r.output_id || r.output_id === activeOutputId)
+            )
         );
         if (selectedIds.includes(catId)) {
           // Clicking selected item deselects it
-          onChange?.(withoutClassification);
+          onChange?.(withoutThisOutputClassification);
         } else {
           onChange?.([
-            ...withoutClassification,
+            ...withoutThisOutputClassification,
             {
               id: generateId(catId),
+              output_id: activeOutputId,
               result_type: "classification",
               category_id: catId,
               value: catId,
@@ -153,7 +175,7 @@ export function TextClassificationCanvas({
         }
       }
     },
-    [readOnly, isMultiple, selectedIds, results, onChange]
+    [readOnly, isMultiple, selectedIds, results, onChange, activeOutputId]
   );
 
   // ── Hotkeys: 1-9 toggle category ─────────────────────────────────────────

@@ -159,28 +159,35 @@ export function NerAnnotationCanvas({
     [categoryColors]
   );
 
-  const nerSpans: NerSpan[] = useMemo(
-    () =>
-      results
-        .filter(
-          (r) =>
-            r.result_type === "ner" &&
-            // Exclude QA answers — they share result_type "ner" but carry payload.question
-            (r.payload as Record<string, unknown> | null | undefined)?.question === undefined &&
-            r.geometry &&
-            typeof r.geometry.start === "number"
-        )
-        .map((r, idx) => ({
-          // Use id ?? output_id for consistent identity across human and machine spans
-          id: r.id ?? r.output_id ?? `span_${idx}`,
-          start: Number(r.geometry!.start),
-          end: Number(r.geometry!.end),
-          categoryId: r.category_id ?? null,
-          spanText: String(r.geometry!.text ?? ""),
-        }))
-        .sort((a, b) => a.start - b.start),
-    [results]
-  );
+  const nerSpans: NerSpan[] = useMemo(() => {
+    // Resolve the active output ID from metadata so we can scope results to
+    // this editor's output definition. Spans belonging to OTHER named-entity
+    // outputs must not be rendered or mutated here (multi-output ontology safety).
+    const activeOutputId = (metadata as Record<string, unknown> | undefined)
+      ?.outputId as string | undefined;
+
+    return results
+      .filter(
+        (r) =>
+          r.result_type === "ner" &&
+          // Exclude QA answers — they share result_type "ner" but carry payload.question
+          (r.payload as Record<string, unknown> | null | undefined)?.question === undefined &&
+          r.geometry &&
+          typeof r.geometry.start === "number" &&
+          // Scope to the active output: allow results with matching output_id,
+          // OR legacy results with no output_id (explicit legacy-result policy).
+          (!activeOutputId || !r.output_id || r.output_id === activeOutputId)
+      )
+      .map((r, idx) => ({
+        // Use id ?? output_id for consistent identity across human and machine spans
+        id: r.id ?? r.output_id ?? `span_${idx}`,
+        start: Number(r.geometry!.start),
+        end: Number(r.geometry!.end),
+        categoryId: r.category_id ?? null,
+        spanText: String(r.geometry!.text ?? ""),
+      }))
+      .sort((a, b) => a.start - b.start);
+  }, [results, metadata]);
 
   const hasOverlap = useCallback(
     (start: number, end: number): boolean =>
@@ -288,11 +295,19 @@ export function NerAnnotationCanvas({
   const handleDeleteSpan = useCallback(
     (id: string) => {
       if (readOnly) return;
-      // Match by id ?? output_id for consistency with nerSpans mapping
-      onChange?.(results.filter((r) => (r.id ?? r.output_id) !== id));
+      const activeOutputId = (metadata as Record<string, unknown> | undefined)
+        ?.outputId as string | undefined;
+      // Only delete results that belong to this output (prevent cross-output mutation).
+      // A result with no output_id is treated as legacy and allowed to be deleted.
+      onChange?.(results.filter((r) => {
+        const rId = r.id ?? r.output_id;
+        if (rId !== id) return true; // not the targeted span — keep
+        if (activeOutputId && r.output_id && r.output_id !== activeOutputId) return true; // foreign output — keep
+        return false; // this is the span to delete
+      }));
       if (selectedSpanId === id) setSelectedSpanId(null);
     },
-    [readOnly, results, onChange, selectedSpanId]
+    [readOnly, results, onChange, selectedSpanId, metadata]
   );
 
   // ── Hotkeys ──────────────────────────────────────────────────────────────

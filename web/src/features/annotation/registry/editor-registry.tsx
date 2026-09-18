@@ -13,7 +13,6 @@ import { ImageClassificationEditor } from "../components/editors/classification/
 import { NerAnnotationCanvas } from "../components/ner-annotation-canvas";
 import { TextClassificationCanvas } from "../components/text-classification-canvas";
 import { QaAnnotationCanvas } from "../components/qa-annotation-canvas";
-// TODO: import { ImageClassificationEditor } from "../components/editors/classification/image-classification-editor"; — component chưa tồn tại, cần implement từ nhánh dev
 
 // Dynamic imports for Canvas-based Micro Editors to avoid SSR window access issues
 const DynamicBoundingBoxEditor = dynamic(
@@ -297,30 +296,6 @@ export const EDITOR_REGISTRY: Record<string, EditorRegistration> = {
     supportedInputTypes: ["document"],
     component: NerEditor,
   },
-
-  // 7. NLP — Text Classification
-  // NOTE: `text_classification` is NOT a valid OutputDefinition.code.
-  // To activate this editor via the registry, add a custom output type to
-  // the ontology schema or pass the code directly as outputTypeCode.
-  text_classification: {
-    code: "text_classification",
-    label: "Text Classification Editor",
-    description: "Đọc văn bản và gán nhãn phân loại toàn đoạn (single / multi-label)",
-    supportedInputTypes: ["document"],
-    component: TextClassificationEditor,
-  },
-
-  // 8. NLP — Question Answering
-  // NOTE: `question_answering` is NOT a valid OutputDefinition.code.
-  // Wire metadata.question from the ontology value_schema before relying on
-  // this editor; see annotation-workspace-view.tsx editorMetadata.
-  question_answering: {
-    code: "question_answering",
-    label: "Question Answering Editor",
-    description: "Highlight đoạn trả lời trong Context cho câu hỏi đã cho",
-    supportedInputTypes: ["document"],
-    component: QaEditor,
-  },
 };
 
 /**
@@ -330,6 +305,10 @@ export const EDITOR_REGISTRY: Record<string, EditorRegistration> = {
  * Compound routing rules (evaluated before the simple registry lookup):
  *   - `classification` + `image` input    → ImageClassificationEditor
  *   - `classification` + `document` input → TextClassificationEditor
+ *
+ * NOTE: QA routing via `metadata.question` was removed — the question field
+ * is never populated in editorMetadata, making that branch unreachable.
+ * Wire QA explicitly via outputTypeCode="question_answering" instead.
  *
  * Strictly fail-fast: NEVER fallback silently to BoundingBoxEditor!
  */
@@ -341,30 +320,6 @@ export function resolveEditorComponent(
   // 1. Compound: image classification needs viewport to display image
   if (outputTypeCode === "classification" && inputTypeCode === "image") {
     return ImageClassificationEditor;
-  }
-
-  // 2. Compound: text classification on document input → text-reading UI
-  if (outputTypeCode === "classification" && inputTypeCode === "document") {
-    return TextClassificationEditor;
-  }
-
-  // 3. Check if output type is registered
-  if (outputTypeCode && EDITOR_REGISTRY[outputTypeCode]) {
-    const registration = EDITOR_REGISTRY[outputTypeCode];
-
-    // Check input modality compatibility
-    if (
-      inputTypeCode &&
-      !registration.supportedInputTypes.includes(
-        inputTypeCode as InputDefinition["code"]
-      )
-    ) {
-      return createUnsupportedEditor(
-        `Tác vụ "${registration.label}" (${outputTypeCode}) không tương thích với dữ liệu đầu vào "${inputTypeCode}".`
-      );
-    }
-
-    return registration.component;
   }
 
   // 4. Fallback only if outputTypeCode is unspecified and input modality matches dedicated editors

@@ -139,32 +139,36 @@ export function QaAnnotationCanvas({
 
   // ── Derived: existing QA answer spans ────────────────────────────────────
 
-  const qaSpans: QaSpan[] = useMemo(
-    () =>
-      results
-        .filter(
-          (r) =>
-            r.result_type === "ner" &&
-            (r.payload as Record<string, unknown> | null | undefined)?.question !== undefined
-        )
-        .map((r) => {
-          const payload = (r.payload ?? {}) as Record<string, unknown>;
-          const hasGeometry =
-            r.geometry != null && typeof r.geometry.start === "number";
-          return {
-            id: r.id!,
-            start: hasGeometry ? Number(r.geometry!.start) : null,
-            end: hasGeometry ? Number(r.geometry!.end) : null,
-            answerText: String(
-              payload.answer_text ??
-              (hasGeometry ? r.geometry!.text : "") ??
-              ""
-            ),
-            question: String(payload.question ?? ""),
-          };
-        }),
-    [results]
-  );
+  const qaSpans: QaSpan[] = useMemo(() => {
+    // Scope results to the active output ID to prevent cross-output mutation
+    // in multi-output ontologies (Copilot High: outputId scoping).
+    const activeOutputId = (meta.outputId as string | undefined);
+
+    return results
+      .filter(
+        (r) =>
+          r.result_type === "ner" &&
+          (r.payload as Record<string, unknown> | null | undefined)?.question !== undefined &&
+          // Scope: allow results with matching output_id OR legacy results with no output_id.
+          (!activeOutputId || !r.output_id || r.output_id === activeOutputId)
+      )
+      .map((r) => {
+        const payload = (r.payload ?? {}) as Record<string, unknown>;
+        const hasGeometry =
+          r.geometry != null && typeof r.geometry.start === "number";
+        return {
+          id: r.id!,
+          start: hasGeometry ? Number(r.geometry!.start) : null,
+          end: hasGeometry ? Number(r.geometry!.end) : null,
+          answerText: String(
+            payload.answer_text ??
+            (hasGeometry ? r.geometry!.text : "") ??
+            ""
+          ),
+          question: String(payload.question ?? ""),
+        };
+      });
+  }, [results, meta.outputId]);
 
   // ── Text selection → pending span ─────────────────────────────────────────
 
@@ -214,6 +218,9 @@ export function QaAnnotationCanvas({
 
     const newResult: AnnotationResult = {
       id: `qa_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      // Stamp output_id so multi-output ontologies can associate each QA answer
+      // with the correct named_entity output definition.
+      output_id: meta.outputId as string | undefined,
       // Use "ner" result_type to stay backend-compatible; payload.question
       // distinguishes QA results from plain NER spans.
       result_type: "ner",
@@ -231,7 +238,7 @@ export function QaAnnotationCanvas({
     onChange?.([...results, newResult]);
     setPendingSpan(null);
     setFreeText("");
-  }, [pendingSpan, freeText, question, results, onChange]);
+  }, [pendingSpan, freeText, question, results, onChange, meta.outputId]);
 
   const handleClear = useCallback(() => {
     setPendingSpan(null);
@@ -241,9 +248,16 @@ export function QaAnnotationCanvas({
   const handleDeleteAnswer = useCallback(
     (id: string) => {
       if (readOnly) return;
-      onChange?.(results.filter((r) => r.id !== id));
+      const activeOutputId = meta.outputId as string | undefined;
+      // Only delete QA answers belonging to this output (prevent cross-output mutation).
+      // Legacy results with no output_id are treated as owned by this editor.
+      onChange?.(results.filter((r) => {
+        if (r.id !== id) return true; // not the target — keep
+        if (activeOutputId && r.output_id && r.output_id !== activeOutputId) return true; // foreign output — keep
+        return false; // delete
+      }));
     },
-    [readOnly, results, onChange]
+    [readOnly, results, onChange, meta.outputId]
   );
 
   // ── Hotkeys ──────────────────────────────────────────────────────────────

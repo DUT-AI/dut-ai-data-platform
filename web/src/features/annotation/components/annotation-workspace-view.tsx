@@ -106,15 +106,18 @@ function AnnotationWorkspaceInner({
   // Derive editor-level metadata from the primary output definition.
   // This is forwarded to specialized editors:
   //   - TextClassificationCanvas reads `metadata.multiple`
-  //   - QaAnnotationCanvas reads `metadata.question` (stored in value_schema)
+  //   - NerAnnotationCanvas reads `metadata.outputId` to stamp output_id on results
+  // NOTE: `value_schema` is only persisted for custom_object outputs by the backend;
+  //       do NOT read task-specific config (e.g. QA question) from it for other types.
   const editorMetadata = useMemo(() => {
     const primaryOutput = exportedSchema?.outputs?.[0];
     if (!primaryOutput) return undefined;
     return {
+      // Used by TextClassificationCanvas for multi-label mode
       multiple: primaryOutput.multiple,
-      question: (
-        primaryOutput.value_schema as Record<string, unknown> | undefined
-      )?.question as string | undefined,
+      // Passed to NER/QA editors so created results carry the correct output_id,
+      // enabling multi-output ontologies to associate each span unambiguously.
+      outputId: primaryOutput.id,
     };
   }, [exportedSchema]);
 
@@ -448,9 +451,14 @@ function AnnotationWorkspaceInner({
                   onSelectShapeId={setSelectedRegionId}
                   onSelectCategory={setActiveCategoryId}
                   metadata={editorMetadata}
-                  onChange={(newVisibleResults) =>
-                    setWorkingResults(newVisibleResults)
-                  }
+                  onChange={(newVisibleResults) => {
+                    // Preserve currently hidden results so they are not
+                    // discarded when the editor only sees visibleResults.
+                    const hiddenResults = workingResults.filter(
+                      (r) => hiddenResultIds.has(r.id ?? r.output_id ?? "")
+                    );
+                    setWorkingResults([...hiddenResults, ...newVisibleResults]);
+                  }}
                 />
 
                 {/* Floating Spatial Controls (Zoom / Pan) for Computer Vision */}

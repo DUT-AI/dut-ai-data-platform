@@ -184,21 +184,28 @@ export function QaAnnotationCanvas({
       return;
     }
 
-    // Compute char offsets — walk text nodes only, skipping annotation-UI nodes
-    // (✓ markers from confirmed spans) so offsets always map to source text.
+    // Compute char offsets — walk text nodes only, skipping annotation-UI nodes.
+    // Use endContainer for `end` so the ✓ marker excluded by the walker
+    // doesn't inflate the selection length (which would save wrong offsets).
     const start = getSourceOffset(
       containerRef.current,
       range.startContainer,
       range.startOffset
     );
-    const end = start + selectedStr.length;
+    const end = getSourceOffset(
+      containerRef.current,
+      range.endContainer,
+      range.endOffset
+    );
+    // Derive span text from source string, not the rendered DOM selection
+    const spanText = contextText.slice(start, end);
 
     if (start >= end) return;
 
-    setPendingSpan({ start, end, text: selectedStr });
-    setFreeText(selectedStr); // pre-fill free-text with span text
+    setPendingSpan({ start, end, text: spanText });
+    setFreeText(spanText); // pre-fill free-text with source span text
     selection.removeAllRanges();
-  }, [readOnly]);
+  }, [readOnly, contextText]);
 
   // ── Confirm answer ────────────────────────────────────────────────────────
 

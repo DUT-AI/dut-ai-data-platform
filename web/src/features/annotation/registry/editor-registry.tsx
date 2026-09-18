@@ -191,40 +191,40 @@ export const EDITOR_REGISTRY: Record<string, EditorRegistration> = {
     supportedInputTypes: ["document"],
     component: NerEditor,
   },
-
-  // 7. NLP — Text Classification
-  // NOTE: `text_classification` is NOT a valid OutputDefinition.code.
-  // To activate this editor via the registry, add a custom output type to
-  // the ontology schema or pass the code directly as outputTypeCode.
-  text_classification: {
-    code: "text_classification",
-    label: "Text Classification Editor",
-    description: "Đọc văn bản và gán nhãn phân loại toàn đoạn (single / multi-label)",
-    supportedInputTypes: ["document"],
-    component: TextClassificationEditor,
-  },
-
-  // 8. NLP — Question Answering
-  // NOTE: `question_answering` is NOT a valid OutputDefinition.code.
-  // Wire metadata.question from the ontology value_schema before relying on
-  // this editor; see annotation-workspace-view.tsx editorMetadata.
-  question_answering: {
-    code: "question_answering",
-    label: "Question Answering Editor",
-    description: "Highlight đoạn trả lời trong Context cho câu hỏi đã cho",
-    supportedInputTypes: ["document"],
-    component: QaEditor,
-  },
 };
 
 /**
- * Resolve the best matching editor given an Output code and fallback Input type
+ * Resolve the best matching editor given an Output code, fallback Input type,
+ * and optional task-level metadata.
+ *
+ * Compound routing rules (evaluated before the simple key lookup):
+ *   - `classification` + `document` input  → TextClassificationCanvas
+ *     (The catalog exposes `classification` for all input types; document-input
+ *     tasks need the text-reading variant, not the image ClassificationEditor.)
+ *   - `named_entity`   + `metadata.question` → QaAnnotationCanvas
+ *     (Both NER and QA use `named_entity` as the output code; the QA path is
+ *     activated when the caller supplies a non-empty `metadata.question` string.
+ *     The question must come from a supported field — NOT value_schema — because
+ *     the backend only persists value_schema for custom_object outputs.
+ *     Suggested source: a project-level config or an asset attribute field.)
  */
 export function resolveEditorComponent(
   outputTypeCode?: string,
-  inputTypeCode?: string
+  inputTypeCode?: string,
+  metadata?: Record<string, unknown>
 ): EditorComponentType {
-  // 1. Match by Output Type first
+  // Compound: classification output on a document input → text-reading UI
+  if (outputTypeCode === "classification" && inputTypeCode === "document") {
+    return TextClassificationEditor;
+  }
+
+  // Compound: named_entity output with a QA question in metadata → QA canvas
+  // Requires the caller to set metadata.question from a supported data source.
+  if (outputTypeCode === "named_entity" && metadata?.question) {
+    return QaEditor;
+  }
+
+  // 1. Match by Output Type
   if (outputTypeCode && EDITOR_REGISTRY[outputTypeCode]) {
     return EDITOR_REGISTRY[outputTypeCode].component;
   }

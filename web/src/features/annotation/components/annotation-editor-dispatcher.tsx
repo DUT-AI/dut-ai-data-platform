@@ -20,7 +20,12 @@ export function AnnotationEditorDispatcher({
   inputTypeCode,
   ...editorProps
 }: AnnotationEditorDispatcherProps) {
-  const EditorComponent = resolveEditorComponent(outputTypeCode, inputTypeCode);
+  // Pass metadata so compound routing (classification+document, named_entity+question) works.
+  const EditorComponent = resolveEditorComponent(
+    outputTypeCode,
+    inputTypeCode,
+    editorProps.metadata
+  );
 
   return React.createElement(EditorComponent, editorProps);
 }

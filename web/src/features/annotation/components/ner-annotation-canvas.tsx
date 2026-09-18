@@ -170,8 +170,9 @@ export function NerAnnotationCanvas({
             r.geometry &&
             typeof r.geometry.start === "number"
         )
-        .map((r) => ({
-          id: r.id!,
+        .map((r, idx) => ({
+          // Use id ?? output_id for consistent identity across human and machine spans
+          id: r.id ?? r.output_id ?? `span_${idx}`,
           start: Number(r.geometry!.start),
           end: Number(r.geometry!.end),
           categoryId: r.category_id ?? null,
@@ -210,14 +211,21 @@ export function NerAnnotationCanvas({
         return;
       }
 
-      // Compute char offsets — walk text nodes only, skipping annotation-UI nodes
-      // (label badges, delete buttons) so offsets always map to source text.
+      // Compute char offsets — walk text nodes only, skipping annotation-UI nodes.
+      // Use endContainer for `end` so the ✓/label badge text excluded by the walker
+      // doesn't inflate the selection length.
       const start = getSourceOffset(
         containerRef.current,
         range.startContainer,
         range.startOffset
       );
-      const end = start + selectedStr.length;
+      const end = getSourceOffset(
+        containerRef.current,
+        range.endContainer,
+        range.endOffset
+      );
+      // Derive span text from source string rather than the rendered DOM selection
+      const spanText = text.slice(start, end);
 
       if (start >= end) return;
       if (hasOverlap(start, end)) {
@@ -227,7 +235,7 @@ export function NerAnnotationCanvas({
 
       // If a category is already active in sidebar → assign immediately
       if (selectedCategoryId) {
-        createSpan(start, end, selectedStr, selectedCategoryId);
+        createSpan(start, end, spanText, selectedCategoryId);
         selection.removeAllRanges();
         return;
       }
@@ -240,7 +248,7 @@ export function NerAnnotationCanvas({
         y: rect.top - containerRect.top - 8,
         start,
         end,
-        text: selectedStr,
+        text: spanText,
       });
       selection.removeAllRanges();
     },
@@ -249,18 +257,24 @@ export function NerAnnotationCanvas({
 
   const createSpan = useCallback(
     (start: number, end: number, spanText: string, catId: string | null) => {
+      const spanId = `ner_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+      // Stamp output_id from editorMetadata so multi-output ontologies can
+      // associate this result with the correct named_entity output definition.
+      const outputId = (metadata as Record<string, unknown> | undefined)
+        ?.outputId as string | undefined;
       const newResult: AnnotationResult = {
-        id: `ner_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        id: spanId,
+        output_id: outputId,
         result_type: "ner",
         category_id: catId,
         geometry: { start, end, text: spanText },
         created_at: new Date().toISOString(),
       };
       onChange?.([...results, newResult]);
-      setSelectedSpanId(newResult.id!);
+      setSelectedSpanId(spanId);
       setPopover(null);
     },
-    [results, onChange]
+    [results, onChange, metadata]
   );
 
   const handlePopoverSelect = useCallback(
@@ -274,7 +288,8 @@ export function NerAnnotationCanvas({
   const handleDeleteSpan = useCallback(
     (id: string) => {
       if (readOnly) return;
-      onChange?.(results.filter((r) => r.id !== id));
+      // Match by id ?? output_id for consistency with nerSpans mapping
+      onChange?.(results.filter((r) => (r.id ?? r.output_id) !== id));
       if (selectedSpanId === id) setSelectedSpanId(null);
     },
     [readOnly, results, onChange, selectedSpanId]

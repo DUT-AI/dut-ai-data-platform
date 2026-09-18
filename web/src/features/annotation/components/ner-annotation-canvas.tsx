@@ -12,6 +12,43 @@ import { AnnotationResult } from "../types";
 import { BaseEditorComponentProps } from "../registry/editor-registry";
 
 // ---------------------------------------------------------------------------
+// Offset helper — counts only source-text characters, skipping annotation-UI
+// nodes (label badges, delete buttons) that share the same selectable container.
+// ---------------------------------------------------------------------------
+
+function getSourceOffset(
+  container: HTMLElement,
+  targetNode: Node,
+  targetOffset: number
+): number {
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      // Walk up from the text node; reject if inside a UI element
+      let el: Node | null = node.parentElement;
+      while (el && el !== container) {
+        if (
+          el instanceof HTMLElement &&
+          el.dataset.annotationUi === "true"
+        ) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        el = el.parentElement;
+      }
+      return NodeFilter.FILTER_ACCEPT;
+    },
+  });
+
+  let offset = 0;
+  let current = walker.nextNode();
+  while (current) {
+    if (current === targetNode) return offset + targetOffset;
+    offset += current.textContent?.length ?? 0;
+    current = walker.nextNode();
+  }
+  return offset;
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -128,6 +165,8 @@ export function NerAnnotationCanvas({
         .filter(
           (r) =>
             r.result_type === "ner" &&
+            // Exclude QA answers — they share result_type "ner" but carry payload.question
+            (r.payload as Record<string, unknown> | null | undefined)?.question === undefined &&
             r.geometry &&
             typeof r.geometry.start === "number"
         )
@@ -171,11 +210,13 @@ export function NerAnnotationCanvas({
         return;
       }
 
-      // Compute char offsets
-      const preRange = range.cloneRange();
-      preRange.selectNodeContents(containerRef.current);
-      preRange.setEnd(range.startContainer, range.startOffset);
-      const start = preRange.toString().length;
+      // Compute char offsets — walk text nodes only, skipping annotation-UI nodes
+      // (label badges, delete buttons) so offsets always map to source text.
+      const start = getSourceOffset(
+        containerRef.current,
+        range.startContainer,
+        range.startOffset
+      );
       const end = start + selectedStr.length;
 
       if (start >= end) return;
@@ -336,12 +377,14 @@ export function NerAnnotationCanvas({
           <span
             style={{ backgroundColor: color }}
             className="ml-1.5 inline-flex items-center rounded px-1 py-px text-[9px] font-bold uppercase tracking-wider text-white"
+            data-annotation-ui="true"
           >
             {labelName}
           </span>
           {!readOnly && isSelected && (
             <button
               type="button"
+              data-annotation-ui="true"
               onClick={(e) => {
                 e.stopPropagation();
                 handleDeleteSpan(span.id);

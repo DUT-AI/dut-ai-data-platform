@@ -103,6 +103,21 @@ function AnnotationWorkspaceInner({
     };
   }, [exportedSchema]);
 
+  // Derive editor-level metadata from the primary output definition.
+  // This is forwarded to specialized editors:
+  //   - TextClassificationCanvas reads `metadata.multiple`
+  //   - QaAnnotationCanvas reads `metadata.question` (stored in value_schema)
+  const editorMetadata = useMemo(() => {
+    const primaryOutput = exportedSchema?.outputs?.[0];
+    if (!primaryOutput) return undefined;
+    return {
+      multiple: primaryOutput.multiple,
+      question: (
+        primaryOutput.value_schema as Record<string, unknown> | undefined
+      )?.question as string | undefined,
+    };
+  }, [exportedSchema]);
+
   const {
     data: annotations,
     isLoading: isAnnoLoading,
@@ -466,6 +481,7 @@ function AnnotationWorkspaceInner({
                   selectedShapeId={selectedRegionId}
                   onSelectShapeId={setSelectedRegionId}
                   onSelectCategory={setActiveCategoryId}
+                  metadata={editorMetadata}
                   onChange={(newVisibleResults) =>
                     setWorkingResults(newVisibleResults)
                   }

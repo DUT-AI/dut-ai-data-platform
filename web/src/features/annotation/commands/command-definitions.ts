@@ -170,4 +170,20 @@ export const DEFAULT_ANNOTATION_COMMANDS: Record<string, CommandDefinition> = {
     scope: "timeline",
     defaultBinding: "L",
   },
+  "playback.mark_in": {
+    id: "playback.mark_in",
+    name: "Bắt đầu phân đoạn (Mark In)",
+    description: "Đánh dấu thời điểm/frame bắt đầu phân đoạn đối tượng",
+    category: "Playback",
+    scope: "timeline",
+    defaultBinding: "I",
+  },
+  "playback.mark_out": {
+    id: "playback.mark_out",
+    name: "Kết thúc phân đoạn (Mark Out)",
+    description: "Đánh dấu thời điểm/frame kết thúc và tự động gán nhãn phân đoạn",
+    category: "Playback",
+    scope: "timeline",
+    defaultBinding: "O",
+  },
 };

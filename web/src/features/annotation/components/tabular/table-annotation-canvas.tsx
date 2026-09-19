@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { AnnotationResult } from "../types";
+import { AnnotationResult } from "../../types";
 import { Table } from "lucide-react";
 
 export interface TableAnnotationCanvasProps {

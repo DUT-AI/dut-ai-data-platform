@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { AnnotationResult } from "../types";
+import { AnnotationResult } from "../../types";
 import { Trash2, FileText } from "lucide-react";
 
 export interface TextAnnotationCanvasProps {
@@ -188,11 +188,10 @@ export function TextAnnotationCanvas({
             backgroundColor: `${color}35`,
             borderBottom: `2px solid ${color}`,
           }}
-          className={`group relative mx-0.5 inline-flex cursor-pointer items-baseline rounded px-1 py-0.5 transition-all ${
-            isSelected
-              ? "scale-[1.02] ring-2 ring-blue-500"
-              : "hover:opacity-90"
-          }`}
+          className={`group relative mx-0.5 inline-flex cursor-pointer items-baseline rounded px-1 py-0.5 transition-all ${isSelected
+            ? "scale-[1.02] ring-2 ring-blue-500"
+            : "hover:opacity-90"
+            }`}
         >
           <span className="font-medium text-slate-100">
             {text.slice(span.start, span.end)}

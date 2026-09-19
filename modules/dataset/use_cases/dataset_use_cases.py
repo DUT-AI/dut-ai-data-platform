@@ -578,27 +578,41 @@ class FinalizeAssetImportUseCase:
         project_id = dataset.project_id
         bucket = s3_settings.default_bucket
         imported_assets: list[AssetEntity] = []
+        reused_count = 0
+        new_count = 0
 
         for item in payload.items:
             clean_key = item.storage_key.lstrip("/")
             uri = f"/{bucket}/{clean_key}"
 
-            # Spec Rule v1: NO content deduplication in v1! Each import creates a unique AssetId.
-            new_asset = AssetEntity(
-                id=item.asset_id,
-                project_id=project_id,
-                filename=item.filename,
-                uri=uri,
-                mime_type=item.mime_type,
-                file_size=item.file_size,
-                sha256=item.sha256,
-                metadata=item.metadata,
-                data_format=item.data_format,
-                status="READY",
-                provenance=item.provenance,
-                created_by=created_by,
-            )
-            saved_asset = await self.repo.save_asset(new_asset)
+            # SHA256 Deduplication Check (Project-scoped)
+            existing_asset = None
+            if item.sha256 and item.sha256.strip():
+                existing_asset = await self.repo.find_asset_by_sha256(
+                    project_id, item.sha256.strip()
+                )
+
+            if existing_asset:
+                saved_asset = existing_asset
+                reused_count += 1
+            else:
+                new_asset = AssetEntity(
+                    id=item.asset_id,
+                    project_id=project_id,
+                    filename=item.filename,
+                    uri=uri,
+                    mime_type=item.mime_type,
+                    file_size=item.file_size,
+                    sha256=item.sha256,
+                    metadata=item.metadata,
+                    data_format=item.data_format,
+                    status="READY",
+                    provenance=item.provenance,
+                    created_by=created_by,
+                )
+                saved_asset = await self.repo.save_asset(new_asset)
+                new_count += 1
+
             await self.repo.add_asset_to_version(version_id, saved_asset.id)
             imported_assets.append(saved_asset)
 
@@ -617,8 +631,11 @@ class FinalizeAssetImportUseCase:
         return FinalizeAssetImportResponseDTO(
             imported_assets=[
                 AssetResponseDTO.model_validate(a) for a in imported_assets
-            ]
+            ],
+            reused_assets_count=reused_count,
+            new_assets_count=new_count,
         )
+
 
 
 class RetireAssetUseCase:

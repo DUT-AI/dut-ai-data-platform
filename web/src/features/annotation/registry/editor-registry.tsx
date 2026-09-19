@@ -4,9 +4,10 @@ import React from "react";
 import dynamic from "next/dynamic";
 import { AnnotationResult } from "../types";
 import { InputDefinition } from "@/features/ontology/types";
-import { TextAnnotationCanvas } from "../components/text-annotation-canvas";
-import { TableAnnotationCanvas } from "../components/table-annotation-canvas";
-import { AudioAnnotationCanvas } from "../components/audio-annotation-canvas";
+import { TextAnnotationCanvas } from "../components/text/text-annotation-canvas";
+import { TableAnnotationCanvas } from "../components/tabular/table-annotation-canvas";
+import { AudioAnnotationCanvas } from "../components/audio/audio-annotation-canvas";
+import { VideoAnnotationCanvas } from "../components/video/video-annotation-canvas";
 import { ClassificationEditor } from "../components/classification-editor";
 import { ImageClassificationEditor } from "../components/editors/classification/image-classification-editor";
 import type { AudioLabelMode } from "../utils/audio-label-utils";
@@ -60,7 +61,7 @@ const DynamicBrushEditor = dynamic(
 // Preserved for legacy keypoints support without regression
 const LegacyKonvaAnnotationCanvas = dynamic(
   () =>
-    import("../components/konva-annotation-canvas").then(
+    import("../components/vision/konva-annotation-canvas").then(
       (mod) => mod.KonvaAnnotationCanvas
     ),
   {
@@ -143,6 +144,10 @@ function AudioEditor(props: BaseEditorComponentProps) {
       {...props}
     />
   );
+}
+
+function VideoEditor(props: BaseEditorComponentProps) {
+  return <VideoAnnotationCanvas assetUrl={props.assetUrl} {...props} />;
 }
 
 /**
@@ -237,6 +242,14 @@ export const EDITOR_REGISTRY: Record<string, EditorRegistration> = {
     description: "Tạo phân đoạn thời gian và gán nhãn trên dạng sóng âm thanh",
     supportedInputTypes: ["audio"],
     component: AudioEditor,
+  },
+  
+  video_segment: {
+    code: "video_segment",
+    label: "Video Segment Editor",
+    description: "Cắt đoạn thời gian và phân loại video",
+    supportedInputTypes: ["video"],
+    component: VideoEditor,
   },
 
   // 5. Classification & Categories

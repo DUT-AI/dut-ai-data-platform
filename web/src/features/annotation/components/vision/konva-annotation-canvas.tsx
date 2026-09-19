@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import Konva from "konva";
-import { AnnotationResult } from "../types";
+import { AnnotationViewerCanvas } from "../annotation-viewer-canvas";
+import { AnnotationResult } from "../../types";
 import {
   ToolMode,
   KonvaAnnotationCanvasProps,
@@ -11,7 +12,7 @@ import {
   CanvasToolbar,
   CanvasFooter,
   ShapeRenderer,
-} from "./canvas";
+} from "../canvas";
 
 import {
   Stage,

@@ -105,6 +105,80 @@ export function useCreateDatasetVersionMutation(
   });
 }
 
+async function computeSha256(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export function useDirectUploadVersionAssetsMutation(versionId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      files,
+      onProgress,
+    }: {
+      files: File[];
+      onProgress?: (fileIndex: number, percent: number) => void;
+    }) => {
+      // Step 1: Prepare Upload Presigned URLs
+      const preparePayload = {
+        files: files.map((f) => ({
+          filename: f.name,
+          content_type: f.type || "application/octet-stream",
+        })),
+      };
+
+      const prepareRes = await datasetApi.prepareAssetUpload(versionId, preparePayload);
+
+      // Step 2: Upload Files directly to S3 and Compute SHA-256
+      const finalizeItems = await Promise.all(
+        files.map(async (file, index) => {
+          const presigned = prepareRes.items[index];
+
+          // Compute SHA-256 and upload to MinIO S3 concurrently
+          const [sha256] = await Promise.all([
+            computeSha256(file),
+            datasetApi.uploadFileToS3(presigned.upload_url, file, (percent) => {
+              onProgress?.(index, percent);
+            }),
+          ]);
+
+          return {
+            asset_id: presigned.asset_id,
+            filename: file.name,
+            storage_key: presigned.storage_key,
+            sha256,
+            file_size: file.size,
+            mime_type: file.type || "application/octet-stream",
+          };
+        })
+      );
+
+      // Step 3: Finalize Import
+      const finalizeRes = await datasetApi.finalizeAssetImport(versionId, {
+        items: finalizeItems,
+      });
+
+      return {
+        uploaded_assets: finalizeRes.imported_assets,
+        new_assets_count: finalizeRes.imported_assets.length,
+        reused_assets_count: 0,
+      };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: DATASET_KEYS.versionAssets(versionId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: DATASET_KEYS.versionDetail(versionId),
+      });
+    },
+  });
+}
+
 export function useUploadVersionAssetsMutation(versionId: string) {
   const queryClient = useQueryClient();
 
@@ -121,6 +195,7 @@ export function useUploadVersionAssetsMutation(versionId: string) {
     },
   });
 }
+
 
 export function useRemoveVersionAssetMutation(versionId: string) {
   const queryClient = useQueryClient();

@@ -138,6 +138,9 @@ class FinalizeAssetImportRequestDTO(BaseModel):
 
 class FinalizeAssetImportResponseDTO(BaseModel):
     imported_assets: list[AssetResponseDTO]
+    reused_assets_count: int = 0
+    new_assets_count: int = 0
+
 
 
 class CursorPageAssetResponseDTO(BaseModel):

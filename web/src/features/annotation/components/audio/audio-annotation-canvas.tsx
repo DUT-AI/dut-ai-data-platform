@@ -15,15 +15,15 @@ import {
   RotateCcw,
   Trash2,
 } from "lucide-react";
-import { ClassificationEditor } from "./classification-editor";
-import type { AnnotationResult } from "../types";
+import { ClassificationEditor } from "../classification-editor";
+import type { AnnotationResult } from "../../types";
 import {
   getResultTimeRange,
   getResultTranscript,
   isAudioSegmentResult,
   isFullTranscriptResult,
   type AudioLabelMode,
-} from "../utils/audio-label-utils";
+} from "../../utils/audio-label-utils";
 
 interface CategoryItem {
   id: string;

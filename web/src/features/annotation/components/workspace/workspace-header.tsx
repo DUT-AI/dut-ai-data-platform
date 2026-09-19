@@ -1,12 +1,10 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { Button, Badge } from "@/components/ui";
 import type { Annotation } from "../../types";
 
 interface WorkspaceHeaderProps {
-  projectId: string;
   assetFilename: string;
   activeAnnotation?: Annotation;
   currentAssetIdx: number;
@@ -16,6 +14,8 @@ interface WorkspaceHeaderProps {
   isSubmitting: boolean;
   isSidebarOpen: boolean;
   isFullscreen: boolean;
+  hasUnsavedChanges: boolean;
+  onNavigateBack: () => void;
   onNavigatePrev: () => void;
   onNavigateNext: () => void;
   onSaveRevision: () => void;
@@ -29,7 +29,6 @@ interface WorkspaceHeaderProps {
  * Top platform navigation, asset queue stepper, and main actions bar
  */
 export function WorkspaceHeader({
-  projectId,
   assetFilename,
   activeAnnotation,
   currentAssetIdx,
@@ -39,6 +38,8 @@ export function WorkspaceHeader({
   isSubmitting,
   isSidebarOpen,
   isFullscreen,
+  hasUnsavedChanges,
+  onNavigateBack,
   onNavigatePrev,
   onNavigateNext,
   onSaveRevision,
@@ -51,13 +52,14 @@ export function WorkspaceHeader({
     <header className="flex h-14 shrink-0 select-none items-center justify-between border-b border-slate-800 bg-slate-900 px-6">
       {/* Left: Back Navigation & Asset Info */}
       <div className="flex items-center space-x-4">
-        <Link
-          href={`/projects/${projectId}`}
+        <button
+          type="button"
+          onClick={onNavigateBack}
           className="flex items-center space-x-1.5 text-xs font-medium text-slate-400 transition-colors hover:text-slate-200"
         >
           <span>←</span>
           <span>Quay lại Dataset</span>
-        </Link>
+        </button>
         <div className="h-4 w-px bg-slate-800" />
         <span
           className="max-w-[200px] truncate font-mono text-sm font-semibold"
@@ -71,6 +73,14 @@ export function WorkspaceHeader({
             className="border-slate-700 font-mono text-[10px] text-slate-400"
           >
             Target: {activeAnnotation.target_type}
+          </Badge>
+        )}
+        {hasUnsavedChanges && (
+          <Badge
+            variant="outline"
+            className="border-amber-700/70 bg-amber-950/40 text-[10px] text-amber-300"
+          >
+            Chưa lưu
           </Badge>
         )}
       </div>

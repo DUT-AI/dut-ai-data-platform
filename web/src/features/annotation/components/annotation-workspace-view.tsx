@@ -16,6 +16,7 @@ import {
   useProjectOntologyQuery,
   useOntologySchemaQuery,
 } from "@/features/ontology";
+import { useProjectQuery } from "@/features/projects";
 import { AnnotationEditorDispatcher } from "./annotation-editor-dispatcher";
 import { ClassificationEditor } from "./classification-editor";
 import { InstructionsModal } from "./instructions-modal";
@@ -30,6 +31,11 @@ import {
   WorkspaceSidebar,
 } from "./workspace";
 import { createAnnotation, createRevision } from "../api";
+import {
+  resolveAudioLabelMode,
+  serializeAnnotationResults,
+  validateAudioAnnotation,
+} from "../utils/audio-label-utils";
 
 interface AnnotationWorkspaceViewProps {
   projectId: string;
@@ -58,7 +64,16 @@ function AnnotationWorkspaceInner({
   const workspaceContainerRef = useRef<HTMLDivElement>(null);
 
   // Queries
-  const { data: ontology } = useProjectOntologyQuery(projectId);
+  const {
+    data: project,
+    isLoading: isProjectLoading,
+    error: projectError,
+  } = useProjectQuery(projectId);
+  const {
+    data: ontology,
+    isLoading: isOntologyLoading,
+    error: ontologyError,
+  } = useProjectOntologyQuery(projectId);
 
   const effectiveOntologyVersionId = useMemo(() => {
     if (ontologyVersionId) return ontologyVersionId;
@@ -68,15 +83,21 @@ function AnnotationWorkspaceInner({
 
   const ontologyId = ontology?.id || "";
 
-  const { data: exportedSchema } = useOntologySchemaQuery(
-    projectId,
-    ontologyId,
-    effectiveOntologyVersionId
-  );
+  const {
+    data: exportedSchema,
+    isLoading: isSchemaLoading,
+    error: schemaError,
+  } = useOntologySchemaQuery(projectId, ontologyId, effectiveOntologyVersionId);
 
-  const { categoryNames, categoryColors, availableCategories } = useMemo(() => {
+  const {
+    categoryNames,
+    categoryColors,
+    categoryKeys,
+    availableCategories,
+  } = useMemo(() => {
     const names: Record<string, string> = {};
     const colors: Record<string, string> = {};
+    const keys: Record<string, string> = {};
     const list: Array<{
       id: string;
       name: string;
@@ -89,6 +110,7 @@ function AnnotationWorkspaceInner({
         output.categories?.forEach((cat) => {
           if (!names[cat.id]) {
             names[cat.id] = cat.name;
+            keys[cat.id] = cat.key;
             if (cat.color) colors[cat.id] = cat.color;
             list.push(cat);
           }
@@ -99,6 +121,7 @@ function AnnotationWorkspaceInner({
     return {
       categoryNames: names,
       categoryColors: colors,
+      categoryKeys: keys,
       availableCategories: list,
     };
   }, [exportedSchema]);
@@ -106,13 +129,19 @@ function AnnotationWorkspaceInner({
   const {
     data: annotations,
     isLoading: isAnnoLoading,
+    error: annotationError,
     refetch: refetchAnnotations,
   } = useAssetAnnotationsQuery(assetId);
-  const { data: downloadData, isLoading: isDownloadLoading } =
-    useAssetDownloadUrlQuery(assetId);
-  const { data: assets, isLoading: isAssetsLoading } = useVersionAssetsQuery(
-    datasetVersionId || ""
-  );
+  const {
+    data: downloadData,
+    isLoading: isDownloadLoading,
+    error: downloadError,
+  } = useAssetDownloadUrlQuery(assetId);
+  const {
+    data: assets,
+    isLoading: isAssetsLoading,
+    error: assetsError,
+  } = useVersionAssetsQuery(datasetVersionId || "");
 
   const downloadUrl = downloadData?.download_url;
   const activeAnnotation = annotations?.[0];
@@ -133,6 +162,7 @@ function AnnotationWorkspaceInner({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+  const [savedResultsHash, setSavedResultsHash] = useState("[]");
 
   // Modality & Task Type Detection
   const currentAssetIdx = useMemo(() => {
@@ -149,14 +179,16 @@ function AnnotationWorkspaceInner({
 
   const {
     effectiveInputType,
+    primaryOutput,
     primaryOutputType,
+    audioLabelMode,
     isClassificationOnly,
     isSpatialVision,
     isAudio,
     isVideo,
   } = useMemo(() => {
     const inputType = exportedSchema?.inputs?.[0]?.schema?.type;
-    const outputType = exportedSchema?.outputs?.[0]?.type;
+    const firstOutput = exportedSchema?.outputs?.[0];
 
     let effInput = inputType;
     const filename = (currentAsset?.filename || "").toLowerCase();
@@ -167,6 +199,26 @@ function AnnotationWorkspaceInner({
       else if (filename.match(/\.(txt|md|log|docx?)$/)) effInput = "document";
       else effInput = "image";
     }
+
+    const preliminaryAudioMode =
+      effInput === "audio"
+        ? resolveAudioLabelMode(project?.template_id, firstOutput)
+        : null;
+    const selectedOutput =
+      preliminaryAudioMode === "intent_classification"
+        ? exportedSchema?.outputs?.find(
+            (output) => output.type === "classification"
+          ) || firstOutput
+        : preliminaryAudioMode === "asr" ||
+            preliminaryAudioMode === "asr_segments"
+          ? exportedSchema?.outputs?.find((output) => output.type === "text") ||
+            firstOutput
+          : firstOutput;
+    const outputType = selectedOutput?.type;
+    const resolvedAudioMode =
+      effInput === "audio"
+        ? resolveAudioLabelMode(project?.template_id, selectedOutput)
+        : null;
 
     const isClassOnly =
       outputType === "classification" &&
@@ -185,22 +237,21 @@ function AnnotationWorkspaceInner({
 
     return {
       effectiveInputType: effInput,
+      primaryOutput: selectedOutput,
       primaryOutputType: outputType,
+      audioLabelMode: resolvedAudioMode,
       isClassificationOnly: isClassOnly,
       isSpatialVision: isSpatial,
       isAudio: isAud,
       isVideo: isVid,
     };
-  }, [exportedSchema, currentAsset]);
+  }, [exportedSchema, currentAsset, project?.template_id]);
 
   // Modals state
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
   const [isHotkeySettingsOpen, setIsHotkeySettingsOpen] = useState(false);
 
-  // Audio timeline state
-  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
-  const [audioDuration] = useState(60);
-  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [audioDuration, setAudioDuration] = useState(0);
 
   // Vision Pan & Zoom state
   const [zoomScale, setZoomScale] = useState(1);
@@ -243,10 +294,26 @@ function AnnotationWorkspaceInner({
   const activeResultsHash = JSON.stringify(activeRevision?.results || []);
 
   useEffect(() => {
-    if (activeRevision?.results && activeRevision.results.length > 0) {
-      syncResults(activeRevision.results);
-    }
-  }, [activeRevisionId, activeResultsHash, syncResults]);
+    const nextResults = activeRevision?.results || [];
+    syncResults(nextResults);
+    setSavedResultsHash(serializeAnnotationResults(nextResults));
+  }, [assetId, activeRevisionId, activeResultsHash, syncResults]);
+
+  const workingResultsHash = useMemo(
+    () => serializeAnnotationResults(workingResults),
+    [workingResults]
+  );
+  const hasUnsavedChanges = workingResultsHash !== savedResultsHash;
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!hasUnsavedChanges) return;
+      event.preventDefault();
+      event.returnValue = true;
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // Set default selected category from ontology
   useEffect(() => {

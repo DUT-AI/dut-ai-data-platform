@@ -12,7 +12,7 @@ WORKDIR /app
 RUN corepack enable
 
 # Copy lockfiles and manifests
-COPY package.json pnpm-lock.yaml .npmrc* ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* .npmrc* ./
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile

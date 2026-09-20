@@ -102,7 +102,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   createbuckets:
-    image: minio/mc:latest
+    image: minio/minio:latest
     container_name: data-platform-minio-init
     depends_on:
       minio:

@@ -10,6 +10,9 @@ import { AudioAnnotationCanvas } from "../components/audio/audio-annotation-canv
 import { VideoAnnotationCanvas } from "../components/video/video-annotation-canvas";
 import { ClassificationEditor } from "../components/classification-editor";
 import { ImageClassificationEditor } from "../components/editors/classification/image-classification-editor";
+import { NerAnnotationCanvas } from "../components/ner-annotation-canvas";
+import { TextClassificationCanvas } from "../components/text-classification-canvas";
+import { QaAnnotationCanvas } from "../components/qa-annotation-canvas";
 
 // Dynamic imports for Canvas-based Micro Editors to avoid SSR window access issues
 const DynamicBoundingBoxEditor = dynamic(
@@ -138,6 +141,29 @@ function VideoEditor(props: BaseEditorComponentProps) {
   return <VideoAnnotationCanvas assetUrl={props.assetUrl} {...props} />;
 }
 
+function NerEditor(props: BaseEditorComponentProps) {
+  return (
+    <NerAnnotationCanvas
+      textContent={(props.metadata as Record<string, unknown> | undefined)?.textContent as string | undefined}
+      {...props}
+    />
+  );
+}
+
+function TextClassificationEditor(props: BaseEditorComponentProps) {
+  return (
+    <TextClassificationCanvas
+      textContent={(props.metadata as Record<string, unknown> | undefined)?.textContent as string | undefined}
+      multiple={!!(props.metadata as Record<string, unknown> | undefined)?.multiple}
+      {...props}
+    />
+  );
+}
+
+function QaEditor(props: BaseEditorComponentProps) {
+  return <QaAnnotationCanvas {...props} />;
+}
+
 /**
  * Creates a Fail-Fast error fallback component when no matching editor exists
  */
@@ -199,12 +225,15 @@ export const EDITOR_REGISTRY: Record<string, EditorRegistration> = {
   },
 
   // 2. NLP & Text Annotations
+  // `named_entity` is the canonical catalog code (OutputDefinition.code) used by the
+  // ontology schema export. Route it directly to NerEditor so that
+  // resolveEditorComponent picks it up correctly.
   named_entity: {
     code: "named_entity",
-    label: "Text NER & Span Editor",
-    description: "Bôi đen văn bản và gán nhãn thực thể (NER, Spans)",
+    label: "Named Entity Recognition Editor",
+    description: "Bôi đen văn bản và gán nhãn thực thể (NER, Spans) — editor nâng cao với inline popover",
     supportedInputTypes: ["document"],
-    component: TextEditor,
+    component: NerEditor,
   },
   text: {
     code: "text",
@@ -255,48 +284,52 @@ export const EDITOR_REGISTRY: Record<string, EditorRegistration> = {
     ],
     component: ClassificationEditor,
   },
+
+  // 6. NLP — Named Entity Recognition (alias kept for backward-compat)
+  // NOTE: The canonical catalog code is `named_entity` (see above).
+  // `named_entity_recognition` is NOT a valid OutputDefinition.code; it will
+  // only be selected if passed explicitly as outputTypeCode.
+  named_entity_recognition: {
+    code: "named_entity_recognition",
+    label: "Named Entity Recognition Editor (alias)",
+    description: "Bôi đen văn bản, chọn loại thực thể từ popover (PER, LOC, ORG…)",
+    supportedInputTypes: ["document"],
+    component: NerEditor,
+  },
 };
 
 /**
- * Resolve the best matching editor given an Output code and Input modality.
+ * Resolve the best matching editor given an Output code, fallback Input type,
+ * and optional task-level metadata.
+ *
+ * Compound routing rules (evaluated before the simple registry lookup):
+ *   - `classification` + `image` input    → ImageClassificationEditor
+ *   - `classification` + `document` input → TextClassificationEditor
+ *
+ * NOTE: QA routing via `metadata.question` was removed — the question field
+ * is never populated in editorMetadata, making that branch unreachable.
+ * Wire QA explicitly via outputTypeCode="question_answering" instead.
+ *
  * Strictly fail-fast: NEVER fallback silently to BoundingBoxEditor!
  */
 export function resolveEditorComponent(
   outputTypeCode?: string,
-  inputTypeCode?: string
+  inputTypeCode?: string,
+  _metadata?: Record<string, unknown>
 ): EditorComponentType {
-  // 1. Special case: Image classification needs viewport to display image
+  // 1. Compound: image classification needs viewport to display image
   if (outputTypeCode === "classification" && inputTypeCode === "image") {
     return ImageClassificationEditor;
   }
 
-  // 2. Check if output type is registered
-  if (outputTypeCode && EDITOR_REGISTRY[outputTypeCode]) {
-    const registration = EDITOR_REGISTRY[outputTypeCode];
-
-    // Check input modality compatibility
-    if (
-      inputTypeCode &&
-      !registration.supportedInputTypes.includes(
-        inputTypeCode as InputDefinition["code"]
-      )
-    ) {
-      return createUnsupportedEditor(
-        `Tác vụ "${registration.label}" (${outputTypeCode}) không tương thích với dữ liệu đầu vào "${inputTypeCode}".`
-      );
-    }
-
-    return registration.component;
-  }
-
-  // 3. Fallback only if outputTypeCode is unspecified and input modality matches dedicated editors
+  // 4. Fallback only if outputTypeCode is unspecified and input modality matches dedicated editors
   if (!outputTypeCode && inputTypeCode) {
     if (inputTypeCode === "audio") return EDITOR_REGISTRY["audio_segment"].component;
     if (inputTypeCode === "tabular") return EDITOR_REGISTRY["tabular"].component;
     if (inputTypeCode === "document") return EDITOR_REGISTRY["named_entity"].component;
   }
 
-  // 4. Fail-fast error if no valid editor can be safely resolved
+  // 5. Fail-fast error if no valid editor can be safely resolved
   return createUnsupportedEditor(
     `Không tìm thấy Editor cho Output Type: "${outputTypeCode || "không xác định"}" (Input: "${inputTypeCode || "không xác định"}").`
   );

@@ -10,6 +10,7 @@ import { AudioAnnotationCanvas } from "../components/audio/audio-annotation-canv
 import { VideoAnnotationCanvas } from "../components/video/video-annotation-canvas";
 import { ClassificationEditor } from "../components/classification-editor";
 import { ImageClassificationEditor } from "../components/editors/classification/image-classification-editor";
+import type { AudioLabelMode } from "../utils/audio-label-utils";
 import { NerAnnotationCanvas } from "../components/ner-annotation-canvas";
 import { TextClassificationCanvas } from "../components/text-classification-canvas";
 import { QaAnnotationCanvas } from "../components/qa-annotation-canvas";
@@ -92,9 +93,14 @@ export interface BaseEditorComponentProps {
     key: string;
   }>;
   readOnly?: boolean;
+  audioLabelMode?: AudioLabelMode;
+  outputId?: string;
+  outputMultiple?: boolean;
+  validationErrors?: string[];
   selectedShapeId?: string | null;
   onSelectShapeId?: (id: string | null) => void;
   onSelectCategory?: (categoryId: string) => void;
+  onDurationChange?: (duration: number) => void;
   onChange?: (results: AnnotationResult[]) => void;
   metadata?: Record<string, unknown>;
 }
@@ -134,7 +140,13 @@ function TabularEditor(props: BaseEditorComponentProps) {
 }
 
 function AudioEditor(props: BaseEditorComponentProps) {
-  return <AudioAnnotationCanvas audioUrl={props.assetUrl} {...props} />;
+  return (
+    <AudioAnnotationCanvas
+      audioUrl={props.assetUrl}
+      mode={props.audioLabelMode}
+      {...props}
+    />
+  );
 }
 
 function VideoEditor(props: BaseEditorComponentProps) {
@@ -322,6 +334,36 @@ export function resolveEditorComponent(
     return ImageClassificationEditor;
   }
 
+  // Audio text/classification tasks share the player and render task-specific panels.
+  if (
+    inputTypeCode === "audio" &&
+    (outputTypeCode === "text" ||
+      outputTypeCode === "classification" ||
+      outputTypeCode === "audio_segment")
+  ) {
+    return AudioEditor;
+  }
+
+  // 2. Check if output type is registered
+  if (outputTypeCode && EDITOR_REGISTRY[outputTypeCode]) {
+    const registration = EDITOR_REGISTRY[outputTypeCode];
+
+    // Check input modality compatibility
+    if (
+      inputTypeCode &&
+      !registration.supportedInputTypes.includes(
+        inputTypeCode as InputDefinition["code"]
+      )
+    ) {
+      return createUnsupportedEditor(
+        `Tác vụ "${registration.label}" (${outputTypeCode}) không tương thích với dữ liệu đầu vào "${inputTypeCode}".`
+      );
+    }
+
+    return registration.component;
+  }
+
+  // 3. Fallback only if outputTypeCode is unspecified and input modality matches dedicated editors
   // 4. Fallback only if outputTypeCode is unspecified and input modality matches dedicated editors
   if (!outputTypeCode && inputTypeCode) {
     if (inputTypeCode === "audio") return EDITOR_REGISTRY["audio_segment"].component;

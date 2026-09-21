@@ -13,6 +13,7 @@ import {
 export interface ClassificationEditorProps {
   assetUrl?: string;
   results: AnnotationResult[];
+  outputId?: string;
   categoryColors?: Record<string, string>;
   categoryNames?: Record<string, string>;
   availableCategories?: Array<{
@@ -36,6 +37,7 @@ function generateClassificationId(catId: string): string {
 export function ClassificationEditor({
   assetUrl,
   results,
+  outputId,
   availableCategories = [],
   multiple = false,
   readOnly = false,
@@ -43,10 +45,17 @@ export function ClassificationEditor({
 }: ClassificationEditorProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const belongsToOutput = (result: AnnotationResult) =>
+    !outputId || !result.output_id || result.output_id === outputId;
 
   // Extract currently selected category IDs from classification results
   const selectedCategoryIds = results
-    .filter((r) => r.result_type === "classification" && r.category_id)
+    .filter(
+      (r) =>
+        r.result_type === "classification" &&
+        r.category_id &&
+        belongsToOutput(r)
+    )
     .map((r) => r.category_id as string);
 
   const handleToggleCategory = (catId: string) => {
@@ -55,12 +64,18 @@ export function ClassificationEditor({
     if (multiple) {
       if (selectedCategoryIds.includes(catId)) {
         const updated = results.filter(
-          (r) => !(r.result_type === "classification" && r.category_id === catId)
+          (r) =>
+            !(
+              r.result_type === "classification" &&
+              r.category_id === catId &&
+              belongsToOutput(r)
+            )
         );
         onChange?.(updated);
       } else {
         const newResult: AnnotationResult = {
           id: generateClassificationId(catId),
+          output_id: outputId,
           result_type: "classification",
           category_id: catId,
           value: catId,
@@ -71,13 +86,14 @@ export function ClassificationEditor({
     } else {
       // Single choice
       const filtered = results.filter(
-        (r) => r.result_type !== "classification"
+        (r) => r.result_type !== "classification" || !belongsToOutput(r)
       );
       if (selectedCategoryIds.includes(catId)) {
         onChange?.(filtered);
       } else {
         const newResult: AnnotationResult = {
           id: generateClassificationId(catId),
+          output_id: outputId,
           result_type: "classification",
           category_id: catId,
           value: catId,

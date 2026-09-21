@@ -7,7 +7,16 @@ export type SelectorType =
   | "DOCUMENT_PAGE";
 
 export type ResultType =
-  "bbox" | "polygon" | "text_region" | "caption" | "classification" | "ner";
+  | "bbox"
+  | "polygon"
+  | "text_region"
+  | "caption"
+  | "classification"
+  /**
+   * Used for both Named Entity Recognition spans and Question Answering answer spans.
+   * QA results are distinguished from NER results by the presence of `payload.question`.
+   */
+  | "ner";
 
 export type RevisionSource = "human" | "machine";
 

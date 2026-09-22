@@ -16,6 +16,7 @@ import {
   useProjectOntologyQuery,
   useOntologySchemaQuery,
 } from "@/features/ontology";
+import { Info } from "lucide-react";
 import { useProjectQuery } from "@/features/projects";
 import { AnnotationEditorDispatcher } from "./annotation-editor-dispatcher";
 import { ClassificationEditor } from "./classification-editor";
@@ -89,42 +90,38 @@ function AnnotationWorkspaceInner({
     error: schemaError,
   } = useOntologySchemaQuery(projectId, ontologyId, effectiveOntologyVersionId);
 
-  const {
-    categoryNames,
-    categoryColors,
-    categoryKeys,
-    availableCategories,
-  } = useMemo(() => {
-    const names: Record<string, string> = {};
-    const colors: Record<string, string> = {};
-    const keys: Record<string, string> = {};
-    const list: Array<{
-      id: string;
-      name: string;
-      color?: string | null;
-      key: string;
-    }> = [];
+  const { categoryNames, categoryColors, categoryKeys, availableCategories } =
+    useMemo(() => {
+      const names: Record<string, string> = {};
+      const colors: Record<string, string> = {};
+      const keys: Record<string, string> = {};
+      const list: Array<{
+        id: string;
+        name: string;
+        color?: string | null;
+        key: string;
+      }> = [];
 
-    if (exportedSchema?.outputs) {
-      exportedSchema.outputs.forEach((output) => {
-        output.categories?.forEach((cat) => {
-          if (!names[cat.id]) {
-            names[cat.id] = cat.name;
-            keys[cat.id] = cat.key;
-            if (cat.color) colors[cat.id] = cat.color;
-            list.push(cat);
-          }
+      if (exportedSchema?.outputs) {
+        exportedSchema.outputs.forEach((output) => {
+          output.categories?.forEach((cat) => {
+            if (!names[cat.id]) {
+              names[cat.id] = cat.name;
+              keys[cat.id] = cat.key;
+              if (cat.color) colors[cat.id] = cat.color;
+              list.push(cat);
+            }
+          });
         });
-      });
-    }
+      }
 
-    return {
-      categoryNames: names,
-      categoryColors: colors,
-      categoryKeys: keys,
-      availableCategories: list,
-    };
-  }, [exportedSchema]);
+      return {
+        categoryNames: names,
+        categoryColors: colors,
+        categoryKeys: keys,
+        availableCategories: list,
+      };
+    }, [exportedSchema]);
 
   // Derive editor-level metadata from the primary output definition.
   // This is forwarded to specialized editors:
@@ -270,6 +267,8 @@ function AnnotationWorkspaceInner({
   const [isHotkeySettingsOpen, setIsHotkeySettingsOpen] = useState(false);
 
   const [audioDuration, setAudioDuration] = useState(0);
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
   // Vision Pan & Zoom state
   const [zoomScale, setZoomScale] = useState(1);
@@ -314,6 +313,8 @@ function AnnotationWorkspaceInner({
   useEffect(() => {
     const nextResults = activeRevision?.results || [];
     syncResults(nextResults);
+    // React Query data is the external source being synchronized here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSavedResultsHash(serializeAnnotationResults(nextResults));
   }, [assetId, activeRevisionId, activeResultsHash, syncResults]);
 
@@ -466,7 +467,7 @@ function AnnotationWorkspaceInner({
   return (
     <div
       ref={workspaceContainerRef}
-      className="flex h-screen w-screen flex-col overflow-hidden bg-slate-950 text-slate-100"
+      className="flex h-dvh w-full flex-col overflow-hidden bg-slate-950 text-slate-100"
     >
       {/* Platform Header Sub-Component */}
       <WorkspaceHeader
@@ -496,12 +497,13 @@ function AnnotationWorkspaceInner({
       />
 
       {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
         {/* Canvas & Editor Workspace */}
-        <main className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-slate-950 p-4">
+        <main className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-auto bg-slate-950 p-2 sm:p-4">
           {feedbackMsg && (
             <div className="absolute left-6 right-6 top-3 z-50 rounded border border-blue-900/50 bg-blue-950/90 px-4 py-2 text-xs text-blue-300 shadow">
-              ℹ️ {feedbackMsg}
+              <Info className="mr-1 inline h-3.5 w-3.5" />
+              {feedbackMsg}
             </div>
           )}
 
@@ -555,8 +557,8 @@ function AnnotationWorkspaceInner({
                   onChange={(newVisibleResults) => {
                     // Preserve currently hidden results so they are not
                     // discarded when the editor only sees visibleResults.
-                    const hiddenResults = workingResults.filter(
-                      (r) => hiddenResultIds.has(r.id ?? r.output_id ?? "")
+                    const hiddenResults = workingResults.filter((r) =>
+                      hiddenResultIds.has(r.id ?? r.output_id ?? "")
                     );
                     setWorkingResults([...hiddenResults, ...newVisibleResults]);
                   }}

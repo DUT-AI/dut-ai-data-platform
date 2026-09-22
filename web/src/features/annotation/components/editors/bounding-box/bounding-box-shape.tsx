@@ -80,20 +80,20 @@ export function BoundingBoxShape({
         onTap={() => {
           if (currentTool === "select") onSelect(shapeId);
         }}
-        onMouseEnter={(e: any) => {
+        onMouseEnter={(e) => {
           if (currentTool === "select" && !readOnly) {
             const stage = e.target.getStage();
             if (stage) stage.container().style.cursor = "pointer";
           }
         }}
-        onMouseLeave={(e: any) => {
+        onMouseLeave={(e) => {
           if (currentTool === "select") {
             const stage = e.target.getStage();
             if (stage) stage.container().style.cursor = "default";
           }
         }}
-        onDragEnd={(e: any) => onDragEnd(shapeId, e)}
-        onTransformEnd={(e: any) => onTransformEnd(shapeId, e)}
+        onDragEnd={(e) => onDragEnd(shapeId, e)}
+        onTransformEnd={(e) => onTransformEnd(shapeId, e)}
       />
 
       {/* Label Badge Container */}

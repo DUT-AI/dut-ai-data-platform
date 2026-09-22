@@ -2,6 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { Info, Loader2 } from "lucide-react";
+import {
+  Button,
+  ConfirmDialog,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+} from "@/components/ui";
 import type { OntologyPreset } from "../../helpers/ontology-presets";
 import { getOntologyApiError } from "../../helpers/ontology-error";
 import {
@@ -46,6 +57,19 @@ interface OntologyEditorViewProps {
 }
 
 type DialogKind = "input" | "output" | "category" | null;
+type EditorFormKind =
+  "create-draft" | "rename-version" | "edit-ontology" | null;
+type ConfirmKind =
+  | "discard-create"
+  | "publish"
+  | "delete-draft"
+  | "delete-ontology"
+  | "delete-input"
+  | "delete-output"
+  | "delete-category"
+  | "discard-back"
+  | "discard-version"
+  | null;
 
 const selectInitialVersion = (ontology: Ontology): string =>
   ontology.versions.find((version) => version.status === "draft")?.id ??
@@ -73,6 +97,16 @@ export function OntologyEditorView({
     useState<ExportedOntologySchema | null>(null);
   const [schemaOpen, setSchemaOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [editorForm, setEditorForm] = useState<EditorFormKind>(null);
+  const [formName, setFormName] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+  const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null);
+  const [pendingVersionId, setPendingVersionId] = useState<string | null>(null);
+  const [pendingInput, setPendingInput] = useState<OntologyInput | null>(null);
+  const [pendingOutput, setPendingOutput] = useState<OntologyOutput | null>(
+    null
+  );
+  const [pendingCategory, setPendingCategory] = useState<Category | null>(null);
 
   const workspace = useOntologyWorkspace(
     projectId,
@@ -164,16 +198,24 @@ export function OntologyEditorView({
     }
   };
 
-  const handleCreateDraft = async (): Promise<void> => {
-    if (
-      graph.dirty &&
-      !window.confirm("Bỏ các thay đổi kết nối chưa lưu và tạo Draft mới?")
-    ) {
-      return;
-    }
+  const openCreateDraftForm = (): void => {
     const nextNumber =
       Math.max(0, ...versions.map((item) => item.version_no)) + 1;
-    const name = window.prompt("Tên Draft mới", `Draft v${nextNumber}`)?.trim();
+    setFormName(`Draft v${nextNumber}`);
+    setFormDescription("");
+    setEditorForm("create-draft");
+  };
+
+  const handleCreateDraft = async (): Promise<void> => {
+    if (graph.dirty) {
+      setConfirmKind("discard-create");
+      return;
+    }
+    openCreateDraftForm();
+  };
+
+  const createDraft = async (): Promise<void> => {
+    const name = formName.trim();
     if (!name) return;
     try {
       const created = await versionMutations.create.mutateAsync({
@@ -182,6 +224,7 @@ export function OntologyEditorView({
           selectedVersion?.status === "published" ? selectedVersion.id : null,
       });
       setSelectedVersionId(created.id);
+      setEditorForm(null);
     } catch (error) {
       showError(error);
     }
@@ -189,11 +232,19 @@ export function OntologyEditorView({
 
   const handleRenameVersion = async (): Promise<void> => {
     if (!selectedVersion) return;
-    const name = window.prompt("Tên Draft", selectedVersion.name)?.trim();
+    setFormName(selectedVersion.name);
+    setFormDescription("");
+    setEditorForm("rename-version");
+  };
+
+  const renameVersion = async (): Promise<void> => {
+    if (!selectedVersion) return;
+    const name = formName.trim();
     if (!name || name === selectedVersion.name) return;
     try {
       await versionMutations.update.mutateAsync(name);
       setMessage("Đã đổi tên Draft.");
+      setEditorForm(null);
     } catch (error) {
       showError(error);
     }
@@ -201,7 +252,11 @@ export function OntologyEditorView({
 
   const handleDeleteDraft = async (): Promise<void> => {
     if (!selectedVersion || selectedVersion.status !== "draft") return;
-    if (!window.confirm(`Xóa Draft “${selectedVersion.name}”?`)) return;
+    setConfirmKind("delete-draft");
+  };
+
+  const deleteDraft = async (): Promise<void> => {
+    if (!selectedVersion || selectedVersion.status !== "draft") return;
     const fallbackVersion = versions.find(
       (version) => version.id !== selectedVersion.id
     );
@@ -209,34 +264,41 @@ export function OntologyEditorView({
       await versionMutations.remove.mutateAsync();
       if (fallbackVersion) setSelectedVersionId(fallbackVersion.id);
       setMessage("Đã xóa Draft.");
+      setConfirmKind(null);
     } catch (error) {
       showError(error);
     }
   };
 
   const handleRenameOntology = async (): Promise<void> => {
-    const name = window.prompt("Tên Ontology", ontology.name)?.trim();
-    if (!name || name === ontology.name) return;
-    const description = window.prompt(
-      "Mô tả Ontology",
-      ontology.description ?? ""
-    );
-    if (description === null) return;
+    setFormName(ontology.name);
+    setFormDescription(ontology.description ?? "");
+    setEditorForm("edit-ontology");
+  };
+
+  const updateOntologyDetails = async (): Promise<void> => {
+    const name = formName.trim();
+    if (!name) return;
     try {
       await updateOntology.mutateAsync({
         name,
-        description: description.trim() || undefined,
+        description: formDescription.trim() || undefined,
       });
       setMessage("Đã cập nhật thông tin Ontology.");
+      setEditorForm(null);
     } catch (error) {
       showError(error);
     }
   };
 
   const handleDeleteOntology = async (): Promise<void> => {
-    if (!window.confirm(`Xóa Ontology “${ontology.name}”?`)) return;
+    setConfirmKind("delete-ontology");
+  };
+
+  const deleteCurrentOntology = async (): Promise<void> => {
     try {
       await deleteOntology.mutateAsync();
+      setConfirmKind(null);
       onBack();
     } catch (error) {
       showError(error);
@@ -280,38 +342,59 @@ export function OntologyEditorView({
   };
 
   const deleteInputNode = async (input: OntologyInput): Promise<boolean> => {
-    if (!window.confirm(`Xóa Input “${input.name}”?`)) return false;
+    setPendingInput(input);
+    setConfirmKind("delete-input");
+    return false;
+  };
+
+  const confirmDeleteInput = async (): Promise<void> => {
+    if (!pendingInput) return;
     try {
-      await inputMutations.remove.mutateAsync(input.id);
-      graph.removeInput(input.id);
-      return true;
+      await inputMutations.remove.mutateAsync(pendingInput.id);
+      graph.removeInput(pendingInput.id);
+      setPendingInput(null);
+      setConfirmKind(null);
+      setDialog(null);
     } catch (error) {
       showError(error);
-      return false;
     }
   };
 
   const deleteOutputNode = async (output: OntologyOutput): Promise<boolean> => {
-    if (!window.confirm(`Xóa Output “${output.name}”?`)) return false;
+    setPendingOutput(output);
+    setConfirmKind("delete-output");
+    return false;
+  };
+
+  const confirmDeleteOutput = async (): Promise<void> => {
+    if (!pendingOutput) return;
     try {
-      await outputMutations.remove.mutateAsync(output.id);
-      graph.removeOutput(output.id);
-      return true;
+      await outputMutations.remove.mutateAsync(pendingOutput.id);
+      graph.removeOutput(pendingOutput.id);
+      setPendingOutput(null);
+      setConfirmKind(null);
+      setDialog(null);
     } catch (error) {
       showError(error);
-      return false;
     }
   };
 
   const deleteCategoryNode = async (category: Category): Promise<boolean> => {
-    if (!window.confirm(`Xóa Category “${category.name}”?`)) return false;
+    setPendingCategory(category);
+    setConfirmKind("delete-category");
+    return false;
+  };
+
+  const confirmDeleteCategory = async (): Promise<void> => {
+    if (!pendingCategory) return;
     try {
-      await categoryMutations.remove.mutateAsync(category.id);
-      graph.removeCategory(category.id);
-      return true;
+      await categoryMutations.remove.mutateAsync(pendingCategory.id);
+      graph.removeCategory(pendingCategory.id);
+      setPendingCategory(null);
+      setConfirmKind(null);
+      setDialog(null);
     } catch (error) {
       showError(error);
-      return false;
     }
   };
 
@@ -323,10 +406,8 @@ export function OntologyEditorView({
   };
 
   const handleBack = (): void => {
-    if (
-      graph.dirty &&
-      !window.confirm("Bỏ các thay đổi kết nối chưa lưu và quay lại?")
-    ) {
+    if (graph.dirty) {
+      setConfirmKind("discard-back");
       return;
     }
     onBack();
@@ -338,6 +419,139 @@ export function OntologyEditorView({
     workspace.inputs.isLoading ||
     workspace.outputs.isLoading ||
     workspace.categories.isLoading;
+
+  const confirmBusy =
+    versionMutations.remove.isPending ||
+    deleteOntology.isPending ||
+    inputMutations.remove.isPending ||
+    outputMutations.remove.isPending ||
+    categoryMutations.remove.isPending;
+
+  const confirmCopy = (() => {
+    switch (confirmKind) {
+      case "discard-create":
+        return {
+          title: "Bỏ thay đổi và tạo Draft mới?",
+          description:
+            "Các kết nối chưa lưu trên canvas hiện tại sẽ bị bỏ. Node catalog chưa bị xoá.",
+          label: "Bỏ thay đổi",
+          destructive: false,
+        };
+      case "publish":
+        return {
+          title: `Publish “${selectedVersion?.name || "Draft hiện tại"}”?`,
+          description:
+            "Hệ thống sẽ validate, tạo schema hash và khóa version ở chế độ chỉ đọc. Published version không thể chỉnh sửa.",
+          label: "Validate và Publish",
+          destructive: false,
+        };
+      case "delete-draft":
+        return {
+          title: `Xoá Draft “${selectedVersion?.name || "hiện tại"}”?`,
+          description:
+            "Draft và composition chưa publish sẽ bị xoá. Published version không bị ảnh hưởng.",
+          label: "Xoá Draft",
+          destructive: true,
+        };
+      case "delete-ontology":
+        return {
+          title: `Xoá Ontology “${ontology.name}”?`,
+          description:
+            "Hành động này có thể ảnh hưởng toàn bộ version và annotation contract đang liên kết.",
+          label: "Xoá Ontology",
+          destructive: true,
+        };
+      case "delete-input":
+        return {
+          title: `Xoá Input “${pendingInput?.name || "đang chọn"}”?`,
+          description:
+            "Input sẽ bị gỡ khỏi catalog và các kết nối composition liên quan.",
+          label: "Xoá Input",
+          destructive: true,
+        };
+      case "delete-output":
+        return {
+          title: `Xoá Output “${pendingOutput?.name || "đang chọn"}”?`,
+          description:
+            "Output và các liên kết Category trong composition sẽ bị gỡ.",
+          label: "Xoá Output",
+          destructive: true,
+        };
+      case "delete-category":
+        return {
+          title: `Xoá Category “${pendingCategory?.name || "đang chọn"}”?`,
+          description: "Category sẽ bị gỡ khỏi các Output đang sử dụng nó.",
+          label: "Xoá Category",
+          destructive: true,
+        };
+      case "discard-back":
+        return {
+          title: "Rời editor và bỏ thay đổi?",
+          description:
+            "Các kết nối chưa lưu trên canvas sẽ không được giữ lại.",
+          label: "Rời editor",
+          destructive: false,
+        };
+      case "discard-version":
+        return {
+          title: "Chuyển version và bỏ thay đổi?",
+          description: "Các kết nối chưa lưu ở version hiện tại sẽ bị bỏ.",
+          label: "Chuyển version",
+          destructive: false,
+        };
+      default:
+        return {
+          title: "Xác nhận thao tác",
+          description: "Kiểm tra tác động trước khi tiếp tục.",
+          label: "Xác nhận",
+          destructive: false,
+        };
+    }
+  })();
+
+  const handleConfirmAction = async (): Promise<void> => {
+    switch (confirmKind) {
+      case "discard-create":
+        setConfirmKind(null);
+        openCreateDraftForm();
+        return;
+      case "publish":
+        await handlePublish();
+        setConfirmKind(null);
+        return;
+      case "delete-draft":
+        await deleteDraft();
+        return;
+      case "delete-ontology":
+        await deleteCurrentOntology();
+        return;
+      case "delete-input":
+        await confirmDeleteInput();
+        return;
+      case "delete-output":
+        await confirmDeleteOutput();
+        return;
+      case "delete-category":
+        await confirmDeleteCategory();
+        return;
+      case "discard-back":
+        setConfirmKind(null);
+        onBack();
+        return;
+      case "discard-version":
+        if (pendingVersionId) {
+          setValidation(null);
+          setMessage(null);
+          setPreset(null);
+          setSelectedVersionId(pendingVersionId);
+        }
+        setPendingVersionId(null);
+        setConfirmKind(null);
+        return;
+      default:
+        return;
+    }
+  };
 
   return (
     <section className="space-y-4" aria-label={`Ontology ${ontology.name}`}>
@@ -351,11 +565,11 @@ export function OntologyEditorView({
         busy={busy}
         onBack={handleBack}
         onSelectVersion={(versionId) => {
-          if (
-            graph.dirty &&
-            !window.confirm("Bỏ các thay đổi kết nối chưa lưu?")
-          )
+          if (graph.dirty) {
+            setPendingVersionId(versionId);
+            setConfirmKind("discard-version");
             return;
+          }
           setValidation(null);
           setMessage(null);
           setPreset(null);
@@ -369,7 +583,7 @@ export function OntologyEditorView({
         onDeleteOntology={handleDeleteOntology}
         onSave={() => saveGraph().catch(showError)}
         onValidate={() => validateVersion().catch(showError)}
-        onPublish={handlePublish}
+        onPublish={() => setConfirmKind("publish")}
         onExport={handleExport}
       />
 
@@ -550,6 +764,109 @@ export function OntologyEditorView({
           setSchemaOpen(false);
           setExportedSchema(null);
         }}
+      />
+
+      <Dialog
+        open={Boolean(editorForm)}
+        onOpenChange={(open) => !open && setEditorForm(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editorForm === "create-draft"
+                ? "Tạo Ontology Draft"
+                : editorForm === "rename-version"
+                  ? "Đổi tên Draft"
+                  : "Chỉnh sửa Ontology"}
+            </DialogTitle>
+            <DialogDescription>
+              {editorForm === "create-draft"
+                ? "Draft mới có thể bắt đầu từ Published version đang chọn và vẫn chỉnh sửa được."
+                : editorForm === "rename-version"
+                  ? "Tên giúp phân biệt mục đích của Draft; không thay đổi schema contract."
+                  : "Cập nhật tên và mô tả của Ontology project."}
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (editorForm === "create-draft") void createDraft();
+              if (editorForm === "rename-version") void renameVersion();
+              if (editorForm === "edit-ontology") void updateOntologyDetails();
+            }}
+          >
+            <div>
+              <label
+                htmlFor="ontology-form-name"
+                className="text-sm font-medium"
+              >
+                Tên
+              </label>
+              <Input
+                id="ontology-form-name"
+                className="mt-1.5"
+                value={formName}
+                onChange={(event) => setFormName(event.target.value)}
+                autoFocus
+                required
+              />
+            </div>
+            {editorForm === "edit-ontology" && (
+              <div>
+                <label
+                  htmlFor="ontology-form-description"
+                  className="text-sm font-medium"
+                >
+                  Mô tả
+                </label>
+                <textarea
+                  id="ontology-form-description"
+                  rows={4}
+                  value={formDescription}
+                  onChange={(event) => setFormDescription(event.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500"
+                />
+              </div>
+            )}
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditorForm(null)}
+              >
+                Huỷ
+              </Button>
+              <Button
+                type="submit"
+                isLoading={
+                  versionMutations.create.isPending ||
+                  versionMutations.update.isPending ||
+                  updateOntology.isPending
+                }
+              >
+                Lưu
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={Boolean(confirmKind)}
+        title={confirmCopy.title}
+        description={confirmCopy.description}
+        confirmLabel={confirmCopy.label}
+        destructive={confirmCopy.destructive}
+        isLoading={confirmBusy}
+        onClose={() => {
+          setConfirmKind(null);
+          setPendingVersionId(null);
+          setPendingInput(null);
+          setPendingOutput(null);
+          setPendingCategory(null);
+        }}
+        onConfirm={handleConfirmAction}
       />
     </section>
   );

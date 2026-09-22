@@ -181,7 +181,7 @@ export function CreateProjectView() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("name")}
-                    className={`flex items-center gap-2 rounded-md px-4 py-1.5 text-xs font-semibold transition-all ${
+                    className={`flex items-center gap-2 rounded-md px-4 py-1.5 text-xs font-semibold transition-colors duration-150 ${
                       activeTab === "name"
                         ? "bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white"
                         : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
@@ -193,7 +193,7 @@ export function CreateProjectView() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("config")}
-                    className={`flex items-center gap-2 rounded-md px-4 py-1.5 text-xs font-semibold transition-all ${
+                    className={`flex items-center gap-2 rounded-md px-4 py-1.5 text-xs font-semibold transition-colors duration-150 ${
                       activeTab === "config"
                         ? "bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white"
                         : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"

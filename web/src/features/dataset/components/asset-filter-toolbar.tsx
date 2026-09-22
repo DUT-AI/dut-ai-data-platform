@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Input, Button, Badge } from "@/components/ui";
+import { X } from "lucide-react";
 
 export interface FileTypeOption {
   mimeType: string;
@@ -78,11 +79,13 @@ export function AssetFilterToolbar({
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => onSearchChange("")}
+                aria-label="Xóa tìm kiếm"
                 className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 title="Xóa tìm kiếm"
               >
-                ✕
+                <X className="size-3.5" aria-hidden="true" />
               </button>
             )}
           </div>

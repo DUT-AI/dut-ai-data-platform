@@ -30,7 +30,9 @@ export function BoundingBoxEditor({
   const prevToolRef = useRef<string>("select");
 
   const [currentTool, setCurrentTool] = useState<string>("select");
-  const [internalSelectedShapeId, setInternalSelectedShapeId] = useState<string | null>(null);
+  const [internalSelectedShapeId, setInternalSelectedShapeId] = useState<
+    string | null
+  >(null);
 
   const selectedShapeId =
     externalSelectedShapeId !== undefined
@@ -147,7 +149,14 @@ export function BoundingBoxEditor({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [currentTool, selectedShapeId, readOnly, results, onChange, setSelectedShapeId]);
+  }, [
+    currentTool,
+    selectedShapeId,
+    readOnly,
+    results,
+    onChange,
+    setSelectedShapeId,
+  ]);
 
   // Stage Mouse Down
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -403,32 +412,35 @@ export function BoundingBoxEditor({
           })}
 
           {/* Crosshair guide lines when in BBox mode */}
-          {currentTool === "bbox" && currentMousePos && !readOnly && imageObj && (
-            <Group opacity={0.4} listening={false}>
-              <Line
-                points={[
-                  imageLayout.x,
-                  currentMousePos.y,
-                  imageLayout.x + imageLayout.width,
-                  currentMousePos.y,
-                ]}
-                stroke="#38BDF8"
-                strokeWidth={1 / stageScale}
-                dash={[4 / stageScale, 4 / stageScale]}
-              />
-              <Line
-                points={[
-                  currentMousePos.x,
-                  imageLayout.y,
-                  currentMousePos.x,
-                  imageLayout.y + imageLayout.height,
-                ]}
-                stroke="#38BDF8"
-                strokeWidth={1 / stageScale}
-                dash={[4 / stageScale, 4 / stageScale]}
-              />
-            </Group>
-          )}
+          {currentTool === "bbox" &&
+            currentMousePos &&
+            !readOnly &&
+            imageObj && (
+              <Group opacity={0.4} listening={false}>
+                <Line
+                  points={[
+                    imageLayout.x,
+                    currentMousePos.y,
+                    imageLayout.x + imageLayout.width,
+                    currentMousePos.y,
+                  ]}
+                  stroke="#38BDF8"
+                  strokeWidth={1 / stageScale}
+                  dash={[4 / stageScale, 4 / stageScale]}
+                />
+                <Line
+                  points={[
+                    currentMousePos.x,
+                    imageLayout.y,
+                    currentMousePos.x,
+                    imageLayout.y + imageLayout.height,
+                  ]}
+                  stroke="#38BDF8"
+                  strokeWidth={1 / stageScale}
+                  dash={[4 / stageScale, 4 / stageScale]}
+                />
+              </Group>
+            )}
 
           {/* In-progress drawing Rectangle */}
           {newRect && (
@@ -476,7 +488,7 @@ export function BoundingBoxEditor({
             ref={transformerRef}
             rotateEnabled={false}
             keepRatio={false}
-            boundBoxFunc={(oldBox: any, newBox: any) => {
+            boundBoxFunc={(oldBox, newBox) => {
               if (newBox.width < 5 || newBox.height < 5) return oldBox;
               return newBox;
             }}

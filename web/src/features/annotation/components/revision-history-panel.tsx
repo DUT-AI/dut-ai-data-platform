@@ -42,7 +42,7 @@ export function RevisionHistoryPanel({
             <Card
               key={rev.id}
               onClick={() => onSelectRevision(rev.id)}
-              className={`cursor-pointer border p-3 transition-all ${
+              className={`cursor-pointer border p-3 transition-colors duration-150 ${
                 isSelected
                   ? "border-primary-500 bg-primary-500/10 dark:bg-primary-500/10"
                   : "border-slate-800 bg-slate-900 hover:border-slate-700"

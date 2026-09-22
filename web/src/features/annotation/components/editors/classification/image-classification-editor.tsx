@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useRef, useMemo } from "react";
+import Konva from "konva";
 import { BaseEditorComponentProps } from "../../../registry/editor-registry";
 import { useImageTransform } from "../../../hooks/use-image-transform";
 import { ImageStage, EditorToolbar, EditorFooter } from "../shared";
 import { AnnotationResult } from "../../../types";
-import { Tag, CheckCircle2, AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, Tag, X } from "lucide-react";
 
 export function ImageClassificationEditor({
   assetUrl,
@@ -18,7 +19,7 @@ export function ImageClassificationEditor({
   onChange,
 }: BaseEditorComponentProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<any>(null);
+  const stageRef = useRef<Konva.Stage | null>(null);
 
   const {
     dimensions,
@@ -38,7 +39,9 @@ export function ImageClassificationEditor({
 
   // Current active classification from results
   const currentClassification = useMemo(() => {
-    return results.find((r) => r.result_type === "classification" && r.category_id);
+    return results.find(
+      (r) => r.result_type === "classification" && r.category_id
+    );
   }, [results]);
 
   const assignedCategoryId = currentClassification?.category_id || null;
@@ -60,7 +63,9 @@ export function ImageClassificationEditor({
   React.useEffect(() => {
     if (readOnly) return;
     if (selectedCategoryId && selectedCategoryId !== assignedCategoryId) {
-      const filtered = results.filter((r) => r.result_type !== "classification");
+      const filtered = results.filter(
+        (r) => r.result_type !== "classification"
+      );
       const newResult: AnnotationResult = {
         id: `class_${selectedCategoryId}_${Date.now()}`,
         result_type: "classification",
@@ -106,10 +111,11 @@ export function ImageClassificationEditor({
               <button
                 type="button"
                 onClick={handleRemoveClassification}
+                aria-label="Bỏ gán nhãn"
                 className="ml-1 text-[11px] text-slate-500 hover:text-red-400"
                 title="Bỏ gán nhãn"
               >
-                ✕
+                <X className="size-3.5" aria-hidden="true" />
               </button>
             )}
           </div>

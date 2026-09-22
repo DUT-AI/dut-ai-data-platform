@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui";
+import { Eye, EyeOff, Trash2 } from "lucide-react";
 import type { AnnotationResult } from "../types";
 
 export type RelationDirection = "left" | "right" | "bi";
@@ -240,7 +241,11 @@ export function RelationsPanel({
                     className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
                     title={isHidden ? "Hiện" : "Ẩn"}
                   >
-                    {isHidden ? "👁️‍🗨️" : "👁️"}
+                    {isHidden ? (
+                      <EyeOff className="size-3.5" aria-hidden="true" />
+                    ) : (
+                      <Eye className="size-3.5" aria-hidden="true" />
+                    )}
                   </button>
                   <button
                     type="button"
@@ -248,7 +253,7 @@ export function RelationsPanel({
                     className="rounded p-1 text-slate-400 hover:bg-red-950 hover:text-red-400"
                     title="Xóa liên kết"
                   >
-                    🗑️
+                    <Trash2 className="size-3.5" aria-hidden="true" />
                   </button>
                 </div>
               </div>

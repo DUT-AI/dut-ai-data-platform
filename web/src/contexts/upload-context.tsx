@@ -2,6 +2,15 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  LoaderCircle,
+  UploadCloud,
+  X,
+} from "lucide-react";
 import { datasetApi } from "@/features/dataset/api";
 import { DATASET_KEYS } from "@/features/dataset/hooks/use-datasets";
 
@@ -50,9 +59,8 @@ async function runWithConcurrencyLimit<T, R>(
     }
   };
 
-  const workers = Array.from(
-    { length: Math.min(limit, items.length) },
-    () => worker()
+  const workers = Array.from({ length: Math.min(limit, items.length) }, () =>
+    worker()
   );
   await Promise.all(workers);
   return results;
@@ -104,7 +112,10 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
         })),
       };
 
-      const prepareRes = await datasetApi.prepareAssetUpload(versionId, preparePayload);
+      const prepareRes = await datasetApi.prepareAssetUpload(
+        versionId,
+        preparePayload
+      );
 
       // Step 2: Upload to S3 with controlled concurrency (Max 3 files in parallel to prevent network congestion)
       const CONCURRENCY_LIMIT = 3;
@@ -120,8 +131,13 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
               setActiveJobs((prev) =>
                 prev.map((job) => {
                   if (job.id !== jobId) return job;
-                  const updatedProgresses = { ...job.fileProgresses, [index]: percent };
-                  const completed = Object.values(updatedProgresses).filter((p) => p === 100).length;
+                  const updatedProgresses = {
+                    ...job.fileProgresses,
+                    [index]: percent,
+                  };
+                  const completed = Object.values(updatedProgresses).filter(
+                    (p) => p === 100
+                  ).length;
                   return {
                     ...job,
                     fileProgresses: updatedProgresses,
@@ -143,7 +159,6 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
         }
       );
 
-
       // Step 3: Finalize import & get deduplication stats
       setActiveJobs((prev) =>
         prev.map((job) =>
@@ -159,16 +174,15 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
         prev.map((job) =>
           job.id === jobId
             ? {
-              ...job,
-              status: "completed",
-              completedCount: files.length,
-              reusedCount: finalizeRes.reused_assets_count,
-              newCount: finalizeRes.new_assets_count,
-            }
+                ...job,
+                status: "completed",
+                completedCount: files.length,
+                reusedCount: finalizeRes.reused_assets_count,
+                newCount: finalizeRes.new_assets_count,
+              }
             : job
         )
       );
-
 
       // Invalidate dataset assets and version detail queries to update UI automatically
       queryClient.invalidateQueries({
@@ -183,9 +197,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
 
       setActiveJobs((prev) =>
         prev.map((job) =>
-          job.id === jobId
-            ? { ...job, status: "error", errorMsg: msg }
-            : job
+          job.id === jobId ? { ...job, status: "error", errorMsg: msg } : job
         )
       );
     }
@@ -197,7 +209,9 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
 
   const toggleMinimizeJob = (jobId: string) => {
     setActiveJobs((prev) =>
-      prev.map((j) => (j.id === jobId ? { ...j, isMinimized: !j.isMinimized } : j))
+      prev.map((j) =>
+        j.id === jobId ? { ...j, isMinimized: !j.isMinimized } : j
+      )
     );
   };
 
@@ -230,35 +244,35 @@ function FloatingUploadManager() {
   if (activeJobs.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-auto">
+    <div className="pointer-events-auto fixed bottom-4 right-4 z-50 flex w-full max-w-sm flex-col gap-3">
       {activeJobs.map((job) => {
         const totalProgress =
           job.files.length > 0
             ? Math.round(
-              Object.values(job.fileProgresses).reduce((a, b) => a + b, 0) /
-              job.files.length
-            )
+                Object.values(job.fileProgresses).reduce((a, b) => a + b, 0) /
+                  job.files.length
+              )
             : 0;
 
         return (
           <div
             key={job.id}
-            className="rounded-xl border border-slate-700 bg-slate-900/95 p-3.5 text-slate-100 shadow-2xl backdrop-blur-md transition-all"
+            className="rounded-xl border border-slate-700 bg-slate-900/95 p-3.5 text-slate-100 shadow-2xl backdrop-blur-md transition-[opacity,transform] duration-150"
           >
             {/* Header */}
             <div className="flex items-center justify-between pb-2">
               <div className="flex items-center gap-2 overflow-hidden">
-                <span className="text-base">
-                  {job.status === "uploading"
-                    ? "📤"
-                    : job.status === "finalizing"
-                      ? "⚡"
-                      : job.status === "completed"
-                        ? "✅"
-                        : "⚠️"}
-                </span>
+                {job.status === "uploading" ? (
+                  <UploadCloud className="h-4 w-4 text-blue-400" />
+                ) : job.status === "finalizing" ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin text-sky-400" />
+                ) : job.status === "completed" ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4 text-rose-400" />
+                )}
                 <div className="flex flex-col">
-                  <span className="text-xs font-semibold truncate">
+                  <span className="truncate text-xs font-semibold">
                     {job.status === "uploading"
                       ? `Đang tải lên, không tắt trang web... (${job.completedCount}/${job.totalCount} tệp)`
                       : job.status === "finalizing"
@@ -275,16 +289,26 @@ function FloatingUploadManager() {
 
               <div className="flex items-center gap-1">
                 <button
+                  type="button"
                   onClick={() => toggleMinimizeJob(job.id)}
-                  className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-white text-xs"
+                  aria-label={
+                    job.isMinimized ? "Mở chi tiết upload" : "Thu gọn upload"
+                  }
+                  className="inline-flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-white"
                 >
-                  {job.isMinimized ? "▲" : "▼"}
+                  {job.isMinimized ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
                 </button>
                 <button
+                  type="button"
                   onClick={() => dismissJob(job.id)}
-                  className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-rose-400 text-xs"
+                  aria-label="Đóng thông báo upload"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-rose-400"
                 >
-                  ✕
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -292,19 +316,21 @@ function FloatingUploadManager() {
             {/* Overall Progress Bar */}
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
               <div
-                className={`h-full transition-all duration-300 ${job.status === "error"
-                  ? "bg-rose-500"
-                  : job.status === "completed"
-                    ? "bg-emerald-500"
-                    : "bg-primary-500"
-                  }`}
+                className={`h-full transition-[width,background-color] duration-300 ${
+                  job.status === "error"
+                    ? "bg-rose-500"
+                    : job.status === "completed"
+                      ? "bg-emerald-500"
+                      : "bg-primary-500"
+                }`}
                 style={{
-                  width: `${job.status === "completed"
-                    ? 100
-                    : job.status === "finalizing"
-                      ? 95
-                      : totalProgress
-                    }%`,
+                  width: `${
+                    job.status === "completed"
+                      ? 100
+                      : job.status === "finalizing"
+                        ? 95
+                        : totalProgress
+                  }%`,
                 }}
               />
             </div>
@@ -320,14 +346,14 @@ function FloatingUploadManager() {
                       className="flex flex-col gap-1 rounded bg-slate-800/60 p-1.5"
                     >
                       <div className="flex items-center justify-between text-[11px]">
-                        <span className="truncate font-mono font-medium max-w-[200px]">
+                        <span className="max-w-[200px] truncate font-mono font-medium">
                           {file.name}
                         </span>
-                        <span className="text-slate-400 font-mono">{p}%</span>
+                        <span className="font-mono text-slate-400">{p}%</span>
                       </div>
                       <div className="h-1 w-full overflow-hidden rounded-full bg-slate-700">
                         <div
-                          className="h-full bg-primary-400 transition-all duration-150"
+                          className="h-full bg-blue-400 transition-[width] duration-150"
                           style={{ width: `${p}%` }}
                         />
                       </div>
@@ -339,16 +365,27 @@ function FloatingUploadManager() {
 
             {/* Deduplication Summary Stats when completed */}
             {!job.isMinimized && job.status === "completed" && (
-              <div className="mt-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-2.5 text-xs text-emerald-300 space-y-1">
-                <p className="font-bold text-emerald-400">✓ Thống kê tải lên:</p>
-                <p>• Tổng số tập tin xử lý: <strong>{job.totalCount}</strong></p>
-                <p>• Tập tin mới lưu trữ MinIO S3: <strong>{job.newCount ?? job.totalCount}</strong></p>
-                <p>• Tập tin trùng lặp SHA256 (Tái sử dụng): <strong>{job.reusedCount ?? 0}</strong></p>
+              <div className="mt-2.5 space-y-1 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-2.5 text-xs text-emerald-300">
+                <p className="flex items-center gap-1 font-bold text-emerald-400">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Thống kê tải lên
+                </p>
+                <p>
+                  • Tổng số tập tin xử lý: <strong>{job.totalCount}</strong>
+                </p>
+                <p>
+                  • Tập tin mới lưu trữ MinIO S3:{" "}
+                  <strong>{job.newCount ?? job.totalCount}</strong>
+                </p>
+                <p>
+                  • Tập tin trùng lặp SHA256 (Tái sử dụng):{" "}
+                  <strong>{job.reusedCount ?? 0}</strong>
+                </p>
               </div>
             )}
 
             {job.errorMsg && (
-              <p className="mt-2 text-[11px] text-rose-400 font-medium">
+              <p className="mt-2 text-[11px] font-medium text-rose-400">
                 {job.errorMsg}
               </p>
             )}
@@ -358,4 +395,3 @@ function FloatingUploadManager() {
     </div>
   );
 }
-

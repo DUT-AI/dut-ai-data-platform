@@ -1,6 +1,13 @@
 "use client";
 
 import React from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Keyboard,
+  Save,
+  ScrollText,
+} from "lucide-react";
 
 export interface CategoryItem {
   id: string;
@@ -63,7 +70,7 @@ export function WorkspaceCategoryBar({
                 borderColor: isSelected ? color : `${color}60`,
                 color: color,
               }}
-              className={`flex items-center space-x-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold transition-all ${
+              className={`flex items-center space-x-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold transition-[opacity,transform,box-shadow] duration-150 ${
                 isSelected
                   ? "scale-[1.03] ring-2 ring-blue-500/50"
                   : "opacity-80 hover:opacity-100"
@@ -93,7 +100,7 @@ export function WorkspaceCategoryBar({
             className="flex h-7 items-center rounded border border-slate-800 bg-slate-950 px-2 text-xs text-slate-300 transition-colors hover:bg-slate-800"
             title="Ảnh trước ([)"
           >
-            ◀
+            <ChevronLeft className="h-3.5 w-3.5" />
           </button>
         )}
         {onNavigateNext && hasNext && (
@@ -103,7 +110,7 @@ export function WorkspaceCategoryBar({
             className="flex h-7 items-center rounded border border-slate-800 bg-slate-950 px-2 text-xs text-slate-300 transition-colors hover:bg-slate-800"
             title="Ảnh sau (])"
           >
-            ▶
+            <ChevronRight className="h-3.5 w-3.5" />
           </button>
         )}
 
@@ -114,7 +121,8 @@ export function WorkspaceCategoryBar({
             className="flex h-7 items-center gap-1 rounded border border-slate-800 bg-slate-950 px-2 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
             title="Xem danh sách phím tắt"
           >
-            <span>⌨️ Phím tắt</span>
+            <Keyboard className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Phím tắt</span>
           </button>
         )}
 
@@ -125,7 +133,8 @@ export function WorkspaceCategoryBar({
             className="flex h-7 items-center gap-1 rounded border border-slate-800 bg-slate-950 px-2 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
             title="Hướng dẫn gán nhãn (H)"
           >
-            <span>📖 Hướng dẫn</span>
+            <ScrollText className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Hướng dẫn</span>
           </button>
         )}
 
@@ -134,10 +143,11 @@ export function WorkspaceCategoryBar({
             type="button"
             disabled={isSubmitting}
             onClick={onSaveRevision}
-            className="flex h-7 items-center gap-1.5 rounded-md bg-blue-600 px-3 text-xs font-semibold text-white shadow-sm transition-all hover:bg-blue-500 disabled:opacity-50"
+            className="flex h-7 items-center gap-1.5 rounded-md bg-blue-600 px-3 text-xs font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-blue-500 disabled:opacity-50"
             title="Lưu phiên bản (Ctrl+S / Cmd+S)"
           >
-            <span>💾 {isSubmitting ? "Đang lưu..." : "Lưu (Ctrl+S)"}</span>
+            <Save className="h-3.5 w-3.5" />
+            <span>{isSubmitting ? "Đang lưu..." : "Lưu"}</span>
           </button>
         )}
       </div>

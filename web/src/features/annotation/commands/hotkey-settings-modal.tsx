@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useCommandRegistry } from "./command-registry";
 import { Button } from "@/components/ui";
+import { X } from "lucide-react";
 
 interface HotkeySettingsModalProps {
   isOpen: boolean;
@@ -55,10 +56,12 @@ export function HotkeySettingsModal({
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Đóng cài đặt phím tắt"
             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
           >
-            ✕
+            <X className="size-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -138,7 +141,7 @@ export function HotkeySettingsModal({
                       <button
                         onClick={() => startRecording(cmd.id)}
                         title="Click để ghi đè phím tắt"
-                        className="group flex items-center space-x-1 rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1 font-mono text-xs font-semibold text-slate-200 transition-all hover:border-blue-500 hover:bg-slate-700"
+                        className="group flex items-center space-x-1 rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1 font-mono text-xs font-semibold text-slate-200 transition-colors duration-150 hover:border-blue-500 hover:bg-slate-700"
                       >
                         <span>{formatBinding(currentBinding)}</span>
                         <span className="text-[10px] text-slate-500 group-hover:text-blue-300">

@@ -38,29 +38,28 @@ export function ProjectList() {
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            <FolderKanban className="h-7 w-7 text-blue-600 dark:text-blue-400" />
-            Quản lý Dự án AI
+          <p className="text-xs font-semibold text-blue-700">
+            Không gian dữ liệu AI
+          </p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 dark:text-slate-100">
+            Project
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Quản lý không gian gán nhãn, tập dữ liệu và các tác vụ huấn luyện AI
-            của bạn.
+            Tìm project theo bài toán, trạng thái và contract dữ liệu hiện hành.
           </p>
         </div>
 
         <Button
           onClick={() => router.push("/projects/new")}
-          className="flex items-center gap-2 bg-blue-600 text-white shadow-md hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500"
+          className="flex min-h-11 items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500"
         >
           <Plus className="h-4 w-4" />
           Tạo dự án mới
         </Button>
       </div>
 
-      {/* Toolbar & Filters */}
       <div className="shadow-xs flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3.5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900">
         <div className="relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -77,7 +76,8 @@ export function ProjectList() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 outline-none hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            aria-label="Lọc theo trạng thái"
+            className="min-h-11 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 outline-none hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
           >
             <option value="all">Tất cả trạng thái ({projects.length})</option>
             <option value="active">Đang hoạt động</option>
@@ -89,7 +89,8 @@ export function ProjectList() {
             size="icon"
             onClick={() => refetch()}
             title="Làm mới danh sách"
-            className="h-9 w-9 border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            aria-label="Làm mới danh sách project"
+            className="h-11 w-11 border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             <RefreshCw className="h-4 w-4" />
           </Button>

@@ -5,8 +5,12 @@ import { cn } from "@/lib/utils";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Project Boilerplate",
-  description: "A clean Next.js frontend boilerplate.",
+  title: {
+    default: "DUT AI Data Platform",
+    template: "%s | DUT AI Data Platform",
+  },
+  description:
+    "Không gian quản trị dữ liệu, ontology và quy trình gán nhãn cho các dự án AI tại DUT.",
 };
 
 export default function RootLayout({
@@ -16,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="vi"
       className={cn("h-full antialiased")}
       suppressHydrationWarning
     >

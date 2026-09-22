@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Konva from "konva";
 import { BaseEditorComponentProps } from "../../../registry/editor-registry";
 import { useImageTransform } from "../../../hooks/use-image-transform";
@@ -25,7 +25,6 @@ export function BrushSegmentationEditor({
 }: BaseEditorComponentProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage | null>(null);
-  const maskLayerRef = useRef<Konva.Layer | null>(null);
   const prevToolRef = useRef<string>("brush");
 
   // Mask settings
@@ -53,11 +52,15 @@ export function BrushSegmentationEditor({
   // Offscreen Canvas for raster mask buffer
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const offscreenCtxRef = useRef<CanvasRenderingContext2D | null>(null);
-  const [isCanvasReady, setIsCanvasReady] = useState(false);
+  const [maskCanvas, setMaskCanvas] = useState<HTMLCanvasElement | null>(null);
 
   // Initialize and resize offscreen canvas to match natural image dimensions
   useEffect(() => {
-    if (!imageObj || naturalDimensions.width === 0 || naturalDimensions.height === 0) {
+    if (
+      !imageObj ||
+      naturalDimensions.width === 0 ||
+      naturalDimensions.height === 0
+    ) {
       return;
     }
 
@@ -68,21 +71,29 @@ export function BrushSegmentationEditor({
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       offscreenCanvasRef.current = canvas;
       offscreenCtxRef.current = ctx;
-      setIsCanvasReady(true);
+      setMaskCanvas(canvas);
     } else if (
       offscreenCanvasRef.current.width !== naturalDimensions.width ||
       offscreenCanvasRef.current.height !== naturalDimensions.height
     ) {
-      offscreenCanvasRef.current.width = naturalDimensions.width;
-      offscreenCanvasRef.current.height = naturalDimensions.height;
-      setIsCanvasReady(true);
+      const canvas = document.createElement("canvas");
+      canvas.width = naturalDimensions.width;
+      canvas.height = naturalDimensions.height;
+      offscreenCanvasRef.current = canvas;
+      offscreenCtxRef.current = canvas.getContext("2d", {
+        willReadFrequently: true,
+      });
+      setMaskCanvas(canvas);
     }
   }, [imageObj, naturalDimensions]);
 
   // Drawing state
   const isPaintingRef = useRef(false);
   const lastPointerPosRef = useRef<{ x: number; y: number } | null>(null);
-  const [currentMousePos, setCurrentMousePos] = useState<{ x: number; y: number } | null>(null);
+  const [currentMousePos, setCurrentMousePos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   const activeColor = selectedCategoryId
     ? categoryColors[selectedCategoryId] || DEFAULT_COLORS[0]
@@ -130,7 +141,13 @@ export function BrushSegmentationEditor({
     if (readOnly || currentTool === "pan" || currentTool === "select") return;
     const stage = stageRef.current;
     const pointer = stage?.getRelativePointerPosition();
-    if (!pointer || !offscreenCanvasRef.current || !offscreenCtxRef.current) return;
+    if (
+      !stage ||
+      !pointer ||
+      !offscreenCanvasRef.current ||
+      !offscreenCtxRef.current
+    )
+      return;
 
     // Check if inside image bounds
     if (
@@ -165,7 +182,13 @@ export function BrushSegmentationEditor({
 
     const scaledBrushRadius = (brushSize / stageScale) * scaleX;
     ctx.beginPath();
-    ctx.arc(naturalX, naturalY, Math.max(1, scaledBrushRadius / 2), 0, Math.PI * 2);
+    ctx.arc(
+      naturalX,
+      naturalY,
+      Math.max(1, scaledBrushRadius / 2),
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
     ctx.restore();
 
@@ -176,11 +199,15 @@ export function BrushSegmentationEditor({
   const handleMouseMove = () => {
     const stage = stageRef.current;
     const pointer = stage?.getRelativePointerPosition();
-    if (!pointer) return;
+    if (!stage || !pointer) return;
 
     setCurrentMousePos({ x: pointer.x, y: pointer.y });
 
-    if (!isPaintingRef.current || !offscreenCtxRef.current || !lastPointerPosRef.current) {
+    if (
+      !isPaintingRef.current ||
+      !offscreenCtxRef.current ||
+      !lastPointerPosRef.current
+    ) {
       return;
     }
 
@@ -246,7 +273,8 @@ export function BrushSegmentationEditor({
 
   // Clear current mask
   const handleClearCurrentMask = () => {
-    if (readOnly || !offscreenCtxRef.current || !offscreenCanvasRef.current) return;
+    if (readOnly || !offscreenCtxRef.current || !offscreenCanvasRef.current)
+      return;
     offscreenCtxRef.current.clearRect(
       0,
       0,
@@ -308,10 +336,10 @@ export function BrushSegmentationEditor({
           onMouseUp={handleMouseUp}
         >
           {/* Raster Mask Canvas Layer rendered via KonvaImage */}
-          {isCanvasReady && offscreenCanvasRef.current && (
+          {maskCanvas && (
             <KonvaImage
               name="raster-mask-canvas"
-              image={offscreenCanvasRef.current}
+              image={maskCanvas}
               x={imageLayout.x}
               y={imageLayout.y}
               width={imageLayout.width}
@@ -332,7 +360,9 @@ export function BrushSegmentationEditor({
                   stroke={currentTool === "eraser" ? "#EF4444" : activeColor}
                   strokeWidth={1.5 / stageScale}
                   dash={[3 / stageScale, 3 / stageScale]}
-                  fill={currentTool === "eraser" ? "#EF444420" : `${activeColor}20`}
+                  fill={
+                    currentTool === "eraser" ? "#EF444420" : `${activeColor}20`
+                  }
                 />
               </Group>
             )}
@@ -342,7 +372,9 @@ export function BrushSegmentationEditor({
       {/* Footer */}
       <EditorFooter
         currentTool={currentTool}
-        resultsCount={results.filter((r) => r.result_type === "brush_mask").length}
+        resultsCount={
+          results.filter((r) => r.result_type === "brush_mask").length
+        }
         stageScale={stageScale}
         naturalDimensions={naturalDimensions}
         cursorNormPos={

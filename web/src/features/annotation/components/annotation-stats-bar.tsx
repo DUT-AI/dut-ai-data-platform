@@ -1,6 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui";
+import { Tag } from "lucide-react";
 
 interface AnnotationStatsBarProps {
   totalAssets: number;
@@ -17,8 +18,8 @@ export function AnnotationStatsBar({
   return (
     <Card className="flex flex-col justify-between gap-3 border-slate-800 bg-slate-900 p-3 text-slate-200 md:flex-row md:items-center">
       <div className="flex items-center gap-3">
-        <div className="bg-primary-500/10 text-primary-400 rounded-lg p-2 text-sm font-bold">
-          🏷️
+        <div className="bg-primary-500/10 text-primary-400 rounded-lg p-2">
+          <Tag className="size-4" aria-hidden="true" />
         </div>
         <div>
           <h4 className="text-xs font-bold text-slate-100">
@@ -34,7 +35,7 @@ export function AnnotationStatsBar({
         <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-800">
           <div
             style={{ width: `${percentage}%` }}
-            className="bg-primary-500 h-full rounded-full transition-all duration-500"
+            className="bg-primary-500 h-full rounded-full transition-[width] duration-500"
           />
         </div>
         <span className="text-primary-400 min-w-[36px] text-right font-mono text-xs font-bold">

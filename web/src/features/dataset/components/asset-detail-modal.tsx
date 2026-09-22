@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { PencilLine } from "lucide-react";
 import {
   Button,
   Dialog,
@@ -177,7 +177,8 @@ function AssetDetailContent({
           disabled={!projectId}
           className="text-xs"
         >
-          ✏️ Gán nhãn (Annotate)
+          <PencilLine className="mr-1.5 size-4" aria-hidden="true" />
+          Gán nhãn (Annotate)
         </Button>
 
         <div className="flex items-center gap-2">

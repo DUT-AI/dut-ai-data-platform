@@ -94,8 +94,8 @@ function ColumnHeader({
   }[tone];
 
   return (
-    <header className="flex min-h-16 items-start justify-between gap-2">
-      <div>
+    <header className="grid min-h-20 grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+      <div className="min-w-0">
         <h3 className="text-sm font-semibold text-slate-950 dark:text-white">
           {title}
         </h3>
@@ -107,10 +107,11 @@ function ColumnHeader({
           size="sm"
           onClick={onAdd}
           aria-label={`Thêm ${title}`}
-          className={addButtonClass}
+          title={`Thêm ${title}`}
+          className={`${addButtonClass} min-h-10 shrink-0 whitespace-nowrap px-2.5`}
         >
-          <CirclePlus className="mr-1.5 size-4" aria-hidden="true" />
-          Thêm {title}
+          <CirclePlus className="mr-1.5 size-4 shrink-0" aria-hidden="true" />
+          Thêm
         </Button>
       )}
     </header>
@@ -463,8 +464,8 @@ export function OntologyCanvas({
               </button>
             ))}
 
-        <div className="relative z-20 grid min-w-[960px] grid-cols-3 items-start gap-16">
-          <div className="flex flex-col">
+        <div className="relative z-20 grid min-w-[960px] grid-cols-3 items-start gap-10 xl:gap-12">
+          <div className="flex min-w-0 flex-col">
             <ColumnHeader
               title="Input"
               description="Một Input có thể cấp dữ liệu cho nhiều Output."
@@ -540,7 +541,7 @@ export function OntologyCanvas({
             </div>
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex min-w-0 flex-col">
             <ColumnHeader
               title="Output"
               description="Thả dây Input vào bất kỳ vị trí nào trên card."
@@ -657,7 +658,7 @@ export function OntologyCanvas({
             </div>
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex min-w-0 flex-col">
             <ColumnHeader
               title="Category"
               description="Thả dây Output vào card để gắn nhãn."

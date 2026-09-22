@@ -1,11 +1,6 @@
 "use client";
 
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { AlignLeft, CheckCircle2, Circle } from "lucide-react";
 import { AnnotationResult } from "../types";
 import { BaseEditorComponentProps } from "../registry/editor-registry";
@@ -59,6 +54,8 @@ export function TextClassificationCanvas({
   // Fetch text content: assetUrl first → metadata.textContent fallback
   useEffect(() => {
     if (textContentProp) {
+      // Synchronize editor state from the selected external asset.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setText(textContentProp);
       return;
     }
@@ -131,7 +128,9 @@ export function TextClassificationCanvas({
                 !(
                   r.result_type === "classification" &&
                   r.category_id === catId &&
-                  (!activeOutputId || !r.output_id || r.output_id === activeOutputId)
+                  (!activeOutputId ||
+                    !r.output_id ||
+                    r.output_id === activeOutputId)
                 )
             )
           );
@@ -154,7 +153,9 @@ export function TextClassificationCanvas({
           (r) =>
             !(
               r.result_type === "classification" &&
-              (!activeOutputId || !r.output_id || r.output_id === activeOutputId)
+              (!activeOutputId ||
+                !r.output_id ||
+                r.output_id === activeOutputId)
             )
         );
         if (selectedIds.includes(catId)) {
@@ -199,10 +200,10 @@ export function TextClassificationCanvas({
       <div className="flex flex-1 flex-col border-r border-slate-800">
         <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-900/80 px-4 py-2.5 backdrop-blur">
           <AlignLeft className="size-4 text-sky-400" />
-          <span className="text-xs font-semibold text-slate-200">
-            Văn bản
+          <span className="text-xs font-semibold text-slate-200">Văn bản</span>
+          <span className="text-[11px] text-slate-400">
+            • Đọc và phân loại đoạn văn
           </span>
-          <span className="text-[11px] text-slate-400">• Đọc và phân loại đoạn văn</span>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 font-mono text-sm leading-7 text-slate-300">
@@ -235,16 +236,15 @@ export function TextClassificationCanvas({
         </div>
 
         {/* Category buttons */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="flex-1 space-y-2 overflow-y-auto p-3">
           {availableCategories.length === 0 ? (
-            <p className="text-center text-xs text-slate-500 pt-6">
+            <p className="pt-6 text-center text-xs text-slate-500">
               Chưa có nhãn nào được định nghĩa.
             </p>
           ) : (
             availableCategories.map((cat, idx) => {
               const isSelected = selectedIds.includes(cat.id);
-              const color =
-                cat.color ?? categoryColors[cat.id] ?? "#6366F1";
+              const color = cat.color ?? categoryColors[cat.id] ?? "#6366F1";
 
               return (
                 <button
@@ -258,7 +258,7 @@ export function TextClassificationCanvas({
                       ? `${color}18`
                       : "rgba(15,23,42,0.3)",
                   }}
-                  className={`flex w-full items-center justify-between rounded-lg border p-2.5 text-left transition-all ${
+                  className={`flex w-full items-center justify-between rounded-lg border p-2.5 text-left transition-colors duration-150 ${
                     isSelected
                       ? "shadow-sm ring-1 ring-blue-500/30"
                       : "hover:border-slate-600 hover:bg-slate-800/40"

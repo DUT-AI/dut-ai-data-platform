@@ -141,7 +141,7 @@ export function TimelineController({
       <div
         ref={trackRef}
         onClick={handleTrackClick}
-        className="relative h-9 w-full cursor-pointer select-none overflow-hidden rounded border border-slate-800 bg-slate-950/80 transition-all"
+        className="relative h-9 w-full cursor-pointer select-none overflow-hidden rounded border border-slate-800 bg-slate-950/80 transition-colors duration-150"
       >
         {/* Progress Background */}
         <div

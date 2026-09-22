@@ -68,6 +68,7 @@ export function UserSearchSelect({
       ? selectedUser
       : users.find((u) => String(u.id) === String(value)) || null
     : null;
+  const currentUserAvatarUrl = currentUser?.avatar_url?.trim();
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -107,12 +108,12 @@ export function UserSearchSelect({
     <div ref={containerRef} className="relative w-full space-y-1.5">
       {/* Selected User View */}
       {currentUser ? (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50/50 p-2.5 transition-all dark:border-blue-900/50 dark:bg-blue-950/20">
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50/50 p-2.5 transition-colors duration-150 dark:border-blue-900/50 dark:bg-blue-950/20">
           <div className="flex min-w-0 items-center gap-3">
-            {currentUser.avatar_url ? (
+            {currentUserAvatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={currentUser.avatar_url}
+                src={currentUserAvatarUrl}
                 alt={currentUser.name || currentUser.email}
                 className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-blue-500/20"
               />
@@ -258,6 +259,7 @@ export function UserSearchSelect({
                 const isAlreadyMember = existingMemberUserIds.includes(
                   String(user.id)
                 );
+                const avatarUrl = user.avatar_url?.trim();
 
                 return (
                   <li
@@ -273,10 +275,10 @@ export function UserSearchSelect({
                     }`}
                   >
                     <div className="flex min-w-0 items-center gap-2.5">
-                      {user.avatar_url ? (
+                      {avatarUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={user.avatar_url}
+                          src={avatarUrl}
                           alt={user.name || user.email}
                           className="h-8 w-8 shrink-0 rounded-full object-cover"
                         />

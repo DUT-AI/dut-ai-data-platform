@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui";
+import { BookOpen, X } from "lucide-react";
 
 interface InstructionsModalProps {
   isOpen: boolean;
@@ -49,14 +50,16 @@ export function InstructionsModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/50 px-6 py-4">
           <div className="flex items-center space-x-2">
-            <span className="text-base">📖</span>
+            <BookOpen className="size-4 text-blue-400" aria-hidden="true" />
             <h2 className="text-base font-semibold text-slate-100">{title}</h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Đóng hướng dẫn"
             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
           >
-            ✕
+            <X className="size-4" aria-hidden="true" />
           </button>
         </div>
 

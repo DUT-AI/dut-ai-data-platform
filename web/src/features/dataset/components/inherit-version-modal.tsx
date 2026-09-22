@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CheckCircle2, Workflow } from "lucide-react";
 import {
   Button,
   Dialog,
@@ -112,7 +113,8 @@ function InheritVersionContent({
     <DialogContent className="max-w-md">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2 text-base">
-          <span>🔄</span> Kế thừa phiên bản dữ liệu
+          <Workflow className="h-4 w-4" aria-hidden="true" />
+          Kế thừa phiên bản dữ liệu
         </DialogTitle>
         <DialogDescription>
           Kế thừa tập tin dữ liệu từ một phiên bản khác trong cùng dataset vào
@@ -133,7 +135,10 @@ function InheritVersionContent({
 
         {resultReport ? (
           <div className="space-y-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-4 text-emerald-700 dark:text-emerald-300">
-            <h4 className="text-sm font-bold">✓ Kế thừa thành công!</h4>
+            <h4 className="flex items-center gap-1.5 text-sm font-bold">
+              <CheckCircle2 className="h-4 w-4" />
+              Kế thừa thành công
+            </h4>
             <div className="space-y-1">
               <p>
                 • Số tập tin mới đã kế thừa:{" "}

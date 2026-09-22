@@ -2,13 +2,7 @@
 
 import React, { useRef, useEffect } from "react";
 import { AnnotationResult } from "../types";
-import {
-  CheckCircle2,
-  Circle,
-  Music,
-  Film,
-  FileText,
-} from "lucide-react";
+import { CheckCircle2, Circle, Music, Film, FileText } from "lucide-react";
 
 export interface ClassificationEditorProps {
   assetUrl?: string;
@@ -227,7 +221,22 @@ export function ClassificationEditor({
             {multiple ? "- Nhiều lựa chọn" : "- Lựa chọn duy nhất"}
           </span>
           <span className="text-[11px] text-slate-400">
-            {selectedCategoryIds.length} đã chọn • Phím phím số <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">1</kbd>..<kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">9</kbd> chọn nhãn nhanh, <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">[</kbd> <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">]</kbd> sang tệp
+            {selectedCategoryIds.length} đã chọn • Phím phím số{" "}
+            <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">
+              1
+            </kbd>
+            ..
+            <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">
+              9
+            </kbd>{" "}
+            chọn nhãn nhanh,{" "}
+            <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">
+              [
+            </kbd>{" "}
+            <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">
+              ]
+            </kbd>{" "}
+            sang tệp
           </span>
         </div>
 
@@ -249,7 +258,7 @@ export function ClassificationEditor({
                     ? `${color}25`
                     : "rgba(15, 23, 42, 0.4)",
                 }}
-                className={`flex items-center justify-between rounded-lg border p-3 text-left transition-all ${
+                className={`flex items-center justify-between rounded-lg border p-3 text-left transition-[border-color,background-color,box-shadow] duration-150 ${
                   isSelected
                     ? "shadow-sm ring-1 ring-blue-500/40"
                     : "hover:border-slate-700 hover:bg-slate-800/40"

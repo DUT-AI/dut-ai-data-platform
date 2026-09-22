@@ -147,7 +147,7 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
               {datasets.map((dataset: Dataset) => (
                 <div
                   key={dataset.id}
-                  className="hover:border-primary-500/50 flex cursor-pointer flex-col justify-between space-y-3 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                  className="hover:border-primary-500/50 flex cursor-pointer flex-col justify-between space-y-3 rounded-xl border border-slate-200 bg-white p-4 transition-[border-color,box-shadow] duration-150 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
                 >
                   <div
                     onClick={() => setSelectedDatasetId(dataset.id)}
@@ -181,7 +181,7 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
                               d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                             />
                           </svg>
-                          <span>Sửa ✏️</span>
+                          <span>Sửa</span>
                         </button>
                         <span className="rounded bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                           {dataset.versions?.length || 1} versions

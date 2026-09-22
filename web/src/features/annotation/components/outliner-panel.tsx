@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { Eye, EyeOff, Trash2 } from "lucide-react";
 import type { AnnotationResult } from "../types";
 
 export type GroupByOption = "none" | "category" | "type";
@@ -132,7 +133,7 @@ export function OutlinerPanel({
                     <div
                       key={id}
                       onClick={() => onSelectResult(id)}
-                      className={`group flex cursor-pointer items-center justify-between rounded-md border p-1.5 transition-all ${
+                      className={`group flex cursor-pointer items-center justify-between rounded-md border p-1.5 transition-colors duration-150 ${
                         isSelected
                           ? "border-blue-500 bg-blue-950/40 text-blue-200"
                           : "border-slate-800/80 bg-slate-950/60 text-slate-300 hover:border-slate-700 hover:bg-slate-800/50"
@@ -164,7 +165,11 @@ export function OutlinerPanel({
                           className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
                           title={isHidden ? "Hiện vùng" : "Ẩn vùng"}
                         >
-                          {isHidden ? "👁️‍🗨️" : "👁️"}
+                          {isHidden ? (
+                            <EyeOff className="size-3.5" aria-hidden="true" />
+                          ) : (
+                            <Eye className="size-3.5" aria-hidden="true" />
+                          )}
                         </button>
 
                         {/* Delete Region */}
@@ -177,7 +182,7 @@ export function OutlinerPanel({
                           className="rounded p-1 text-slate-400 hover:bg-red-950 hover:text-red-400"
                           title="Xóa vùng"
                         >
-                          🗑️
+                          <Trash2 className="size-3.5" aria-hidden="true" />
                         </button>
                       </div>
                     </div>

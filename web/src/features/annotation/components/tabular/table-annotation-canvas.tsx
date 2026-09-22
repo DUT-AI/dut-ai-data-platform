@@ -225,7 +225,7 @@ export function TableAnnotationCanvas({
                             backgroundColor: tag ? `${color}25` : undefined,
                             borderLeft: tag ? `3px solid ${color}` : undefined,
                           }}
-                          className="relative cursor-pointer px-3 py-2 transition-all hover:bg-blue-950/20"
+                          className="relative cursor-pointer px-3 py-2 transition-colors duration-150 hover:bg-blue-950/20"
                         >
                           <div className="flex items-center justify-between gap-2">
                             <span>{String(row[col] ?? "")}</span>

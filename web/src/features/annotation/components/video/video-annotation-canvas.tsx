@@ -107,7 +107,10 @@ export function VideoAnnotationCanvas({
         case "ArrowLeft":
           if (videoRef.current) {
             e.preventDefault();
-            videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 0.1);
+            videoRef.current.currentTime = Math.max(
+              0,
+              videoRef.current.currentTime - 0.1
+            );
           }
           break;
         case "l":
@@ -136,12 +139,12 @@ export function VideoAnnotationCanvas({
           if (!readOnly && videoRef.current) {
             e.preventDefault();
             const time = videoRef.current.currentTime;
-            
+
             // Auto commit if we had a start
             if (dragStart !== null) {
               const start = Math.min(dragStart, time);
               const end = Math.max(dragStart, time);
-              
+
               if (end - start > 0.1) {
                 const newId = `video_${Date.now()}`;
                 const newResult: AnnotationResult = {
@@ -263,7 +266,19 @@ export function VideoAnnotationCanvas({
             Video Canvas (Classification & Segmenting)
           </span>
           <span className="text-[11px] text-slate-400">
-            • Phím tắt: <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">I</kbd> chọn bắt đầu, <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">O</kbd> chọn kết thúc & tạo đoạn nhãn, <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">Space</kbd> phát/dừng
+            • Phím tắt:{" "}
+            <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">
+              I
+            </kbd>{" "}
+            chọn bắt đầu,{" "}
+            <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">
+              O
+            </kbd>{" "}
+            chọn kết thúc & tạo đoạn nhãn,{" "}
+            <kbd className="rounded bg-slate-800 px-1 font-mono text-[10px] text-slate-200">
+              Space
+            </kbd>{" "}
+            phát/dừng
           </span>
         </div>
 
@@ -312,7 +327,9 @@ export function VideoAnnotationCanvas({
         >
           {/* Base progress bar */}
           <div
-            style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+            style={{
+              width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
+            }}
             className="absolute bottom-0 left-0 top-0 bg-blue-900/30"
           />
 
@@ -348,10 +365,10 @@ export function VideoAnnotationCanvas({
                       backgroundColor: `${color}30`,
                       borderColor: color,
                     }}
-                    className={`absolute inset-y-0 border-x-2 transition-all ${
+                    className={`absolute inset-y-0 border-x-2 transition-[border-color,background-color,opacity] duration-150 ${
                       isSelected
                         ? "z-20 ring-2 ring-blue-500"
-                        : "z-10 hover:opacity-90 hover:bg-opacity-50"
+                        : "z-10 hover:bg-opacity-50 hover:opacity-90"
                     }`}
                     title={`${labelName} (${start}s - ${end}s)`}
                   />
@@ -377,7 +394,7 @@ export function VideoAnnotationCanvas({
               style={{ left: `${(currentTime / duration) * 100}%` }}
               className="pointer-events-none absolute inset-y-0 z-40 w-0.5 bg-red-500 shadow"
             >
-               <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-red-500 shadow-sm" />
+              <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-red-500 shadow-sm" />
             </div>
           )}
         </div>
@@ -409,23 +426,23 @@ export function VideoAnnotationCanvas({
             >
               <RotateCcw className="size-3" />
             </button>
-            
+
             <div className="font-mono text-xs font-semibold text-slate-300">
               {formatTime(currentTime)} / {formatTime(duration)}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-[11px] font-mono">
-             <span className="text-slate-500">Tốc độ:</span>
-             {[0.5, 1, 1.5, 2].map((rate) => (
-                <button
-                  key={rate}
-                  onClick={() => handlePlaybackRateChange(rate)}
-                  className={`rounded px-1.5 py-0.5 ${playbackRate === rate ? 'bg-blue-900/50 text-blue-300' : 'text-slate-400 hover:bg-slate-800'}`}
-                >
-                  {rate}x
-                </button>
-             ))}
+          <div className="flex items-center gap-2 font-mono text-[11px]">
+            <span className="text-slate-500">Tốc độ:</span>
+            {[0.5, 1, 1.5, 2].map((rate) => (
+              <button
+                key={rate}
+                onClick={() => handlePlaybackRateChange(rate)}
+                className={`rounded px-1.5 py-0.5 ${playbackRate === rate ? "bg-blue-900/50 text-blue-300" : "text-slate-400 hover:bg-slate-800"}`}
+              >
+                {rate}x
+              </button>
+            ))}
           </div>
         </div>
       </div>

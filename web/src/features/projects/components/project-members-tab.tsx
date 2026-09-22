@@ -111,11 +111,13 @@ function MemberAvatar({
   role: ProjectMemberRole;
 }) {
   const config = ROLE_CONFIG[role];
-  if (avatarUrl) {
+  const normalizedAvatarUrl = avatarUrl?.trim();
+
+  if (normalizedAvatarUrl) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={avatarUrl}
+        src={normalizedAvatarUrl}
         alt={name || email || "Avatar"}
         className={`inline-flex h-8 w-8 shrink-0 rounded-full object-cover ring-2 ${config.ringClass}`}
       />

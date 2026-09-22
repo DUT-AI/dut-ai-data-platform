@@ -13,15 +13,12 @@ import {
 } from "lucide-react";
 
 export type AssetCategory =
-  | "image"
-  | "video"
-  | "audio"
-  | "pdf"
-  | "tabular"
-  | "text"
-  | "unknown";
+  "image" | "video" | "audio" | "pdf" | "tabular" | "text" | "unknown";
 
-export function getAssetCategory(filename: string, mimeType: string): AssetCategory {
+export function getAssetCategory(
+  filename: string,
+  mimeType: string
+): AssetCategory {
   const mime = (mimeType || "").toLowerCase();
   const ext = (filename.split(".").pop() || "").toLowerCase();
 
@@ -70,7 +67,9 @@ export function getAssetCategory(filename: string, mimeType: string): AssetCateg
     mime === "application/json" ||
     mime === "application/x-jsonlines" ||
     mime === "application/jsonlines" ||
-    ["txt", "json", "jsonl", "md", "log", "text", "py", "js", "ts"].includes(ext)
+    ["txt", "json", "jsonl", "md", "log", "text", "py", "js", "ts"].includes(
+      ext
+    )
   ) {
     return "text";
   }
@@ -96,7 +95,7 @@ export function AssetPreview({
   if (isLoading || !downloadUrl) {
     return (
       <div className="flex h-64 flex-col items-center justify-center space-y-2 text-slate-400">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
+        <div className="border-primary-500 h-6 w-6 animate-spin rounded-full border-2 border-t-transparent" />
         <span className="text-xs">Đang tải dữ liệu xem trước...</span>
       </div>
     );
@@ -107,10 +106,22 @@ export function AssetPreview({
       return <ImagePreview src={downloadUrl} filename={filename} />;
 
     case "video":
-      return <VideoPreview src={downloadUrl} mimeType={mimeType} filename={filename} />;
+      return (
+        <VideoPreview
+          src={downloadUrl}
+          mimeType={mimeType}
+          filename={filename}
+        />
+      );
 
     case "audio":
-      return <AudioPreview src={downloadUrl} filename={filename} mimeType={mimeType} />;
+      return (
+        <AudioPreview
+          src={downloadUrl}
+          filename={filename}
+          mimeType={mimeType}
+        />
+      );
 
     case "pdf":
       return (
@@ -125,7 +136,13 @@ export function AssetPreview({
       return <TabularPreview src={downloadUrl} filename={filename} />;
 
     case "text":
-      return <TextPreview src={downloadUrl} filename={filename} mimeType={mimeType} />;
+      return (
+        <TextPreview
+          src={downloadUrl}
+          filename={filename}
+          mimeType={mimeType}
+        />
+      );
 
     default:
       return <GenericFilePreview filename={filename} mimeType={mimeType} />;
@@ -233,7 +250,7 @@ function AudioPreview({
   return (
     <div className="flex w-full flex-col items-center justify-center rounded-xl border border-slate-800 bg-slate-950 p-6 text-slate-200 shadow-inner">
       <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/20 text-primary-400">
+        <div className="bg-primary-500/20 text-primary-400 flex h-12 w-12 items-center justify-center rounded-full">
           <Music className="h-6 w-6 animate-pulse" />
         </div>
         <div className="text-left">
@@ -268,6 +285,8 @@ function TabularPreview({ src, filename }: { src: string; filename: string }) {
 
   useEffect(() => {
     let isMounted = true;
+    // Reset preview state when the selected external asset URL changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true);
     setError(null);
 
@@ -284,7 +303,9 @@ function TabularPreview({ src, filename }: { src: string; filename: string }) {
         setTotalLinesCount(rawLines.length);
 
         const delimiter = filename.endsWith(".tsv") ? "\t" : ",";
-        const parsed = rawLines.slice(0, 15).map((line) => parseCsvLine(line, delimiter));
+        const parsed = rawLines
+          .slice(0, 15)
+          .map((line) => parseCsvLine(line, delimiter));
         setRows(parsed);
       })
       .catch((err) => {
@@ -303,8 +324,10 @@ function TabularPreview({ src, filename }: { src: string; filename: string }) {
   if (isLoading) {
     return (
       <div className="flex h-48 flex-col items-center justify-center space-y-2 text-slate-400">
-        <TableIcon className="h-6 w-6 animate-pulse text-primary-400" />
-        <span className="text-xs">Đang đọc và xử lý dữ liệu bảng (CSV/TSV)...</span>
+        <TableIcon className="text-primary-400 h-6 w-6 animate-pulse" />
+        <span className="text-xs">
+          Đang đọc và xử lý dữ liệu bảng (CSV/TSV)...
+        </span>
       </div>
     );
   }
@@ -327,7 +350,7 @@ function TabularPreview({ src, filename }: { src: string; filename: string }) {
     <div className="flex w-full flex-col space-y-2">
       <div className="flex items-center justify-between px-1 text-[11px] text-slate-400">
         <span className="flex items-center gap-1 font-medium text-slate-300">
-          <TableIcon className="h-3.5 w-3.5 text-primary-400" />
+          <TableIcon className="text-primary-400 h-3.5 w-3.5" />
           Xem trước bảng (Top {rows.length} / {totalLinesCount} dòng)
         </span>
         <span className="font-mono text-[10px] text-slate-500">{filename}</span>
@@ -337,9 +360,12 @@ function TabularPreview({ src, filename }: { src: string; filename: string }) {
         <table className="w-full text-left font-mono text-[11px]">
           <thead className="sticky top-0 border-b border-slate-800 bg-slate-900 text-slate-200">
             <tr>
-              <th className="w-10 px-2 py-1.5 text-slate-500 text-center">#</th>
+              <th className="w-10 px-2 py-1.5 text-center text-slate-500">#</th>
               {headerRow.map((col, idx) => (
-                <th key={idx} className="whitespace-nowrap px-3 py-1.5 font-semibold">
+                <th
+                  key={idx}
+                  className="whitespace-nowrap px-3 py-1.5 font-semibold"
+                >
                   {col || `Cột ${idx + 1}`}
                 </th>
               ))}
@@ -410,6 +436,8 @@ function TextPreview({
 
   useEffect(() => {
     let isMounted = true;
+    // Reset preview state when the selected external asset URL changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true);
     setError(null);
 
@@ -421,8 +449,7 @@ function TextPreview({
       .then((text) => {
         if (!isMounted) return;
 
-        const isJson =
-          filename.endsWith(".json") || mimeType.includes("json");
+        const isJson = filename.endsWith(".json") || mimeType.includes("json");
         const isJsonl =
           filename.endsWith(".jsonl") ||
           mimeType.includes("jsonlines") ||
@@ -532,11 +559,14 @@ function GenericFilePreview({
         <File className="h-6 w-6" />
       </div>
       <div>
-        <p className="font-mono text-xs font-medium text-slate-200">{filename}</p>
+        <p className="font-mono text-xs font-medium text-slate-200">
+          {filename}
+        </p>
         <p className="mt-1 font-mono text-[11px] text-slate-500">{mimeType}</p>
       </div>
       <p className="text-[11px] text-slate-400">
-        Tập tin này không hỗ trợ xem trực tiếp. Bạn có thể bấm nút &quot;Tải tệp xuống&quot; bên dưới để kiểm tra.
+        Tập tin này không hỗ trợ xem trực tiếp. Bạn có thể bấm nút &quot;Tải tệp
+        xuống&quot; bên dưới để kiểm tra.
       </p>
     </div>
   );

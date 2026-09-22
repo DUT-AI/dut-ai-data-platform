@@ -126,6 +126,7 @@ export function UserListTable({
             const isActive =
               user.status?.toUpperCase() === "ACTIVE" ||
               user.status?.toUpperCase() === "HOẠT ĐỘNG";
+            const avatarUrl = user.avatar_url?.trim();
 
             return (
               <tr
@@ -134,10 +135,10 @@ export function UserListTable({
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    {user.avatar_url ? (
+                    {avatarUrl ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
-                        src={user.avatar_url}
+                        src={avatarUrl}
                         alt={user.name}
                         className="h-8 w-8 rounded-full object-cover"
                       />

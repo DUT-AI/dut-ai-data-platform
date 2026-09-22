@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { ChevronDown, ChevronUp, Tag } from "lucide-react";
 
 export interface TaxonomyItem {
   id: string;
@@ -70,11 +71,22 @@ export function TaxonomySelector({
         className="flex w-full items-center justify-between rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 shadow-sm hover:border-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span
-          className={`truncate ${selectedPath.length === 0 ? "text-slate-500" : "font-medium"}`}
+          className={`flex min-w-0 items-center gap-1.5 ${selectedPath.length === 0 ? "text-slate-500" : "font-medium"}`}
         >
-          🏷️ {selectedDisplay}
+          <Tag className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className="truncate">{selectedDisplay}</span>
         </span>
-        <span className="ml-2 text-slate-500">{isOpen ? "▲" : "▼"}</span>
+        {isOpen ? (
+          <ChevronUp
+            className="ml-2 size-3.5 shrink-0 text-slate-500"
+            aria-hidden="true"
+          />
+        ) : (
+          <ChevronDown
+            className="ml-2 size-3.5 shrink-0 text-slate-500"
+            aria-hidden="true"
+          />
+        )}
       </button>
 
       {isOpen && (

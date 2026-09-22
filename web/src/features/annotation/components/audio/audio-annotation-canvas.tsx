@@ -149,9 +149,12 @@ export function AudioAnnotationCanvas({
     const audio = audioRef.current;
     if (!audio || audioError) return;
     if (audio.paused) {
-      void audio.play().then(() => setIsPlaying(true)).catch(() => {
-        setAudioError("Không thể phát tệp âm thanh này.");
-      });
+      void audio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => {
+          setAudioError("Không thể phát tệp âm thanh này.");
+        });
     } else {
       audio.pause();
       setIsPlaying(false);
@@ -163,7 +166,9 @@ export function AudioAnnotationCanvas({
       const target = event.target as HTMLElement | null;
       if (
         event.code !== "Space" ||
-        target?.matches("input, textarea, select, button, [contenteditable='true']")
+        target?.matches(
+          "input, textarea, select, button, [contenteditable='true']"
+        )
       ) {
         return;
       }
@@ -176,6 +181,8 @@ export function AudioAnnotationCanvas({
   }, [togglePlay]);
 
   useEffect(() => {
+    // Reset player state when the external audio resource changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAudioError(null);
     setCurrentTime(0);
     setDuration(0);
@@ -203,7 +210,8 @@ export function AudioAnnotationCanvas({
       const seed =
         Math.sin(index * 0.41) * 0.52 + Math.cos(index * 0.79) * 0.28;
       const barHeight = Math.max(8, Math.abs(seed) * height * 0.76);
-      const isPassed = duration > 0 && (index / barCount) * duration <= currentTime;
+      const isPassed =
+        duration > 0 && (index / barCount) * duration <= currentTime;
       context.fillStyle = isPassed ? "#3B82F6" : "rgba(100, 116, 139, 0.65)";
       context.fillRect(
         index * barWidth + 1,
@@ -283,7 +291,9 @@ export function AudioAnnotationCanvas({
   const deleteSegment = (segment: AnnotationResult) => {
     if (readOnly) return;
     const id = segment.id || segment.output_id;
-    onChange?.(results.filter((result) => (result.id || result.output_id) !== id));
+    onChange?.(
+      results.filter((result) => (result.id || result.output_id) !== id)
+    );
     if (selectedSegmentId === id) setSelectedSegmentId(null);
   };
 
@@ -335,7 +345,9 @@ export function AudioAnnotationCanvas({
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 bg-slate-900/80 px-4 py-2.5">
         <div className="flex items-center gap-2">
           <Headphones className="size-4 text-purple-400" aria-hidden="true" />
-          <span className="text-xs font-semibold text-slate-100">{taskTitle}</span>
+          <span className="text-xs font-semibold text-slate-100">
+            {taskTitle}
+          </span>
           <span className="text-[11px] text-slate-400">
             {mode === "asr_segments"
               ? "Kéo trên timeline để tạo segment"
@@ -353,7 +365,9 @@ export function AudioAnnotationCanvas({
         ref={audioRef}
         src={audioUrl}
         preload="metadata"
-        onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+        onTimeUpdate={(event) =>
+          setCurrentTime(event.currentTarget.currentTime)
+        }
         onLoadedMetadata={(event) => {
           const nextDuration = event.currentTarget.duration || 0;
           setDuration(nextDuration);
@@ -363,7 +377,9 @@ export function AudioAnnotationCanvas({
         onEnded={() => setIsPlaying(false)}
         onError={() => {
           setIsPlaying(false);
-          setAudioError("Không thể tải audio. Hãy kiểm tra định dạng hoặc URL của tệp.");
+          setAudioError(
+            "Không thể tải audio. Hãy kiểm tra định dạng hoặc URL của tệp."
+          );
         }}
       />
 
@@ -371,7 +387,10 @@ export function AudioAnnotationCanvas({
         <section className="flex min-h-[300px] flex-col justify-center gap-4 border-b border-slate-800 p-4 lg:border-b-0 lg:border-r">
           {!audioUrl || audioError ? (
             <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-red-900/60 bg-red-950/20 p-6 text-center">
-              <AlertTriangle className="size-6 text-red-400" aria-hidden="true" />
+              <AlertTriangle
+                className="size-6 text-red-400"
+                aria-hidden="true"
+              />
               <p className="text-sm font-medium text-red-300">
                 {audioError || "Không có URL audio để hiển thị."}
               </p>
@@ -423,7 +442,7 @@ export function AudioAnnotationCanvas({
                           backgroundColor: `${color}30`,
                           borderColor: color,
                         }}
-                        className={`absolute inset-y-0 border-x-2 text-left transition-all ${
+                        className={`absolute inset-y-0 border-x-2 text-left transition-[border-color,background-color,opacity] duration-150 ${
                           isSelected
                             ? "z-20 ring-2 ring-blue-400"
                             : "z-10 hover:bg-slate-700/30"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { AlertTriangle, UploadCloud, X } from "lucide-react";
 
 import {
   Button,
@@ -146,15 +147,15 @@ function UploadDropzoneContent({
         )}
 
         {/* Drag & Drop Area */}
-        <div
+        <label
+          htmlFor="dataset-file-upload"
           onDragOver={(e) => {
             e.preventDefault();
             setIsDragging(true);
           }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-          className={`cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-all ${
+          className={`block cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-[border-color,background-color] duration-150 ${
             isDragging
               ? "border-primary-500 bg-primary-500/5"
               : "border-slate-300 hover:border-slate-400 dark:border-slate-700"
@@ -162,6 +163,7 @@ function UploadDropzoneContent({
         >
           <input
             ref={fileInputRef}
+            id="dataset-file-upload"
             type="file"
             multiple
             className="hidden"
@@ -169,7 +171,7 @@ function UploadDropzoneContent({
           />
           <div className="space-y-2">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-xl font-bold text-slate-500 dark:bg-slate-800">
-              📁
+              <UploadCloud className="h-6 w-6" aria-hidden="true" />
             </div>
             <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
               Kéo & thả nhiều tập tin vào đây, hoặc{" "}
@@ -178,10 +180,11 @@ function UploadDropzoneContent({
               </span>
             </p>
             <p className="text-xs text-slate-400">
-              Hỗ trợ PNG, JPG, PDF, MP4, CSV, ZIP... (Tự động tải ngầm ở nền không khóa giao diện)
+              Hỗ trợ PNG, JPG, PDF, MP4, CSV, ZIP... (Tự động tải ngầm ở nền
+              không khóa giao diện)
             </p>
           </div>
-        </div>
+        </label>
 
         {/* Selected File Queue List */}
         {selectedFiles.length > 0 && (
@@ -219,15 +222,18 @@ function UploadDropzoneContent({
                       </span>
                       {isCorrupted && (
                         <span className="shrink-0 rounded bg-rose-500/20 px-1.5 py-0.5 font-sans text-[10px] font-semibold text-rose-600 dark:text-rose-400">
-                          ⚠️ Ảnh bị hỏng
+                          <AlertTriangle className="mr-1 inline h-3 w-3" />
+                          Ảnh bị hỏng
                         </span>
                       )}
                     </div>
                     <button
+                      type="button"
                       onClick={() => handleRemoveFile(idx)}
-                      className="ml-2 text-slate-400 hover:text-rose-500"
+                      aria-label={`Bỏ ${f.name} khỏi hàng đợi`}
+                      className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:bg-rose-50 hover:text-rose-500"
                     >
-                      ×
+                      <X className="h-4 w-4" />
                     </button>
                   </div>
                 );
@@ -246,11 +252,10 @@ function UploadDropzoneContent({
           onClick={handleUploadSubmit}
           disabled={selectedFiles.length === 0}
         >
-          🚀 Tải lên ở nền ({selectedFiles.length} tệp)
+          <UploadCloud className="mr-2 h-4 w-4" />
+          Tải lên ở nền ({selectedFiles.length} tệp)
         </Button>
       </DialogFooter>
     </DialogContent>
   );
 }
-
-

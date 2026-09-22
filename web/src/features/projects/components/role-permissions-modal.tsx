@@ -8,6 +8,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui";
+import {
+  FolderCog,
+  FolderTree,
+  PencilRuler,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
 interface RolePermissionsModalProps {
   isOpen: boolean;
@@ -59,14 +66,14 @@ interface PermissionRow {
 
 interface PermissionGroup {
   group: string;
-  icon: string;
+  icon: LucideIcon;
   rows: PermissionRow[];
 }
 
 const PERMISSION_GROUPS: PermissionGroup[] = [
   {
     group: "Quản trị Dự án",
-    icon: "🏗️",
+    icon: FolderCog,
     rows: [
       {
         label: "Xem thông tin & chi tiết dự án",
@@ -100,7 +107,7 @@ const PERMISSION_GROUPS: PermissionGroup[] = [
   },
   {
     group: "Quản lý Thành viên",
-    icon: "👥",
+    icon: Users,
     rows: [
       {
         label: "Xem danh sách thành viên",
@@ -134,7 +141,7 @@ const PERMISSION_GROUPS: PermissionGroup[] = [
   },
   {
     group: "Dữ liệu & Bộ nhãn",
-    icon: "🗂️",
+    icon: FolderTree,
     rows: [
       {
         label: "Xem Ontology (Danh mục nhãn)",
@@ -168,7 +175,7 @@ const PERMISSION_GROUPS: PermissionGroup[] = [
   },
   {
     group: "Gán nhãn & Kiểm định",
-    icon: "✏️",
+    icon: PencilRuler,
     rows: [
       {
         label: "Thực hiện Gán nhãn (Annotation)",
@@ -282,8 +289,10 @@ export function RolePermissionsModal({
                       colSpan={5}
                       className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                     >
-                      <span className="mr-1.5">{group.icon}</span>
-                      {group.group}
+                      <span className="inline-flex items-center gap-1.5">
+                        <group.icon className="size-3.5" aria-hidden="true" />
+                        {group.group}
+                      </span>
                     </td>
                   </tr>
                   {/* Permission rows */}

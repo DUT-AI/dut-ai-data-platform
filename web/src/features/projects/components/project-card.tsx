@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Folder, ArrowRight, Calendar, User } from "lucide-react";
+import { Folder, ArrowRight, Calendar, Database } from "lucide-react";
 import { Project } from "../types";
 import {
   Badge,
@@ -28,7 +28,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
     : "Vừa tạo";
 
   return (
-    <Card className="flex flex-col justify-between border-slate-200 bg-white transition-all hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700">
+    <Card className="flex flex-col justify-between border-slate-200 bg-white transition-[border-color,box-shadow] duration-150 hover:border-blue-200 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700">
       <div>
         <CardHeader className="space-y-3 pb-3">
           <div className="flex items-start justify-between gap-2">
@@ -50,7 +50,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
                   : "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
               }
             >
-              {project.status === "active" ? "Active" : "Archived"}
+              {project.status === "active" ? "Hoạt động" : "Đã lưu trữ"}
             </Badge>
           </div>
 
@@ -66,9 +66,11 @@ export function ProjectCard({ project }: ProjectCardProps) {
               <span>{formattedDate}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <User className="h-3.5 w-3.5 text-slate-400" />
+              <Database className="h-3.5 w-3.5 text-slate-400" />
               <span>
-                {project.status === "active" ? "Hoạt động" : "Lưu trữ"}
+                {project.template_id
+                  ? `Template ${project.template_id}`
+                  : "Chưa gắn template"}
               </span>
             </div>
           </div>
@@ -81,7 +83,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             variant="outline"
             className="w-full justify-between text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            <span>Vào không gian làm việc</span>
+            <span>Mở workspace</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </Link>

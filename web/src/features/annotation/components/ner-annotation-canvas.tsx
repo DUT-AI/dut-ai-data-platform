@@ -26,10 +26,7 @@ function getSourceOffset(
       // Walk up from the text node; reject if inside a UI element
       let el: Node | null = node.parentElement;
       while (el && el !== container) {
-        if (
-          el instanceof HTMLElement &&
-          el.dataset.annotationUi === "true"
-        ) {
+        if (el instanceof HTMLElement && el.dataset.annotationUi === "true") {
           return NodeFilter.FILTER_REJECT;
         }
         el = el.parentElement;
@@ -114,6 +111,8 @@ export function NerAnnotationCanvas({
   // Resolve text: inline prop OR fetch from URL (assetUrl), fallback metadata.textContent
   useEffect(() => {
     if (textContentProp) {
+      // Synchronize editor state from the selected external asset.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setText(textContentProp);
       return;
     }
@@ -171,7 +170,8 @@ export function NerAnnotationCanvas({
         (r) =>
           r.result_type === "ner" &&
           // Exclude QA answers — they share result_type "ner" but carry payload.question
-          (r.payload as Record<string, unknown> | null | undefined)?.question === undefined &&
+          (r.payload as Record<string, unknown> | null | undefined)
+            ?.question === undefined &&
           r.geometry &&
           typeof r.geometry.start === "number" &&
           // Scope to the active output: allow results with matching output_id,
@@ -191,10 +191,28 @@ export function NerAnnotationCanvas({
 
   const hasOverlap = useCallback(
     (start: number, end: number): boolean =>
-      nerSpans.some(
-        (s) => !(end <= s.start || start >= s.end)
-      ),
+      nerSpans.some((s) => !(end <= s.start || start >= s.end)),
     [nerSpans]
+  );
+
+  const createSpan = useCallback(
+    (start: number, end: number, spanText: string, catId: string | null) => {
+      const spanId = `ner_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+      const outputId = (metadata as Record<string, unknown> | undefined)
+        ?.outputId as string | undefined;
+      const newResult: AnnotationResult = {
+        id: spanId,
+        output_id: outputId,
+        result_type: "ner",
+        category_id: catId,
+        geometry: { start, end, text: spanText },
+        created_at: new Date().toISOString(),
+      };
+      onChange?.([...results, newResult]);
+      setSelectedSpanId(spanId);
+      setPopover(null);
+    },
+    [results, onChange, metadata]
   );
 
   // ── Interaction: text selection ───────────────────────────────────────────
@@ -259,29 +277,7 @@ export function NerAnnotationCanvas({
       });
       selection.removeAllRanges();
     },
-    [readOnly, selectedCategoryId, hasOverlap] // eslint-disable-line react-hooks/exhaustive-deps
-  );
-
-  const createSpan = useCallback(
-    (start: number, end: number, spanText: string, catId: string | null) => {
-      const spanId = `ner_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-      // Stamp output_id from editorMetadata so multi-output ontologies can
-      // associate this result with the correct named_entity output definition.
-      const outputId = (metadata as Record<string, unknown> | undefined)
-        ?.outputId as string | undefined;
-      const newResult: AnnotationResult = {
-        id: spanId,
-        output_id: outputId,
-        result_type: "ner",
-        category_id: catId,
-        geometry: { start, end, text: spanText },
-        created_at: new Date().toISOString(),
-      };
-      onChange?.([...results, newResult]);
-      setSelectedSpanId(spanId);
-      setPopover(null);
-    },
-    [results, onChange, metadata]
+    [readOnly, selectedCategoryId, hasOverlap, createSpan, text]
   );
 
   const handlePopoverSelect = useCallback(
@@ -299,12 +295,15 @@ export function NerAnnotationCanvas({
         ?.outputId as string | undefined;
       // Only delete results that belong to this output (prevent cross-output mutation).
       // A result with no output_id is treated as legacy and allowed to be deleted.
-      onChange?.(results.filter((r) => {
-        const rId = r.id ?? r.output_id;
-        if (rId !== id) return true; // not the targeted span — keep
-        if (activeOutputId && r.output_id && r.output_id !== activeOutputId) return true; // foreign output — keep
-        return false; // this is the span to delete
-      }));
+      onChange?.(
+        results.filter((r) => {
+          const rId = r.id ?? r.output_id;
+          if (rId !== id) return true; // not the targeted span — keep
+          if (activeOutputId && r.output_id && r.output_id !== activeOutputId)
+            return true; // foreign output — keep
+          return false; // this is the span to delete
+        })
+      );
       if (selectedSpanId === id) setSelectedSpanId(null);
     },
     [readOnly, results, onChange, selectedSpanId, metadata]
@@ -326,7 +325,12 @@ export function NerAnnotationCanvas({
       }
       // 1-9 → select category by index (only when popover is open or span selected)
       const digit = parseInt(e.key, 10);
-      if (!isNaN(digit) && digit >= 1 && digit <= 9 && availableCategories.length > 0) {
+      if (
+        !isNaN(digit) &&
+        digit >= 1 &&
+        digit <= 9 &&
+        availableCategories.length > 0
+      ) {
         const cat = availableCategories[digit - 1];
         if (!cat) return;
         if (popover) {
@@ -395,7 +399,7 @@ export function NerAnnotationCanvas({
             backgroundColor: `${color}30`,
             borderBottom: `2px solid ${color}`,
           }}
-          className={`group relative mx-0.5 inline-flex cursor-pointer items-baseline rounded px-1 py-0.5 transition-all ${
+          className={`group relative mx-0.5 inline-flex cursor-pointer items-baseline rounded px-1 py-0.5 transition-[background-color,box-shadow] duration-150 ${
             isSelected
               ? "scale-[1.02] ring-2 ring-blue-500"
               : "hover:opacity-85"
@@ -432,9 +436,7 @@ export function NerAnnotationCanvas({
     });
 
     if (lastIdx < text.length) {
-      elements.push(
-        <span key="text-tail">{text.slice(lastIdx)}</span>
-      );
+      elements.push(<span key="text-tail">{text.slice(lastIdx)}</span>);
     }
 
     return (
@@ -534,7 +536,7 @@ export function NerAnnotationCanvas({
               top: `${popover.y}px`,
               transform: "translate(-50%, -100%)",
             }}
-            className="z-50 animate-in fade-in zoom-in-95 rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-2xl"
+            className="animate-in fade-in zoom-in-95 z-50 rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-2xl"
           >
             <p className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
               Chọn nhãn
@@ -545,7 +547,10 @@ export function NerAnnotationCanvas({
                   key={cat.id}
                   type="button"
                   onClick={() => handlePopoverSelect(cat.id)}
-                  style={{ backgroundColor: cat.color ?? DEFAULT_COLORS[idx % DEFAULT_COLORS.length] }}
+                  style={{
+                    backgroundColor:
+                      cat.color ?? DEFAULT_COLORS[idx % DEFAULT_COLORS.length],
+                  }}
                   className="rounded px-2 py-1 text-xs font-semibold text-white transition-opacity hover:opacity-80"
                   title={`Phím tắt: ${idx + 1}`}
                 >

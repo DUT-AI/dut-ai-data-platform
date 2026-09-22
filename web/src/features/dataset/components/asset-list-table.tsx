@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Button } from "@/components/ui";
+import { Badge, Button, ConfirmDialog, EmptyState } from "@/components/ui";
+import { SearchX } from "lucide-react";
 import { Asset } from "../types";
 import { useRemoveVersionAssetMutation } from "../hooks";
 import { AssetDetailModal } from "./asset-detail-modal";
@@ -26,6 +27,7 @@ export function AssetListTable({
   ontologyVersionId,
 }: AssetListTableProps) {
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [assetToRemove, setAssetToRemove] = useState<Asset | null>(null);
   const removeMutation = useRemoveVersionAssetMutation(versionId);
 
   const formatSize = (bytes: number) => {
@@ -34,33 +36,27 @@ export function AssetListTable({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const handleRemove = (assetId: string, filename: string) => {
-    if (
-      confirm(`Bạn có chắc muốn xóa tập tin "${filename}" khỏi phiên bản này?`)
-    ) {
-      removeMutation.mutate(assetId);
-    }
+  const handleRemove = async () => {
+    if (!assetToRemove) return;
+    await removeMutation.mutateAsync(assetToRemove.id);
+    setAssetToRemove(null);
   };
 
   if (assets.length === 0) {
     if (totalAssetsCount && totalAssetsCount > 0) {
       return (
-        <div className="space-y-3 rounded-xl border-2 border-dashed border-slate-200 p-12 text-center text-slate-400 dark:border-slate-800">
-          <div className="text-3xl">🔍</div>
-          <p className="text-[13px] font-medium text-slate-700 dark:text-slate-300">
-            Không tìm thấy tập tin nào phù hợp với bộ lọc
-          </p>
-          {onResetFilters && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onResetFilters}
-              className="text-xs"
-            >
-              Xóa bộ lọc để xem lại tất cả ({totalAssetsCount}) tập tin
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={SearchX}
+          title="Không có asset phù hợp"
+          description="Thay đổi từ khoá hoặc xoá bộ lọc để xem lại toàn bộ dữ liệu trong version."
+          action={
+            onResetFilters ? (
+              <Button size="sm" variant="outline" onClick={onResetFilters}>
+                Xoá bộ lọc ({totalAssetsCount} asset)
+              </Button>
+            ) : undefined
+          }
+        />
       );
     }
 
@@ -89,8 +85,7 @@ export function AssetListTable({
             {assets.map((asset) => (
               <tr
                 key={asset.id}
-                onClick={() => setSelectedAsset(asset)}
-                className="cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/50"
+                className="hover:bg-slate-50 dark:hover:bg-slate-900/50"
               >
                 <td className="max-w-xs truncate px-4 py-3 font-mono font-medium text-slate-900 dark:text-slate-100">
                   {asset.filename}
@@ -129,7 +124,7 @@ export function AssetListTable({
                         variant="destructive"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleRemove(asset.id, asset.filename);
+                          setAssetToRemove(asset);
                         }}
                         className="h-7 text-xs"
                       >
@@ -151,6 +146,16 @@ export function AssetListTable({
         projectId={projectId}
         ontologyVersionId={ontologyVersionId}
         datasetVersionId={versionId}
+      />
+      <ConfirmDialog
+        open={Boolean(assetToRemove)}
+        title={`Xoá “${assetToRemove?.filename || "asset"}” khỏi version?`}
+        description="Liên kết asset với dataset version này sẽ bị xoá. Hãy kiểm tra các annotation liên quan trước khi tiếp tục."
+        confirmLabel="Xoá asset"
+        destructive
+        isLoading={removeMutation.isPending}
+        onClose={() => setAssetToRemove(null)}
+        onConfirm={handleRemove}
       />
     </>
   );

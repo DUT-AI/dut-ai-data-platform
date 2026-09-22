@@ -16,7 +16,12 @@ export interface PolygonShapeProps {
   currentTool: string;
   pointNormToScreen: (normX: number, normY: number) => { x: number; y: number };
   onSelect: (id: string) => void;
-  onVertexDragEnd?: (id: string, vertexIndex: number, screenX: number, screenY: number) => void;
+  onVertexDragEnd?: (
+    id: string,
+    vertexIndex: number,
+    screenX: number,
+    screenY: number
+  ) => void;
 }
 
 export function PolygonShape({
@@ -67,13 +72,13 @@ export function PolygonShape({
         onTap={() => {
           if (currentTool === "select") onSelect(shapeId);
         }}
-        onMouseEnter={(e: any) => {
+        onMouseEnter={(e) => {
           if (currentTool === "select" && !readOnly) {
             const stage = e.target.getStage();
             if (stage) stage.container().style.cursor = "pointer";
           }
         }}
-        onMouseLeave={(e: any) => {
+        onMouseLeave={(e) => {
           if (currentTool === "select") {
             const stage = e.target.getStage();
             if (stage) stage.container().style.cursor = "default";
@@ -114,16 +119,16 @@ export function PolygonShape({
               stroke={color}
               strokeWidth={2 / stageScale}
               draggable={true}
-              onMouseEnter={(e: any) => {
+              onMouseEnter={(e) => {
                 const stage = e.target.getStage();
                 if (stage) stage.container().style.cursor = "move";
               }}
-              onMouseLeave={(e: any) => {
+              onMouseLeave={(e) => {
                 const stage = e.target.getStage();
                 if (stage) stage.container().style.cursor = "default";
               }}
-              onDragEnd={(e: any) => {
-                const node = e.target as any;
+              onDragEnd={(e) => {
+                const node = e.target;
                 onVertexDragEnd?.(shapeId, vIdx, node.x(), node.y());
               }}
             />

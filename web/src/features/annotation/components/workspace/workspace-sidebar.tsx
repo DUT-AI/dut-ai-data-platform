@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { Clock3, ListTree, Share2 } from "lucide-react";
 import { OutlinerPanel } from "../outliner-panel";
 import {
   RelationsPanel,
@@ -80,7 +81,7 @@ export function WorkspaceSidebar({
   if (!isOpen) return null;
 
   return (
-    <aside className="w-84 flex shrink-0 select-none flex-col overflow-hidden border-l border-slate-800 bg-slate-900">
+    <aside className="lg:w-84 flex w-full shrink-0 select-none flex-col overflow-hidden border-t border-slate-800 bg-slate-900 lg:border-l lg:border-t-0">
       {/* Sidebar Tabs Switcher - Adaptive to task modality */}
       <div className="flex shrink-0 items-center border-b border-slate-800 bg-slate-950/60 p-1.5">
         {!isClassificationOnly && (
@@ -93,7 +94,8 @@ export function WorkspaceSidebar({
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
-            📋 {isAudio ? "Phân đoạn" : "Vùng"} ({workingResults.length})
+            <ListTree className="mr-1 inline h-3.5 w-3.5" />
+            {isAudio ? "Phân đoạn" : "Vùng"} ({workingResults.length})
           </button>
         )}
 
@@ -107,7 +109,8 @@ export function WorkspaceSidebar({
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
-            🔗 Quan hệ ({relations.length})
+            <Share2 className="mr-1 inline h-3.5 w-3.5" />
+            Quan hệ ({relations.length})
           </button>
         )}
 
@@ -120,7 +123,8 @@ export function WorkspaceSidebar({
               : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          🕒 Lịch sử ({revisions.length})
+          <Clock3 className="mr-1 inline h-3.5 w-3.5" />
+          Lịch sử ({revisions.length})
         </button>
       </div>
 

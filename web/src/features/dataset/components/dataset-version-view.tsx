@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import {
   Badge,
   Button,
-  Card,
+  ConfirmDialog,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -13,6 +13,15 @@ import {
   DialogTitle,
   Input,
 } from "@/components/ui";
+import {
+  GitBranchPlus,
+  Grid2X2,
+  List,
+  Pencil,
+  Plus,
+  Upload,
+  Workflow,
+} from "lucide-react";
 import { Dataset, DatasetVersion } from "../types";
 import {
   useCreateDatasetVersionMutation,
@@ -30,7 +39,6 @@ import { UploadDropzoneModal } from "./upload-dropzone-modal";
 import { InheritVersionModal } from "./inherit-version-modal";
 import { AssetGalleryGrid } from "./asset-gallery-grid";
 import { AssetListTable } from "./asset-list-table";
-import { AnnotationStatsBar } from "@/features/annotation";
 import { useProjectOntologiesQuery } from "@/features/ontology";
 
 interface DatasetVersionViewProps {
@@ -50,6 +58,11 @@ export function DatasetVersionView({
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isInheritOpen, setIsInheritOpen] = useState(false);
   const [isEditDatasetOpen, setIsEditDatasetOpen] = useState(false);
+  const [isCreateVersionOpen, setIsCreateVersionOpen] = useState(false);
+  const [isPublishOpen, setIsPublishOpen] = useState(false);
+  const [newVersionName, setNewVersionName] = useState(
+    `v1.${versions.length}.0`
+  );
   const [editName, setEditName] = useState(dataset.name);
   const [editDescription, setEditDescription] = useState(
     dataset.description || ""
@@ -212,176 +225,170 @@ export function DatasetVersionView({
     );
   };
 
-  const handleCreateVersion = () => {
-    const nextVerStr = `v1.${versions.length}.0`;
-    const newVer = prompt(
-      "Nhập tên phiên bản mới (Dataset Version):",
-      nextVerStr
-    );
-    if (newVer && newVer.trim()) {
-      createVersionMutation.mutate(
-        { version: newVer.trim() },
-        {
-          onSuccess: (created: { id: string }) => {
-            setSelectedVersionId(created.id);
-          },
-        }
-      );
-    }
+  const handleCreateVersion = async () => {
+    const version = newVersionName.trim();
+    if (!version) return;
+    const created = await createVersionMutation.mutateAsync({ version });
+    setSelectedVersionId(created.id);
+    setIsCreateVersionOpen(false);
   };
 
-  const handlePublish = () => {
-    if (
-      confirm(
-        `Bạn có chắc chắn muốn xuất bản phiên bản "${versionDetail?.version}"? Phiên bản sau khi xuất bản sẽ bị KHÓA không thể thêm/xóa tập tin.`
-      )
-    ) {
-      publishMutation.mutate();
-    }
+  const handlePublish = async () => {
+    await publishMutation.mutateAsync();
+    setIsPublishOpen(false);
   };
 
   const isEditable = versionDetail?.status === "draft";
 
   return (
     <div className="space-y-6">
-      {/* Header Version Bar */}
-      <Card className="border-slate-800 bg-slate-900 p-4 text-slate-50">
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col">
-              <span className="text-xs font-medium text-slate-400">
-                Dataset
-              </span>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold">{dataset.name}</h2>
-                <button
-                  onClick={() => {
-                    setEditName(dataset.name);
-                    setEditDescription(dataset.description || "");
-                    setIsEditDatasetOpen(true);
-                  }}
-                  title="Đổi tên / Chỉnh sửa Dataset"
-                  className="flex items-center gap-1.5 rounded-md border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-xs font-medium text-slate-200 shadow-sm transition-colors hover:border-slate-600 hover:bg-slate-700 hover:text-white"
-                >
-                  <svg
-                    className="h-3.5 w-3.5 text-slate-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                    />
-                  </svg>
-                  <span>Sửa Dataset ✏️</span>
-                </button>
+      {/* Dataset and version command bar */}
+      <section className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4 sm:p-5">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+          <div className="min-w-0 space-y-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
+                  Dataset đang làm việc
+                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <h2 className="break-words text-lg font-bold text-slate-950 sm:text-xl">
+                    {dataset.name}
+                  </h2>
+                  {versionDetail && (
+                    <Badge
+                      variant={
+                        versionDetail.status === "published"
+                          ? "success"
+                          : "secondary"
+                      }
+                    >
+                      {versionDetail.status === "published"
+                        ? "Published"
+                        : "Draft"}
+                    </Badge>
+                  )}
+                </div>
               </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setEditName(dataset.name);
+                  setEditDescription(dataset.description || "");
+                  setIsEditDatasetOpen(true);
+                }}
+                className="min-h-10 shrink-0 border-blue-200 bg-white text-blue-800 hover:border-blue-300 hover:bg-blue-100"
+              >
+                <Pencil className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                Sửa dataset
+              </Button>
             </div>
 
-            {/* Version Selector Dropdown */}
-            <div className="ml-4 flex items-center gap-2">
-              <span className="text-xs text-slate-400">Version:</span>
-              <select
-                value={activeVersionId}
-                onChange={(e) => setSelectedVersionId(e.target.value)}
-                className="focus:ring-primary-500 rounded border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2"
-              >
-                {versions.map((v: DatasetVersion) => (
-                  <option key={v.id} value={v.id}>
-                    {v.version} ({v.status.toUpperCase()}) - {v.asset_count}{" "}
-                    assets
-                  </option>
-                ))}
-              </select>
+            <div className="grid gap-3 rounded-xl border border-blue-200 bg-white p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+              <label className="min-w-0">
+                <span className="mb-1.5 block text-xs font-semibold text-slate-600">
+                  Phiên bản dữ liệu
+                </span>
+                <select
+                  value={activeVersionId}
+                  onChange={(e) => setSelectedVersionId(e.target.value)}
+                  className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                >
+                  {versions.map((v: DatasetVersion) => (
+                    <option key={v.id} value={v.id}>
+                      {v.version} · {v.status.toUpperCase()} · {v.asset_count}{" "}
+                      assets
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-              <button
-                onClick={handleCreateVersion}
-                title="Tạo phiên bản mới"
-                className="rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-300 hover:bg-slate-700"
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setNewVersionName(`v1.${versions.length}.0`);
+                  setIsCreateVersionOpen(true);
+                }}
+                className="min-h-11 border-blue-200 bg-white text-blue-800 hover:border-blue-300 hover:bg-blue-50"
               >
-                + Version
-              </button>
+                <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                Tạo version
+              </Button>
             </div>
-
-            {versionDetail && (
-              <Badge
-                variant={
-                  versionDetail.status === "published" ? "success" : "secondary"
-                }
-              >
-                {versionDetail.status.toUpperCase()}
-              </Badge>
-            )}
           </div>
 
-          {/* Header Action Buttons & View Toggle */}
-          <div className="flex items-center gap-2">
-            {/* View Mode Toggle */}
-            <div className="flex items-center rounded-lg border border-slate-700 bg-slate-800 p-0.5">
+          <div className="flex flex-col gap-3 xl:items-end">
+            <div
+              className="inline-flex w-fit items-center rounded-lg border border-slate-200 bg-white p-1"
+              aria-label="Chế độ hiển thị asset"
+            >
               <button
+                type="button"
                 onClick={() => setViewMode("grid")}
-                className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                aria-pressed={viewMode === "grid"}
+                className={`inline-flex min-h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-colors duration-150 ${
                   viewMode === "grid"
-                    ? "bg-slate-700 text-white shadow"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "bg-blue-600 text-white"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
                 }`}
               >
-                Grid
+                <Grid2X2 className="h-3.5 w-3.5" aria-hidden="true" />
+                Lưới
               </button>
               <button
+                type="button"
                 onClick={() => setViewMode("table")}
-                className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                aria-pressed={viewMode === "table"}
+                className={`inline-flex min-h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-colors duration-150 ${
                   viewMode === "table"
-                    ? "bg-slate-700 text-white shadow"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "bg-blue-600 text-white"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
                 }`}
               >
-                Table
+                <List className="h-3.5 w-3.5" aria-hidden="true" />
+                Bảng
               </button>
             </div>
 
             {isEditable && (
-              <>
+              <div className="flex flex-wrap gap-2 xl:justify-end">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setIsInheritOpen(true)}
-                  className="border-slate-700 text-slate-200 hover:bg-slate-800"
+                  className="min-h-10 border-slate-300 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800"
                 >
-                  🔄 Kế thừa phiên bản
+                  <Workflow className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                  Kế thừa
                 </Button>
 
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setIsUploadOpen(true)}
-                  className="border-slate-700 text-slate-200 hover:bg-slate-800"
+                  className="min-h-10 border-slate-300 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800"
                 >
-                  + Batch Upload
+                  <Upload className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                  Tải dữ liệu
                 </Button>
 
                 <Button
                   size="sm"
                   variant="primary"
-                  onClick={handlePublish}
+                  onClick={() => setIsPublishOpen(true)}
                   isLoading={publishMutation.isPending}
+                  className="min-h-10"
                 >
-                  ✓ Publish Version
+                  Publish version
                 </Button>
-              </>
+              </div>
             )}
           </div>
         </div>
-      </Card>
-
-      {/* Annotation Stats Progress Bar */}
-      <AnnotationStatsBar
-        totalAssets={assets?.length || 0}
-        annotatedAssets={assets?.length ? Math.round(assets.length * 0.4) : 0}
-      />
+      </section>
 
       {/* Search & Filter Toolbar */}
       {assets && assets.length > 0 && (
@@ -446,6 +453,68 @@ export function DatasetVersionView({
         isOpen={isInheritOpen}
         onClose={() => setIsInheritOpen(false)}
         projectId={projectId}
+      />
+
+      <Dialog
+        open={isCreateVersionOpen}
+        onOpenChange={(open) => !open && setIsCreateVersionOpen(false)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Tạo dataset version</DialogTitle>
+            <DialogDescription>
+              Version mới bắt đầu ở trạng thái Draft để bạn có thể thêm và kiểm
+              tra asset trước khi publish.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleCreateVersion();
+            }}
+          >
+            <div>
+              <label
+                htmlFor="dataset-version-name"
+                className="text-sm font-medium"
+              >
+                Tên version
+              </label>
+              <Input
+                id="dataset-version-name"
+                className="mt-1.5"
+                value={newVersionName}
+                onChange={(event) => setNewVersionName(event.target.value)}
+                autoFocus
+                required
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsCreateVersionOpen(false)}
+              >
+                Huỷ
+              </Button>
+              <Button type="submit" isLoading={createVersionMutation.isPending}>
+                <GitBranchPlus className="mr-2 h-4 w-4" />
+                Tạo version
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={isPublishOpen}
+        title={`Publish “${versionDetail?.version || "version này"}”?`}
+        description="Sau khi publish, version trở thành bất biến: không thể thêm hoặc xoá asset. Hãy kiểm tra dữ liệu trước khi tiếp tục."
+        confirmLabel="Publish version"
+        isLoading={publishMutation.isPending}
+        onClose={() => setIsPublishOpen(false)}
+        onConfirm={handlePublish}
       />
 
       {/* Edit Dataset Modal */}

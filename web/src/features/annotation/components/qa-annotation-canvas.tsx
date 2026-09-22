@@ -7,7 +7,14 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { HelpCircle, CheckCheck, Trash2, XCircle } from "lucide-react";
+import {
+  CheckCheck,
+  FileText,
+  HelpCircle,
+  PencilLine,
+  Trash2,
+  XCircle,
+} from "lucide-react";
 import { AnnotationResult } from "../types";
 import { BaseEditorComponentProps } from "../registry/editor-registry";
 
@@ -25,10 +32,7 @@ function getSourceOffset(
     acceptNode(node) {
       let el: Node | null = node.parentElement;
       while (el && el !== container) {
-        if (
-          el instanceof HTMLElement &&
-          el.dataset.annotationUi === "true"
-        ) {
+        if (el instanceof HTMLElement && el.dataset.annotationUi === "true") {
           return NodeFilter.FILTER_REJECT;
         }
         el = el.parentElement;
@@ -103,6 +107,8 @@ export function QaAnnotationCanvas({
 
   useEffect(() => {
     if (textContentProp) {
+      // Synchronize editor state from the selected external asset.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setContextText(textContentProp);
       return;
     }
@@ -142,13 +148,14 @@ export function QaAnnotationCanvas({
   const qaSpans: QaSpan[] = useMemo(() => {
     // Scope results to the active output ID to prevent cross-output mutation
     // in multi-output ontologies (Copilot High: outputId scoping).
-    const activeOutputId = (meta.outputId as string | undefined);
+    const activeOutputId = meta.outputId as string | undefined;
 
     return results
       .filter(
         (r) =>
           r.result_type === "ner" &&
-          (r.payload as Record<string, unknown> | null | undefined)?.question !== undefined &&
+          (r.payload as Record<string, unknown> | null | undefined)
+            ?.question !== undefined &&
           // Scope: allow results with matching output_id OR legacy results with no output_id.
           (!activeOutputId || !r.output_id || r.output_id === activeOutputId)
       )
@@ -161,9 +168,7 @@ export function QaAnnotationCanvas({
           start: hasGeometry ? Number(r.geometry!.start) : null,
           end: hasGeometry ? Number(r.geometry!.end) : null,
           answerText: String(
-            payload.answer_text ??
-            (hasGeometry ? r.geometry!.text : "") ??
-            ""
+            payload.answer_text ?? (hasGeometry ? r.geometry!.text : "") ?? ""
           ),
           question: String(payload.question ?? ""),
         };
@@ -176,7 +181,8 @@ export function QaAnnotationCanvas({
     if (readOnly) return;
 
     const selection = window.getSelection();
-    if (!selection || selection.isCollapsed || !selection.toString().trim()) return;
+    if (!selection || selection.isCollapsed || !selection.toString().trim())
+      return;
 
     const selectedStr = selection.toString();
     const range = selection.getRangeAt(0);
@@ -226,7 +232,11 @@ export function QaAnnotationCanvas({
       result_type: "ner",
       category_id: null,
       geometry: pendingSpan
-        ? { start: pendingSpan.start, end: pendingSpan.end, text: pendingSpan.text }
+        ? {
+            start: pendingSpan.start,
+            end: pendingSpan.end,
+            text: pendingSpan.text,
+          }
         : null,
       payload: {
         question,
@@ -251,11 +261,14 @@ export function QaAnnotationCanvas({
       const activeOutputId = meta.outputId as string | undefined;
       // Only delete QA answers belonging to this output (prevent cross-output mutation).
       // Legacy results with no output_id are treated as owned by this editor.
-      onChange?.(results.filter((r) => {
-        if (r.id !== id) return true; // not the target — keep
-        if (activeOutputId && r.output_id && r.output_id !== activeOutputId) return true; // foreign output — keep
-        return false; // delete
-      }));
+      onChange?.(
+        results.filter((r) => {
+          if (r.id !== id) return true; // not the target — keep
+          if (activeOutputId && r.output_id && r.output_id !== activeOutputId)
+            return true; // foreign output — keep
+          return false; // delete
+        })
+      );
     },
     [readOnly, results, onChange, meta.outputId]
   );
@@ -280,13 +293,22 @@ export function QaAnnotationCanvas({
     const allSpans = [
       // Only render confirmed spans that have actual geometry (coordinates in context)
       ...qaSpans
-        .filter((s): s is QaSpan & { start: number; end: number } =>
-          s.start !== null && s.end !== null
+        .filter(
+          (s): s is QaSpan & { start: number; end: number } =>
+            s.start !== null && s.end !== null
         )
         .map((s) => ({ ...s, isPending: false as const })),
       // Pending span (in-progress)
       ...(pendingSpan
-        ? [{ id: "__pending__", ...pendingSpan, answerText: pendingSpan.text, question, isPending: true as const }]
+        ? [
+            {
+              id: "__pending__",
+              ...pendingSpan,
+              answerText: pendingSpan.text,
+              question,
+              isPending: true as const,
+            },
+          ]
         : []),
     ].sort((a, b) => a.start - b.start);
 
@@ -331,9 +353,7 @@ export function QaAnnotationCanvas({
     });
 
     if (lastIdx < contextText.length) {
-      elements.push(
-        <span key="tail">{contextText.slice(lastIdx)}</span>
-      );
+      elements.push(<span key="tail">{contextText.slice(lastIdx)}</span>);
     }
 
     return (
@@ -348,7 +368,10 @@ export function QaAnnotationCanvas({
       {/* LEFT: Context panel */}
       <div className="flex flex-1 flex-col border-r border-slate-800">
         <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-900/80 px-4 py-2.5 backdrop-blur">
-          <span className="text-xs font-semibold text-slate-200">📄 Context</span>
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
+            <FileText className="size-3.5" aria-hidden="true" />
+            Context
+          </span>
           <span className="text-[11px] text-slate-400">
             • Bôi đen đoạn văn để chọn câu trả lời
           </span>
@@ -378,14 +401,14 @@ export function QaAnnotationCanvas({
             <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-slate-500">
               Câu trả lời đã xác nhận ({qaSpans.length})
             </p>
-            <div className="space-y-1 max-h-28 overflow-y-auto">
+            <div className="max-h-28 space-y-1 overflow-y-auto">
               {qaSpans.map((s) => (
                 <div
                   key={s.id}
                   className="flex items-start justify-between rounded bg-emerald-950/40 px-2 py-1.5 text-xs"
                 >
-                  <span className="text-emerald-300 line-clamp-1 flex-1 pr-2">
-                    "{s.answerText}"
+                  <span className="line-clamp-1 flex-1 pr-2 text-emerald-300">
+                    &ldquo;{s.answerText}&rdquo;
                   </span>
                   {!readOnly && (
                     <button
@@ -429,13 +452,17 @@ export function QaAnnotationCanvas({
 
         {/* Span preview */}
         <div className="border-b border-slate-800 p-4">
-          <p className="mb-1.5 text-xs font-semibold text-slate-300">
-            ✅ Answer Span
+          <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-300">
+            <CheckCheck
+              className="size-3.5 text-emerald-400"
+              aria-hidden="true"
+            />
+            Answer Span
           </p>
           {pendingSpan ? (
             <div className="rounded bg-emerald-950/40 px-3 py-2 ring-1 ring-emerald-800/60">
-              <p className="text-xs text-emerald-200 line-clamp-3">
-                "{pendingSpan.text}"
+              <p className="line-clamp-3 text-xs text-emerald-200">
+                &ldquo;{pendingSpan.text}&rdquo;
               </p>
               <p className="mt-1 font-mono text-[10px] text-slate-500">
                 offset: {pendingSpan.start} → {pendingSpan.end}
@@ -451,8 +478,9 @@ export function QaAnnotationCanvas({
         {/* Free-text override */}
         {allowFreeText && (
           <div className="border-b border-slate-800 p-4">
-            <p className="mb-1.5 text-xs font-semibold text-slate-300">
-              📝 Free-text (tuỳ chỉnh)
+            <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-300">
+              <PencilLine className="size-3.5" aria-hidden="true" />
+              Free-text (tuỳ chỉnh)
             </p>
             <textarea
               value={freeText}
@@ -467,7 +495,7 @@ export function QaAnnotationCanvas({
 
         {/* Action buttons */}
         {!readOnly && (
-          <div className="p-4 flex gap-2">
+          <div className="flex gap-2 p-4">
             <button
               type="button"
               onClick={handleClear}

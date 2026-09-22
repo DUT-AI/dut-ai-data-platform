@@ -173,10 +173,10 @@ export function OntologyEditorHeader({
           {!isDraft && (
             <Button
               type="button"
-              variant="outline"
               size="sm"
               onClick={onCreateDraft}
               disabled={busy}
+              className="shadow-xs border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 disabled:bg-slate-100 disabled:text-slate-400 dark:border-amber-700 dark:bg-amber-950/60 dark:text-amber-100 dark:hover:bg-amber-900/70 dark:disabled:border-slate-700 dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
             >
               <CopyPlus className="mr-1.5 size-4" aria-hidden="true" />
               Tạo Draft mới

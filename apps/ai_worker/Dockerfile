@@ -17,10 +17,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-COPY pyproject.toml uv.lock* ./
+COPY pyproject.toml uv.lock* README.md* ./
 
 # Install core dependencies PLUS the optional [ai] extra (PyTorch, torchvision, ultralytics...)
-RUN uv sync --extra ai --no-dev
+RUN uv sync --extra ai --no-dev --no-install-project
 
 # --- Stage 2: GPU Runtime Image ---
 FROM python:3.12-slim AS runner

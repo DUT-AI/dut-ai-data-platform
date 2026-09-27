@@ -9,7 +9,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Enable pnpm
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@9.15.5 --activate
 
 # Copy lockfiles and manifests
 COPY package.json pnpm-lock.yaml .npmrc* ./
@@ -21,7 +21,7 @@ RUN pnpm install --frozen-lockfile
 FROM node:22-alpine AS builder
 WORKDIR /app
 
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@9.15.5 --activate
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

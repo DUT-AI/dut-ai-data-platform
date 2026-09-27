@@ -96,6 +96,7 @@ export interface BaseEditorComponentProps {
   audioLabelMode?: AudioLabelMode;
   outputId?: string;
   outputMultiple?: boolean;
+  outputTypeCode?: string;
   validationErrors?: string[];
   selectedShapeId?: string | null;
   onSelectShapeId?: (id: string | null) => void;
@@ -342,6 +343,17 @@ export function resolveEditorComponent(
       outputTypeCode === "audio_segment")
   ) {
     return AudioEditor;
+  }
+
+  // Tabular classification, regression, or grid tasks need the tabular data grid
+  if (
+    inputTypeCode === "tabular" &&
+    (outputTypeCode === "classification" ||
+      outputTypeCode === "number" ||
+      outputTypeCode === "tabular" ||
+      !outputTypeCode)
+  ) {
+    return TabularEditor;
   }
 
   // 2. Check if output type is registered

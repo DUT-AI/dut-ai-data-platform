@@ -17,6 +17,7 @@ import {
   useOntologySchemaQuery,
 } from "@/features/ontology";
 import { Info } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useProjectQuery } from "@/features/projects";
 import { AnnotationEditorDispatcher } from "./annotation-editor-dispatcher";
 import { ClassificationEditor } from "./classification-editor";
@@ -545,7 +546,14 @@ function AnnotationWorkspaceInner({
               </span>
             </div>
           ) : (
-            <div className="flex h-full w-full max-w-5xl flex-col space-y-2">
+            <div
+              className={cn(
+                "flex h-full w-full flex-col space-y-2",
+                effectiveInputType === "tabular"
+                  ? "max-w-full px-1 sm:px-2"
+                  : "max-w-5xl"
+              )}
+            >
               {/* Category Legend, Label Selector & Quick Action Bar */}
               <WorkspaceCategoryBar
                 categories={availableCategories}
@@ -594,6 +602,8 @@ function AnnotationWorkspaceInner({
                   onSelectShapeId={setSelectedRegionId}
                   onSelectCategory={setActiveCategoryId}
                   metadata={editorMetadata}
+                  outputId={editorMetadata?.outputId}
+                  outputMultiple={editorMetadata?.multiple}
                   onChange={(newVisibleResults) => {
                     // Preserve currently hidden results so they are not
                     // discarded when the editor only sees visibleResults.
@@ -658,9 +668,10 @@ function AnnotationWorkspaceInner({
               )}
 
               {/* Classification Output Section */}
-              {exportedSchema?.outputs?.some(
-                (o) => o.type === "classification"
-              ) &&
+              {effectiveInputType !== "tabular" &&
+                exportedSchema?.outputs?.some(
+                  (o) => o.type === "classification"
+                ) &&
                 exportedSchema?.outputs?.[0]?.type !== "classification" && (
                   <div className="shrink-0 pt-1">
                     <ClassificationEditor

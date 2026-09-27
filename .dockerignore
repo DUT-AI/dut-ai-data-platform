@@ -25,6 +25,7 @@ htmlcov/
 docs/
 assets/
 *.md
+!README.md
 
 # Ignore local env files & logs
 .env

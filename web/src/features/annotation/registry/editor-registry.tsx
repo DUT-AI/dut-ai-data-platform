@@ -364,14 +364,15 @@ export function resolveEditorComponent(
   }
 
   // 3. Fallback only if outputTypeCode is unspecified and input modality matches dedicated editors
-  // 4. Fallback only if outputTypeCode is unspecified and input modality matches dedicated editors
   if (!outputTypeCode && inputTypeCode) {
+    if (inputTypeCode === "image") return EDITOR_REGISTRY["bounding_box"].component;
+    if (inputTypeCode === "video") return EDITOR_REGISTRY["video_segment"].component;
     if (inputTypeCode === "audio") return EDITOR_REGISTRY["audio_segment"].component;
     if (inputTypeCode === "tabular") return EDITOR_REGISTRY["tabular"].component;
     if (inputTypeCode === "document") return EDITOR_REGISTRY["named_entity"].component;
   }
 
-  // 5. Fail-fast error if no valid editor can be safely resolved
+  // 4. Fail-fast error if no valid editor can be safely resolved
   return createUnsupportedEditor(
     `Không tìm thấy Editor cho Output Type: "${outputTypeCode || "không xác định"}" (Input: "${inputTypeCode || "không xác định"}").`
   );

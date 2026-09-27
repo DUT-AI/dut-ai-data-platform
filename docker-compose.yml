@@ -57,7 +57,7 @@ services:
 
 
   minio:
-    image: quay.io/minio/minio:latest
+    image: cgr.dev/chainguard/minio:latest
     container_name: data-platform-minio
     restart: always
     ports:
@@ -102,7 +102,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   createbuckets:
-    image: quay.io/minio/mc:latest
+    image: cgr.dev/chainguard/minio:latest
     container_name: data-platform-minio-init
     depends_on:
       minio:
@@ -131,6 +131,9 @@ services:
       - "8000:8000"
     env_file:
       - ./.env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://${RABBITMQ_DEFAULT_USER:-guest}:${RABBITMQ_DEFAULT_PASS:-guest}@rabbitmq:5672/
     networks:
       - platform-net
     depends_on:
@@ -153,6 +156,9 @@ services:
     restart: always
     env_file:
       - ./.env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://${RABBITMQ_DEFAULT_USER:-guest}:${RABBITMQ_DEFAULT_PASS:-guest}@rabbitmq:5672/
     networks:
       - platform-net
     depends_on:
@@ -173,6 +179,9 @@ services:
     restart: always
     env_file:
       - ./.env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://${RABBITMQ_DEFAULT_USER:-guest}:${RABBITMQ_DEFAULT_PASS:-guest}@rabbitmq:5672/
     networks:
       - platform-net
     depends_on:

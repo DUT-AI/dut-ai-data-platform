@@ -229,7 +229,37 @@ function AnnotationWorkspaceInner({
           ? exportedSchema?.outputs?.find((output) => output.type === "text") ||
             firstOutput
           : firstOutput;
-    const outputType = selectedOutput?.type;
+    let defaultOutputType: string | undefined = undefined;
+    if (!selectedOutput) {
+      const templateId = (project?.template_id || "").toLowerCase();
+      if (templateId.includes("polygon")) {
+        defaultOutputType = "polygon";
+      } else if (templateId.includes("mask") || templateId.includes("brush")) {
+        defaultOutputType = "brush_mask";
+      } else if (templateId.includes("classification")) {
+        defaultOutputType = "classification";
+      } else if (templateId.includes("keypoint")) {
+        defaultOutputType = "keypoint";
+      } else if (
+        templateId.includes("bounding") ||
+        templateId.includes("bbox") ||
+        templateId.includes("detection")
+      ) {
+        defaultOutputType = "bounding_box";
+      } else if (effInput === "image") {
+        defaultOutputType = "bounding_box";
+      } else if (effInput === "video") {
+        defaultOutputType = "video_segment";
+      } else if (effInput === "audio") {
+        defaultOutputType = "audio_segment";
+      } else if (effInput === "tabular") {
+        defaultOutputType = "tabular";
+      } else if (effInput === "document") {
+        defaultOutputType = "named_entity";
+      }
+    }
+
+    const outputType = selectedOutput?.type || defaultOutputType;
     const resolvedAudioMode =
       effInput === "audio"
         ? resolveAudioLabelMode(project?.template_id, selectedOutput)
@@ -538,6 +568,16 @@ function AnnotationWorkspaceInner({
                   navigateToAsset(assets[currentAssetIdx + 1].id)
                 }
               />
+
+              {/* Guidance hint when no categories are defined in ontology */}
+              {availableCategories.length === 0 && (
+                <div className="flex shrink-0 items-center justify-between rounded-lg border border-amber-500/30 bg-amber-950/20 px-3 py-1.5 text-xs text-amber-300">
+                  <span>
+                    Chưa có nhãn (Category) trong cấu hình Ontology. Bạn vẫn có thể vẽ gán nhãn, hoặc vào tab{" "}
+                    <span className="font-semibold underline">Ontology</span> để thêm danh mục nhãn.
+                  </span>
+                </div>
+              )}
 
               {/* Dynamic Annotation Canvas Workspace */}
               <div className="relative flex min-h-0 flex-1 flex-col justify-center">

@@ -40,6 +40,8 @@ import { InheritVersionModal } from "./inherit-version-modal";
 import { AssetGalleryGrid } from "./asset-gallery-grid";
 import { AssetListTable } from "./asset-list-table";
 import { useProjectOntologiesQuery } from "@/features/ontology";
+import { useProjectQuery, useProjectTemplateQuery } from "@/features/projects/hooks";
+import { resolveModalityMeta } from "../utils/modality";
 
 interface DatasetVersionViewProps {
   dataset: Dataset;
@@ -50,6 +52,12 @@ export function DatasetVersionView({
   dataset,
   projectId,
 }: DatasetVersionViewProps) {
+  const { data: project } = useProjectQuery(projectId);
+  const { data: template } = useProjectTemplateQuery(project?.template_id);
+  const modalityMeta = useMemo(
+    () => resolveModalityMeta(template?.modality, template?.group),
+    [template?.modality, template?.group]
+  );
   const versions = useMemo(() => dataset.versions || [], [dataset.versions]);
   const [selectedVersionId, setSelectedVersionId] = useState<string>(
     () => versions[0]?.id || ""
@@ -390,6 +398,34 @@ export function DatasetVersionView({
         </div>
       </section>
 
+      {/* Project Modality & Task Context Header (Option A) */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-blue-100 bg-blue-50/50 px-4 py-2.5 text-xs dark:border-blue-950/60 dark:bg-blue-950/20">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-semibold text-blue-950 dark:text-blue-100">
+            Quy chuẩn bài toán:
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2 py-0.5 font-medium text-white shadow-2xs">
+            {template?.title || project?.project_type || "Quy chuẩn dự án"}
+          </span>
+          <span className="text-slate-400">•</span>
+          <span className="text-slate-600 dark:text-slate-400">
+            Phân loại: <strong className="font-semibold text-slate-800 dark:text-slate-200">{modalityMeta.label}</strong>
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+          <span>Định dạng chấp nhận:</span>
+          <span className="font-mono font-medium text-slate-700 dark:text-slate-300">
+            {modalityMeta.allowedExtensions.map((e: string) => e.toUpperCase()).join(", ")}
+          </span>
+          {ontologyVersionId && (
+            <span className="rounded bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+              Ontology kết nối
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* Search & Filter Toolbar */}
       {assets && assets.length > 0 && (
         <AssetFilterToolbar
@@ -440,6 +476,9 @@ export function DatasetVersionView({
         versionId={activeVersionId}
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
+        modality={template?.modality}
+        templateTitle={template?.title}
+        templateGroup={template?.group}
       />
 
       <InheritVersionModal

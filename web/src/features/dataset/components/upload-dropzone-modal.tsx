@@ -1,7 +1,17 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { AlertTriangle, UploadCloud, X } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import {
+  AlertTriangle,
+  FileText,
+  Headphones,
+  Image as ImageIcon,
+  Layers,
+  Table as TableIcon,
+  UploadCloud,
+  Video,
+  X,
+} from "lucide-react";
 
 import {
   Button,
@@ -13,22 +23,35 @@ import {
   DialogTitle,
 } from "@/components/ui";
 import { useUploadManager } from "@/contexts/upload-context";
+import { resolveModalityMeta, validateFileForModality } from "../utils/modality";
 
 interface UploadDropzoneModalProps {
   versionId: string;
   isOpen: boolean;
   onClose: () => void;
+  modality?: string;
+  templateTitle?: string;
+  templateGroup?: string;
 }
 
 export function UploadDropzoneModal({
   versionId,
   isOpen,
   onClose,
+  modality,
+  templateTitle,
+  templateGroup,
 }: UploadDropzoneModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       {isOpen && (
-        <UploadDropzoneContent versionId={versionId} onClose={onClose} />
+        <UploadDropzoneContent
+          versionId={versionId}
+          onClose={onClose}
+          modality={modality}
+          templateTitle={templateTitle}
+          templateGroup={templateGroup}
+        />
       )}
     </Dialog>
   );
@@ -37,9 +60,15 @@ export function UploadDropzoneModal({
 function UploadDropzoneContent({
   versionId,
   onClose,
+  modality,
+  templateTitle,
+  templateGroup,
 }: {
   versionId: string;
   onClose: () => void;
+  modality?: string;
+  templateTitle?: string;
+  templateGroup?: string;
 }) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -50,6 +79,28 @@ function UploadDropzoneContent({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { startBackgroundUpload } = useUploadManager();
+
+  const modalityMeta = useMemo(
+    () => resolveModalityMeta(modality, templateGroup),
+    [modality, templateGroup]
+  );
+
+  const renderModalityIcon = (iconName: string, className = "h-5 w-5") => {
+    switch (iconName) {
+      case "image":
+        return <ImageIcon className={className} aria-hidden="true" />;
+      case "file-text":
+        return <FileText className={className} aria-hidden="true" />;
+      case "headphones":
+        return <Headphones className={className} aria-hidden="true" />;
+      case "video":
+        return <Video className={className} aria-hidden="true" />;
+      case "table":
+        return <TableIcon className={className} aria-hidden="true" />;
+      default:
+        return <Layers className={className} aria-hidden="true" />;
+    }
+  };
 
   const validateImageFile = (file: File): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -77,13 +128,42 @@ function UploadDropzoneContent({
   const handleFileSelect = async (files: FileList | null) => {
     if (!files) return;
     const newFiles = Array.from(files);
-    setSelectedFiles((prev) => [...prev, ...newFiles]);
+    const validFiles: File[] = [];
+    const rejectedFiles: string[] = [];
 
-    // Check images in background
     for (const f of newFiles) {
-      const isValid = await validateImageFile(f);
-      if (!isValid) {
-        setCorruptedFileNames((prev) => new Set(prev).add(f.name));
+      const result = validateFileForModality(f, modalityMeta);
+      if (result.valid) {
+        validFiles.push(f);
+      } else {
+        rejectedFiles.push(f.name);
+      }
+    }
+
+    if (rejectedFiles.length > 0) {
+      const names = rejectedFiles.slice(0, 3).join(", ");
+      const extra =
+        rejectedFiles.length > 3
+          ? ` và ${rejectedFiles.length - 3} tệp khác`
+          : "";
+      setErrorMsg(
+        `Từ chối ${rejectedFiles.length} tệp không tương thích (${names}${extra}). Dự án thuộc phân loại ${modalityMeta.label}, chỉ chấp nhận định dạng: ${modalityMeta.allowedExtensions.map((e: string) => e.toUpperCase()).join(", ")}.`
+      );
+    } else {
+      setErrorMsg(null);
+    }
+
+    if (validFiles.length > 0) {
+      setSelectedFiles((prev) => [...prev, ...validFiles]);
+
+      // Check images in background if modality is image
+      if (modalityMeta.code === "image") {
+        for (const f of validFiles) {
+          const isValid = await validateImageFile(f);
+          if (!isValid) {
+            setCorruptedFileNames((prev) => new Set(prev).add(f.name));
+          }
+        }
       }
     }
   };
@@ -132,10 +212,14 @@ function UploadDropzoneContent({
   return (
     <DialogContent className="max-w-xl">
       <DialogHeader>
-        <DialogTitle>Tải lên tập tin dữ liệu (Batch Upload)</DialogTitle>
+        <DialogTitle className="flex items-center gap-2">
+          <span>Tải lên tập tin dữ liệu</span>
+          <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+            {modalityMeta.shortLabel}
+          </span>
+        </DialogTitle>
         <DialogDescription>
-          Kéo thả hoặc chọn nhiều tệp tin (ảnh, PDF, video, audio) để tải lên.
-          Tập tin sẽ được tải trực tiếp ở chế độ nền.
+          Kéo thả hoặc chọn các tệp ({modalityMeta.allowedExtensions.map((e: string) => e.toUpperCase()).join(", ")}) phù hợp với bài toán {templateTitle || modalityMeta.domainGroup}. Tải trực tiếp ở chế độ nền.
         </DialogDescription>
       </DialogHeader>
 
@@ -149,7 +233,7 @@ function UploadDropzoneContent({
         {/* Drag & Drop Area */}
         <label
           htmlFor="dataset-file-upload"
-          onDragOver={(e) => {
+          onDragOver={(e: React.DragEvent) => {
             e.preventDefault();
             setIsDragging(true);
           }}
@@ -166,22 +250,24 @@ function UploadDropzoneContent({
             id="dataset-file-upload"
             type="file"
             multiple
+            accept={modalityMeta.acceptAttribute}
             className="hidden"
-            onChange={(e) => handleFileSelect(e.target.files)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              handleFileSelect(e.target.files)
+            }
           />
           <div className="space-y-2">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-xl font-bold text-slate-500 dark:bg-slate-800">
-              <UploadCloud className="h-6 w-6" aria-hidden="true" />
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+              {renderModalityIcon(modalityMeta.iconName, "h-6 w-6")}
             </div>
             <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-              Kéo & thả nhiều tập tin vào đây, hoặc{" "}
+              Kéo & thả tập tin {modalityMeta.shortLabel.toLowerCase()} vào đây, hoặc{" "}
               <span className="text-primary-600 underline">
                 duyệt từ máy tính
               </span>
             </p>
             <p className="text-xs text-slate-400">
-              Hỗ trợ PNG, JPG, PDF, MP4, CSV, ZIP... (Tự động tải ngầm ở nền
-              không khóa giao diện)
+              Chấp nhận: {modalityMeta.allowedExtensions.map((e: string) => e.toUpperCase()).join(", ")} (Tự động tải ngầm và kiểm tra SHA256)
             </p>
           </div>
         </label>
@@ -194,6 +280,7 @@ function UploadDropzoneContent({
                 Đã chọn {selectedFiles.length} tập tin ({formatSize(totalSize)})
               </span>
               <button
+                type="button"
                 onClick={() => setSelectedFiles([])}
                 className="text-rose-500 hover:underline"
               >
@@ -202,7 +289,7 @@ function UploadDropzoneContent({
             </div>
 
             <div className="max-h-48 space-y-1.5 overflow-y-auto rounded-md border border-slate-100 p-2 pr-1 dark:border-slate-800">
-              {selectedFiles.map((f, idx) => {
+              {selectedFiles.map((f: File, idx: number) => {
                 const isCorrupted = corruptedFileNames.has(f.name);
                 return (
                   <div

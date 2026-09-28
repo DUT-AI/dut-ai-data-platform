@@ -1,6 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import {
+  FileText,
+  Headphones,
+  Image as ImageIcon,
+  Info,
+  Layers,
+  Sparkles,
+  Table as TableIcon,
+  Tag,
+  Video,
+} from "lucide-react";
 import {
   Button,
   Card,
@@ -21,6 +32,9 @@ import {
   useProjectDatasetsQuery,
   useUpdateDatasetMutation,
 } from "../hooks";
+import { useProjectQuery, useProjectTemplateQuery } from "@/features/projects/hooks";
+import { useProjectOntologyQuery } from "@/features/ontology/hooks/use-ontologies";
+import { resolveModalityMeta } from "../utils/modality";
 import { DatasetVersionView } from "./dataset-version-view";
 
 interface DatasetListViewProps {
@@ -42,6 +56,77 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
   const [editDescription, setEditDescription] = useState("");
 
   const { data: datasets, isLoading } = useProjectDatasetsQuery(projectId);
+  const { data: project } = useProjectQuery(projectId);
+  const { data: template } = useProjectTemplateQuery(project?.template_id);
+  const { data: ontology } = useProjectOntologyQuery(projectId);
+
+  const modalityMeta = useMemo(
+    () => resolveModalityMeta(template?.modality, template?.group),
+    [template?.modality, template?.group]
+  );
+
+  const activeOntologyVersion = useMemo(() => {
+    if (!ontology?.versions || ontology.versions.length === 0) return null;
+    return (
+      ontology.versions.find((v: { status: string }) => v.status === "published") ||
+      ontology.versions[0]
+    );
+  }, [ontology]);
+
+  const resolvedTools = useMemo(() => {
+    if (activeOntologyVersion?.outputs && activeOntologyVersion.outputs.length > 0) {
+      const names = activeOntologyVersion.outputs
+        .map((o: { output?: { name: string } | null; ontology_output_id?: string }) => o.output?.name || o.ontology_output_id)
+        .filter(Boolean) as string[];
+      if (names.length > 0) return names;
+    }
+    if (template?.tools && template.tools.length > 0) {
+      return template.tools.map((t: { name: string }) => t.name);
+    }
+    return modalityMeta.defaultTools.map((t: { name: string }) => t.name);
+  }, [activeOntologyVersion, template?.tools, modalityMeta]);
+
+  const resolvedLabels = useMemo(() => {
+    if (activeOntologyVersion?.outputs && activeOntologyVersion.outputs.length > 0) {
+      const labels: Array<{ name: string; color: string }> = [];
+      activeOntologyVersion.outputs.forEach((out: { categories?: Array<{ category?: { name: string; color?: string | null } | null }> }) => {
+        out.categories?.forEach((catLink) => {
+          if (catLink.category) {
+            labels.push({
+              name: catLink.category.name,
+              color: catLink.category.color || "#2563eb",
+            });
+          }
+        });
+      });
+      if (labels.length > 0) return labels;
+    }
+    if (template?.labels && template.labels.length > 0) {
+      return template.labels.map((l: { name: string; color?: string }) => ({
+        name: l.name,
+        color: l.color || "#2563eb",
+      }));
+    }
+    return modalityMeta.defaultLabels;
+  }, [activeOntologyVersion, template?.labels, modalityMeta]);
+
+  const renderModalityIcon = (iconName: string, className = "h-4 w-4") => {
+    switch (iconName) {
+      case "image":
+        return <ImageIcon className={className} aria-hidden="true" />;
+      case "file-text":
+        return <FileText className={className} aria-hidden="true" />;
+      case "headphones":
+        return <Headphones className={className} aria-hidden="true" />;
+      case "video":
+        return <Video className={className} aria-hidden="true" />;
+      case "table":
+        return <TableIcon className={className} aria-hidden="true" />;
+      default:
+        return <Layers className={className} aria-hidden="true" />;
+    }
+  };
+
   const createMutation = useCreateDatasetMutation(projectId);
   const updateMutation = useUpdateDatasetMutation(
     editingDataset?.id || "",
@@ -188,7 +273,19 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
                         </span>
                       </div>
                     </div>
-                    <p className="line-clamp-2 text-xs text-slate-500">
+
+                    {/* Modality & Task badge inherited from project */}
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-800/80 dark:text-slate-300">
+                        {renderModalityIcon(modalityMeta.iconName, "h-3 w-3 text-blue-600 dark:text-blue-400")}
+                        <span>{modalityMeta.shortLabel}</span>
+                      </span>
+                      <span className="truncate text-[11px] text-slate-500">
+                        {template?.title || project?.name || "Quy chuẩn dự án"}
+                      </span>
+                    </div>
+
+                    <p className="line-clamp-2 pt-1 text-xs text-slate-500">
                       {dataset.description || "Chưa có mô tả."}
                     </p>
                   </div>
@@ -216,16 +313,16 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
         </CardContent>
       </Card>
 
-      {/* Create Dataset Modal */}
+      {/* Create Dataset Modal with Project Inheritance (Option A) */}
       <Dialog
         open={isCreateOpen}
         onOpenChange={(open) => !open && setIsCreateOpen(false)}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Tạo bộ Dữ liệu Dataset mới</DialogTitle>
             <DialogDescription>
-              Khởi tạo một Dataset và phiên bản nháp mặc định (v1.0.0).
+              Khởi tạo Dataset đồng bộ với bài toán và cấu hình Ontology của Dự án.
             </DialogDescription>
           </DialogHeader>
 
@@ -236,12 +333,92 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
               </div>
             )}
 
+            {/* Project Modality & Task Inheritance Context Block */}
+            <div className="space-y-2.5 rounded-xl border border-blue-200 bg-blue-50/60 p-3.5 dark:border-blue-900/50 dark:bg-blue-950/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs dark:bg-blue-500">
+                    {renderModalityIcon(modalityMeta.iconName, "h-4 w-4")}
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-blue-950 dark:text-blue-100">
+                      {modalityMeta.label}
+                    </span>
+                    <p className="text-[11px] text-blue-700 dark:text-blue-300">
+                      {template?.title || project?.name || "Quy chuẩn dự án"}
+                    </p>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-blue-800 dark:border-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                  <Sparkles className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                  Kế thừa từ Dự án
+                </span>
+              </div>
+
+              {/* Tools and Labels */}
+              <div className="space-y-2 border-t border-blue-200/60 pt-2 text-xs text-slate-700 dark:border-blue-900/40 dark:text-slate-300">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="font-medium text-slate-600 dark:text-slate-400">
+                    Công cụ gán nhãn:
+                  </span>
+                  {resolvedTools.map((t, idx) => (
+                    <span
+                      key={idx}
+                      className="rounded bg-white px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-800 shadow-2xs dark:bg-slate-900 dark:text-slate-200"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                {resolvedLabels.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-medium text-slate-600 dark:text-slate-400">
+                      Nhãn lớp mẫu ({resolvedLabels.length}):
+                    </span>
+                    {resolvedLabels.slice(0, 6).map((lbl, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium shadow-2xs"
+                        style={{
+                          backgroundColor: lbl.color ? `${lbl.color}18` : "#f1f5f9",
+                          color: lbl.color || "#1e293b",
+                          border: `1px solid ${lbl.color ? `${lbl.color}35` : "#cbd5e1"}`,
+                        }}
+                      >
+                        <span
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ backgroundColor: lbl.color || "#2563eb" }}
+                        />
+                        {lbl.name}
+                      </span>
+                    ))}
+                    {resolvedLabels.length > 6 && (
+                      <span className="text-[11px] text-slate-500">
+                        +{resolvedLabels.length - 6} nhãn khác
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  <Info className="h-3 w-3 shrink-0 text-blue-600 dark:text-blue-400" />
+                  <span>
+                    Định dạng tệp hợp lệ:{" "}
+                    <strong className="font-mono text-slate-700 dark:text-slate-200">
+                      {modalityMeta.allowedExtensions.map((e) => e.toUpperCase()).join(", ")}
+                    </strong>
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Tên Dataset <span className="text-rose-500">*</span>
               </label>
               <Input
-                placeholder="VD: Dữ liệu ảnh xe ô tô camera giao thông"
+                placeholder={modalityMeta.exampleDatasetName}
                 value={name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setName(e.target.value)
@@ -255,7 +432,7 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
                 Mô tả
               </label>
               <textarea
-                placeholder="Mô tả nguồn dữ liệu và mục đích huấn luyện..."
+                placeholder={modalityMeta.exampleDescription}
                 value={description}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   setDescription(e.target.value)

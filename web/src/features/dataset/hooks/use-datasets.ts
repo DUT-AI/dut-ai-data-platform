@@ -238,6 +238,7 @@ export function useAssetDownloadUrlQuery(assetId: string) {
     queryKey: DATASET_KEYS.assetDownload(assetId),
     queryFn: () => datasetApi.getAssetDownloadUrl(assetId),
     enabled: Boolean(assetId),
+    staleTime: 1000 * 60 * 30, // 30 minutes cache for presigned URLs
   });
 }
 

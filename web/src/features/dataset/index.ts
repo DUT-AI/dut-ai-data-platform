@@ -8,3 +8,4 @@ export * from "./components/asset-list-table";
 export * from "./components/upload-dropzone-modal";
 export * from "./components/inherit-version-modal";
 export * from "./components/asset-detail-modal";
+export * from "./utils/modality";

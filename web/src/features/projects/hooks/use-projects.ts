@@ -18,6 +18,7 @@ export const PROJECT_KEYS = {
     search?: string;
   }) => [...PROJECT_KEYS.all, "templates", params] as const,
   templateGroups: () => [...PROJECT_KEYS.all, "templateGroups"] as const,
+  template: (id: string) => [...PROJECT_KEYS.all, "template", id] as const,
 };
 
 export function useProjectsQuery(page = 1, pageSize = 50) {
@@ -62,6 +63,14 @@ export function useProjectTemplateGroupsQuery() {
   return useQuery({
     queryKey: PROJECT_KEYS.templateGroups(),
     queryFn: projectApi.getProjectTemplateGroups,
+  });
+}
+
+export function useProjectTemplateQuery(templateId?: string | null) {
+  return useQuery({
+    queryKey: PROJECT_KEYS.template(templateId || ""),
+    queryFn: () => projectApi.getProjectTemplateById(templateId!),
+    enabled: Boolean(templateId),
   });
 }
 

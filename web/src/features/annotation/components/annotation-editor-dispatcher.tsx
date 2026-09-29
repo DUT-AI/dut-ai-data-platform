@@ -27,5 +27,8 @@ export function AnnotationEditorDispatcher({
     editorProps.metadata
   );
 
-  return React.createElement(EditorComponent, editorProps);
+  return React.createElement(EditorComponent, {
+    ...editorProps,
+    outputTypeCode,
+  });
 }

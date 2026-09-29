@@ -59,6 +59,15 @@ export const projectApi = {
     return response.data;
   },
 
+  getProjectTemplateById: async (
+    templateId: string
+  ): Promise<CatalogTemplate> => {
+    const response = await api.get<CatalogTemplate>(
+      `/project-templates/${templateId}`
+    );
+    return response.data;
+  },
+
   getProjectConfig: async (id: string): Promise<ProjectConfig> => {
     const response = await api.get<ProjectConfig>(`/projects/${id}/config`);
     return response.data;

@@ -9,6 +9,7 @@ export interface Asset {
   mime_type: string;
   file_size: number;
   sha256: string;
+  download_url?: string;
   metadata: {
     width?: number;
     height?: number;

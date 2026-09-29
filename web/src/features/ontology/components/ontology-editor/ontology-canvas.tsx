@@ -166,8 +166,8 @@ const matchesSearch = (
     .some((value) => value.toLocaleLowerCase("vi").includes(normalized));
 };
 
-function versionBadge(versions: OntologyVersion[]) {
-  if (versions.length === 0) return undefined;
+function versionBadge(versions?: OntologyVersion[]) {
+  if (!versions || versions.length === 0) return undefined;
   const ordered = [...versions].sort(
     (left, right) => left.version_no - right.version_no
   );
@@ -279,7 +279,7 @@ export function OntologyCanvas({
           input.name,
           input.description,
           input.definition?.name,
-          input.input_schema.type,
+          input.input_schema?.type,
           input.scope,
           ...versionTerms(usedVersions),
         ]);
@@ -493,7 +493,11 @@ export function OntologyCanvas({
                   ).length;
                   const usedVersions = inputUsage.get(input.id) ?? [];
                   const formats =
-                    input.input_schema.allowed_extensions.join(", ");
+                    input.input_schema?.allowed_extensions &&
+                    input.input_schema.allowed_extensions.length > 0
+                      ? input.input_schema.allowed_extensions.join(", ")
+                      : input.definition?.allowed_formats?.join(", ") ??
+                        "Mặc định";
 
                   return (
                     <OntologyNodeCard
@@ -501,7 +505,7 @@ export function OntologyCanvas({
                       id={input.id}
                       tone="input"
                       title={input.name}
-                      subtitle={`${input.definition?.name ?? input.input_schema.type} · ${input.scope === "ONE_ITEM" ? "1 Asset = 1 Item" : "1 Asset = N Items"}`}
+                      subtitle={`${input.definition?.name ?? input.input_schema?.type ?? "Input"} · ${input.scope === "ONE_ITEM" ? "1 Asset = 1 Item" : "1 Asset = N Items"}`}
                       description={input.description}
                       locked={input.locked}
                       readOnly={readOnly}

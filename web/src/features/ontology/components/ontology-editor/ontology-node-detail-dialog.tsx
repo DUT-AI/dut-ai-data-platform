@@ -115,7 +115,8 @@ export function OntologyNodeDetailDialog({
                     label="Loại Input"
                     value={
                       details.node.definition?.name ??
-                      details.node.input_schema.type
+                      details.node.input_schema?.type ??
+                      "Input"
                     }
                   />
                   <DetailRow
@@ -129,9 +130,17 @@ export function OntologyNodeDetailDialog({
                   <DetailRow
                     label="Định dạng"
                     value={
-                      details.node.input_schema.allowed_extensions
-                        .map((extension) => `.${extension}`)
-                        .join(", ") || "Không giới hạn"
+                      details.node.input_schema?.allowed_extensions &&
+                      details.node.input_schema.allowed_extensions.length > 0
+                        ? details.node.input_schema.allowed_extensions
+                            .map((extension) => `.${extension}`)
+                            .join(", ")
+                        : details.node.definition?.allowed_formats &&
+                            details.node.definition.allowed_formats.length > 0
+                          ? details.node.definition.allowed_formats
+                              .map((extension) => `.${extension}`)
+                              .join(", ")
+                          : "Không giới hạn"
                     }
                   />
                 </>

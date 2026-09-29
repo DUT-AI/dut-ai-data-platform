@@ -72,9 +72,9 @@ type ConfirmKind =
   | null;
 
 const selectInitialVersion = (ontology: Ontology): string =>
-  ontology.versions.find((version) => version.status === "draft")?.id ??
+  ontology.versions?.find((version) => version.status === "draft")?.id ??
   ontology.current_version_id ??
-  ontology.versions[0]?.id ??
+  ontology.versions?.[0]?.id ??
   "";
 
 export function OntologyEditorView({
@@ -114,7 +114,7 @@ export function OntologyEditorView({
     selectedVersionId
   );
   const ontology = workspace.ontology.data ?? initialOntology;
-  const versions = workspace.versions.data ?? ontology.versions;
+  const versions = workspace.versions.data ?? ontology?.versions ?? [];
   const selectedVersion =
     workspace.version.data ??
     versions.find((version) => version.id === selectedVersionId);
@@ -200,7 +200,7 @@ export function OntologyEditorView({
 
   const openCreateDraftForm = (): void => {
     const nextNumber =
-      Math.max(0, ...versions.map((item) => item.version_no)) + 1;
+      Math.max(0, ...(versions ?? []).map((item) => item.version_no)) + 1;
     setFormName(`Draft v${nextNumber}`);
     setFormDescription("");
     setEditorForm("create-draft");

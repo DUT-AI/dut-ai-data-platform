@@ -215,6 +215,16 @@ class OntologyInputResponseDTO(ResponseDTO):
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
+    @field_validator("input_schema", mode="after")
+    @classmethod
+    def ensure_allowed_extensions(cls, v: dict[str, Any]) -> dict[str, Any]:
+        if isinstance(v, dict):
+            if "allowed_extensions" not in v or not isinstance(v["allowed_extensions"], list):
+                new_v = dict(v)
+                new_v["allowed_extensions"] = []
+                return new_v
+        return v
+
 
 class OntologyOutputResponseDTO(ResponseDTO):
     id: str

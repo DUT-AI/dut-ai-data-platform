@@ -17,20 +17,21 @@ interface VersionGraphState {
 const graphFromVersion = (version?: OntologyVersion): VersionGraphState => ({
   inputIds:
     version?.inputs
-      .slice()
+      ?.slice()
       .sort((left, right) => left.sort_order - right.sort_order)
       .map((item) => item.ontology_input_id) ?? [],
   outputLinks:
     version?.outputs
-      .slice()
+      ?.slice()
       .sort((left, right) => left.sort_order - right.sort_order)
       .map((item) => ({
         outputId: item.ontology_output_id,
         inputId: item.ontology_input_id,
-        categoryIds: item.categories
-          .slice()
-          .sort((left, right) => left.sort_order - right.sort_order)
-          .map((category) => category.category_id),
+        categoryIds:
+          item.categories
+            ?.slice()
+            .sort((left, right) => left.sort_order - right.sort_order)
+            .map((category) => category.category_id) ?? [],
       })) ?? [],
 });
 

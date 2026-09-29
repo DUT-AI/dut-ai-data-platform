@@ -60,17 +60,19 @@ const emptyInputForm = (definition?: InputDefinition): InputNodeForm => ({
 const inputFormFromNode = (
   definitions: InputDefinition[],
   initial?: OntologyInput | null
-): InputNodeForm =>
-  initial
-    ? {
-        definition_id: initial.definition_id,
-        name: initial.name,
-        description: initial.description ?? "",
-        scope: initial.scope,
-        allowed_extensions: initial.input_schema.allowed_extensions,
-        fields: objectSchemaToFields(initial.input_schema.item),
-      }
-    : emptyInputForm(definitions[0]);
+): InputNodeForm => {
+  if (!initial) return emptyInputForm(definitions[0]);
+  const def = definitions.find((d) => d.id === initial.definition_id);
+  return {
+    definition_id: initial.definition_id,
+    name: initial.name,
+    description: initial.description ?? "",
+    scope: initial.scope,
+    allowed_extensions:
+      initial.input_schema?.allowed_extensions ?? def?.allowed_formats ?? [],
+    fields: objectSchemaToFields(initial.input_schema?.item),
+  };
+};
 
 export function InputNodeDialog({
   open,

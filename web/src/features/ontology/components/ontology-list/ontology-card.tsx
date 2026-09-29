@@ -7,10 +7,11 @@ interface OntologyCardProps {
 }
 
 export function OntologyCard({ ontology, onOpen }: OntologyCardProps) {
-  const published = ontology.versions.filter(
+  const versions = ontology.versions ?? [];
+  const published = versions.filter(
     (version) => version.status === "published"
   ).length;
-  const drafts = ontology.versions.length - published;
+  const drafts = versions.length - published;
 
   return (
     <button

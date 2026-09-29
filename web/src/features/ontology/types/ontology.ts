@@ -33,8 +33,8 @@ export interface OutputDefinition {
 
 export interface InputSchema {
   type: InputDefinition["code"];
-  allowed_extensions: string[];
-  item: JsonObject | null;
+  allowed_extensions?: string[];
+  item?: JsonObject | null;
 }
 
 export interface OntologyInput {
@@ -122,7 +122,7 @@ export interface Ontology {
   current_version_id: string | null;
   created_at: string | null;
   updated_at: string | null;
-  versions: OntologyVersion[];
+  versions?: OntologyVersion[];
 }
 
 export interface ValidationIssue {

@@ -99,9 +99,19 @@ async def seed_ontology_from_template(
                     definition_id=matched_input_def.id,
                     name=f"{matched_input_def.name} ({template.get('title', 'Project')})",
                     scope="ONE_ITEM",
-                    input_schema={"type": matched_input_def.code},
+                    input_schema={
+                        "type": matched_input_def.code,
+                        "allowed_extensions": matched_input_def.allowed_formats,
+                        "item": None,
+                    },
                 )
             )
+        elif not onto_input.input_schema.get("allowed_extensions"):
+            onto_input.input_schema = dict(onto_input.input_schema or {})
+            onto_input.input_schema["type"] = onto_input.input_schema.get("type", matched_input_def.code)
+            onto_input.input_schema["allowed_extensions"] = matched_input_def.allowed_formats
+            onto_input.input_schema.setdefault("item", None)
+            await input_repo.update(onto_input)
 
         output_defs = await output_def_repo.list()
         created_categories: list[CategoryEntity] = []
@@ -299,6 +309,28 @@ class GetProjectOntologyUseCase:
                 category_repo=self.category_repo,
                 version_repo=self.versions,
             )
+            updated = await self.repo.get_by_project(project_id)
+            if updated:
+                ontology = updated
+
+        # Ensure any inputs in database have allowed_extensions populated
+        existing_inputs = await self.input_repo.list_by_ontology(ontology.id)
+        input_defs = None
+        repaired = False
+        for inp in existing_inputs:
+            if not inp.input_schema or not inp.input_schema.get("allowed_extensions"):
+                if input_defs is None:
+                    input_defs = await self.input_def_repo.list()
+                matched_def = next((d for d in input_defs if d.id == inp.definition_id), None)
+                if matched_def:
+                    inp.input_schema = dict(inp.input_schema or {})
+                    inp.input_schema["type"] = inp.input_schema.get("type", matched_def.code)
+                    inp.input_schema["allowed_extensions"] = matched_def.allowed_formats
+                    inp.input_schema.setdefault("item", None)
+                    await self.input_repo.update(inp)
+                    repaired = True
+
+        if repaired:
             updated = await self.repo.get_by_project(project_id)
             if updated:
                 ontology = updated

@@ -24,7 +24,7 @@ class SqlUserLoginRepository(IUserLoginRepository):
         stmt = (
             insert(UserLoginMetadataModel)
             .values(
-                user_id=user_id,
+                user_id=str(user_id),
                 last_login_at=last_login_at,
                 created_at=now,
                 updated_at=now,
@@ -46,7 +46,7 @@ class SqlUserLoginRepository(IUserLoginRepository):
     async def get_by_user_id(self, user_id: str) -> UserLoginMetadataEntity | None:
         """Fetch last login record for a single user."""
         stmt = select(UserLoginMetadataModel).where(
-            UserLoginMetadataModel.user_id == user_id
+            UserLoginMetadataModel.user_id == str(user_id)
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()

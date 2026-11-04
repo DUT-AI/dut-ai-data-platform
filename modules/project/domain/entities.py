@@ -20,7 +20,11 @@ class ProjectConfigurationEntity:
 @dataclass
 class ProjectMemberEntity:
     project_id: str
-    user_id: str
+    user_id: int
+
+    def __post_init__(self):
+        if isinstance(self.user_id, str) and self.user_id.isdigit():
+            self.user_id = int(self.user_id)
     role: str
     id: str = field(default_factory=generate_ulid)
     status: str = "active"
@@ -30,7 +34,11 @@ class ProjectMemberEntity:
 @dataclass
 class ProjectEntity:
     name: str
-    created_by: str
+    created_by: int
+
+    def __post_init__(self):
+        if isinstance(self.created_by, str) and self.created_by.isdigit():
+            self.created_by = int(self.created_by)
     template_id: str | None = None
     description: str | None = None
     status: str = "active"
@@ -49,7 +57,7 @@ class ProjectEntity:
 
 
     @property
-    def owner_id(self) -> str:
+    def owner_id(self) -> int:
         """Legacy response alias; ownership is managed by Project Member."""
         return self.created_by
 

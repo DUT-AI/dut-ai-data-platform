@@ -6,6 +6,7 @@ from modules.ontology.domain.interfaces import (
     IOntologyInputRepository,
     IOntologyOutputRepository,
     IOntologyRepository,
+    IOntologyTemplateSeederService,
     IOntologyVersionRepository,
     IOutputDefinitionRepository,
 )
@@ -62,6 +63,9 @@ from modules.ontology.use_cases import (
 )
 
 
+from modules.ontology.services.seeder import OntologyTemplateSeederService
+
+
 class OntologyProvider(Provider):
     scope = Scope.REQUEST
 
@@ -80,6 +84,9 @@ class OntologyProvider(Provider):
         SqlOntologyOutputRepository, provides=IOntologyOutputRepository
     )
     category_repo = provide(SqlCategoryRepository, provides=ICategoryRepository)
+    seeder = provide(
+        OntologyTemplateSeederService, provides=IOntologyTemplateSeederService
+    )
 
     create_ontology = provide(CreateOntologyUseCase)
     list_ontologies = provide(ListProjectOntologiesUseCase)

@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from loguru import logger
 
 from core.security.jwt import create_access_token
-from modules.identity.client.auth_client import AuthClient
+from modules.identity.domain.interfaces import IAuthClient
 from modules.identity.domain.interfaces import IUserLoginRepository
 from modules.identity.dtos.auth_dtos import LoginRequestDTO, TokenResponseDTO
 
@@ -13,7 +13,7 @@ class LoginUseCase:
 
     def __init__(
         self,
-        auth_client: AuthClient,
+        auth_client: IAuthClient,
         login_repo: IUserLoginRepository,
     ) -> None:
         self.auth_client = auth_client

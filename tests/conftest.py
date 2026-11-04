@@ -22,6 +22,7 @@ import modules.ontology.models
 import modules.project.models  # noqa: F401
 from apps.api.main import app
 from core.database.base import Base
+from core.events.outbox import IOutboxRepository, SqlOutboxRepository
 from core.storage.interface import IStorageProvider
 from modules.annotation.di import AnnotationProvider
 from modules.dataset.di import DatasetProvider
@@ -72,6 +73,10 @@ class TestDatabaseProvider(Provider):
                 await session.rollback()
                 raise
 
+    @provide(scope=Scope.REQUEST)
+    def get_outbox_repository(self, session: AsyncSession) -> IOutboxRepository | None:
+        return SqlOutboxRepository(session)
+
     @provide(scope=Scope.APP)
     def get_storage_provider(self) -> IStorageProvider:
         return InMemoryStorageProvider()
@@ -100,6 +105,16 @@ class InMemoryStorageProvider(IStorageProvider):
         self, bucket: str, key: str, content_type: str | None = None, expires: int = 3600
     ) -> str:
         return f"https://storage.test/upload/{bucket}/{key.lstrip('/')}?expires={expires}"
+
+    async def generate_presigned_download_url(
+        self, bucket: str, key: str, expires: int = 3600
+    ) -> str:
+        return await self.get_presigned_url(bucket, key, expires)
+
+    async def generate_presigned_upload_url(
+        self, bucket: str, key: str, content_type: str | None = None, expires: int = 3600
+    ) -> str:
+        return await self.get_presigned_upload_url(bucket, key, content_type, expires)
 
     async def delete(self, bucket: str, key: str) -> None:
         self.objects.pop((bucket, key), None)

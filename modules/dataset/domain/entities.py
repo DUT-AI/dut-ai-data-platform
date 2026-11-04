@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Literal
 
+from core.exceptions import InvariantViolationError
 from core.utils.id_generator import generate_ulid
 
 AssetStatus = Literal["READY", "RETIRED", "DELETED"]
@@ -22,10 +23,14 @@ class AssetEntity:
     data_format: str | None = None
     status: AssetStatus = "READY"
     provenance: dict[str, Any] | None = None
-    created_by: str | None = None
+    created_by: int | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
     retired_at: datetime | None = None
+
+    def __post_init__(self):
+        if isinstance(self.created_by, str) and self.created_by.isdigit():
+            self.created_by = int(self.created_by)
 
 
 @dataclass
@@ -51,11 +56,22 @@ class DatasetVersionEntity:
     version_config: dict[str, Any] | None = None
     manifest_hash: str | None = None
     asset_count: int = 0
-    created_by: str | None = None
+    created_by: int | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
     published_at: datetime | None = None
     assets: list[AssetEntity] = field(default_factory=list)
+
+    def __post_init__(self):
+        if isinstance(self.created_by, str) and self.created_by.isdigit():
+            self.created_by = int(self.created_by)
+
+    def assert_mutable(self) -> None:
+        """Domain Invariant: Published dataset versions are immutable."""
+        if self.status == "published":
+            raise InvariantViolationError(
+                f"DatasetVersion '{self.version}' ({self.id}) is published and immutable."
+            )
 
 
 @dataclass
@@ -67,8 +83,11 @@ class DatasetEntity:
     tags: list[str] = field(default_factory=list)
     status: DatasetStatus = "active"
     latest_published_version_number: int | None = None
-    created_by: str | None = None
+    created_by: int | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
     versions: list[DatasetVersionEntity] = field(default_factory=list)
 
+    def __post_init__(self):
+        if isinstance(self.created_by, str) and self.created_by.isdigit():
+            self.created_by = int(self.created_by)

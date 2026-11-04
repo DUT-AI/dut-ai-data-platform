@@ -1,7 +1,6 @@
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.events.outbox import IOutboxRepository, SqlOutboxRepository
 from modules.dataset.domain.interfaces import IDatasetRepository
 from modules.dataset.repository.dataset_repository import SqlDatasetRepository
 from modules.dataset.use_cases import (
@@ -34,10 +33,6 @@ class DatasetProvider(Provider):
     @provide
     def get_repository(self, session: AsyncSession) -> IDatasetRepository:
         return SqlDatasetRepository(session)
-
-    @provide
-    def get_outbox_repository(self, session: AsyncSession) -> IOutboxRepository | None:
-        return SqlOutboxRepository(session)
 
     create_dataset_uc = provide(CreateDatasetUseCase)
     update_dataset_uc = provide(UpdateDatasetUseCase)

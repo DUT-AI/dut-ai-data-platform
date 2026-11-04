@@ -4,7 +4,7 @@ import httpx
 from fastapi import HTTPException, status
 
 from core.config.auth import auth_settings
-from modules.identity.domain.entities import AuthUser, TokenResponse
+from modules.identity.dtos.auth_dtos import AuthUser, TokenResponse
 
 
 class AuthClient:

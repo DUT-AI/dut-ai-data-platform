@@ -1,5 +1,7 @@
 from modules.identity.dtos.auth_dtos import (
     AuthUserResponseDTO,
+    AuthUserDTO,
+    AuthUser,
     LoginRequestDTO,
     LoginResponseDTO,
     LogoutResponseDTO,
@@ -16,6 +18,8 @@ from modules.identity.dtos.user_dtos import (
 
 __all__ = [
     "AuthUserResponseDTO",
+    "AuthUserDTO",
+    "AuthUser",
     "LoginRequestDTO",
     "LoginResponseDTO",
     "LogoutResponseDTO",

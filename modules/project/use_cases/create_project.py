@@ -1,3 +1,5 @@
+from core.events.domain_event import ProjectCreatedEvent
+from core.events.outbox import IOutboxRepository
 from modules.project.domain.catalog_interfaces import IProjectCatalogRepository
 from modules.project.domain.entities import ProjectEntity, ProjectMemberEntity
 from modules.project.domain.events import IProjectEventPublisher, ProjectDomainEvent
@@ -14,14 +16,22 @@ class CreateProjectUseCase:
         repo: IProjectRepository,
         catalog_repo: IProjectCatalogRepository,
         event_publisher: IProjectEventPublisher,
+        outbox_repo: IOutboxRepository | None = None,
     ) -> None:
         self.repo = repo
         self.catalog_repo = catalog_repo
         self.event_publisher = event_publisher
+        self.outbox_repo = outbox_repo
 
     async def execute(
-        self, data: ProjectCreateDTO, owner_id: str
+        self, data: ProjectCreateDTO, owner_id: int | str
     ) -> ProjectResponseDTO:
+        parsed_owner_id = (
+            int(owner_id)
+            if isinstance(owner_id, int)
+            or (isinstance(owner_id, str) and str(owner_id).isdigit())
+            else 0
+        )
         template = None
         template_id = (
             data.template_id
@@ -38,12 +48,12 @@ class CreateProjectUseCase:
             name=data.name,
             description=data.description,
             template_id=template["id"] if template else template_id,
-            created_by=owner_id,
+            created_by=parsed_owner_id,
         )
         saved = await self.repo.save(project)
         owner_member = ProjectMemberEntity(
             project_id=saved.id,
-            user_id=owner_id,
+            user_id=parsed_owner_id,
             role="owner",
             status="active",
         )
@@ -58,6 +68,15 @@ class CreateProjectUseCase:
                 "settings_schema_version": "1.0",
             },
         )
+        if self.outbox_repo:
+            await self.outbox_repo.save_event(
+                ProjectCreatedEvent(
+                    project_id=saved.id,
+                    name=saved.name,
+                    owner_id=parsed_owner_id,
+                    template_id=saved.template_id,
+                )
+            )
         await self.event_publisher.publish(
             ProjectDomainEvent(
                 event_type="ProjectCreated",

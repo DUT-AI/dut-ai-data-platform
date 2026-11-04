@@ -40,3 +40,29 @@ class ForbiddenException(DomainException):
 
     def __init__(self, message: str = "Permission denied") -> None:
         super().__init__(message, status_code=403)
+
+
+# Standard Clean Architecture & SOLID aliases and typed exceptions
+DomainError = DomainException
+EntityNotFoundError = NotFoundException
+
+
+class InvariantViolationError(DomainException):
+    """Domain business invariant violation."""
+
+    def __init__(self, message: str = "Domain invariant violation") -> None:
+        super().__init__(message, status_code=422)
+
+
+class StorageError(DomainException):
+    """Base infrastructure storage failure."""
+
+    def __init__(self, message: str = "Storage operation failed") -> None:
+        super().__init__(message, status_code=500)
+
+
+class StorageUploadError(StorageError):
+    """Storage upload failure."""
+
+    def __init__(self, message: str = "Failed to upload file to storage") -> None:
+        super().__init__(message)

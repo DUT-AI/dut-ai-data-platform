@@ -40,7 +40,7 @@ class SqlAnnotationRepository(IAnnotationRepository):
             target_type=annotation.target_type,
             target_selector=annotation.target_selector,
             ontology_version_id=annotation.ontology_version_id,
-            created_by=annotation.created_by,
+            created_by=str(annotation.created_by),
         )
         self.session.add(model)
         await self.session.flush()
@@ -95,23 +95,12 @@ class SqlAnnotationRepository(IAnnotationRepository):
     async def create_revision(
         self, revision: AnnotationRevisionEntity
     ) -> AnnotationRevisionEntity:
-        count_stmt = select(AnnotationRevisionModel).where(
-            AnnotationRevisionModel.annotation_id == revision.annotation_id
-        )
-        res = await self.session.execute(count_stmt)
-        existing_revs = res.scalars().all()
-        next_rev_num = (
-            max([r.revision_number for r in existing_revs], default=0) + 1
-            if existing_revs
-            else revision.revision_number or 1
-        )
-
         rev_model = AnnotationRevisionModel(
             id=revision.id or generate_ulid(),
             annotation_id=revision.annotation_id,
-            revision_number=next_rev_num,
+            revision_number=revision.revision_number or 1,
             ontology_version_id=revision.ontology_version_id,
-            created_by=revision.created_by,
+            created_by=str(revision.created_by),
             source=revision.source,
             results=revision.results,
             category_ids=revision.category_ids,

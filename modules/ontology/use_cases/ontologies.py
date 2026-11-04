@@ -18,6 +18,7 @@ from modules.ontology.domain.interfaces import (
     IOntologyInputRepository,
     IOntologyOutputRepository,
     IOntologyRepository,
+    IOntologyTemplateSeederService,
     IOntologyVersionRepository,
     IOutputDefinitionRepository,
 )
@@ -190,27 +191,17 @@ async def seed_ontology_from_template(
 
 
 class CreateOntologyUseCase:
+    """Creates a new project ontology and draft version with optional template seeding."""
+
     def __init__(
         self,
         repo: IOntologyRepository,
         versions: IOntologyVersionRepository,
-        project_repo: IProjectRepository,
-        catalog_repo: IProjectCatalogRepository,
-        input_def_repo: IInputDefinitionRepository,
-        output_def_repo: IOutputDefinitionRepository,
-        input_repo: IOntologyInputRepository,
-        output_repo: IOntologyOutputRepository,
-        category_repo: ICategoryRepository,
+        seeder: IOntologyTemplateSeederService | None = None,
     ) -> None:
         self.repo = repo
         self.versions = versions
-        self.project_repo = project_repo
-        self.catalog_repo = catalog_repo
-        self.input_def_repo = input_def_repo
-        self.output_def_repo = output_def_repo
-        self.input_repo = input_repo
-        self.output_repo = output_repo
-        self.category_repo = category_repo
+        self.seeder = seeder
 
     async def execute(
         self, project_id: str, data: OntologyCreateDTO
@@ -227,19 +218,12 @@ class CreateOntologyUseCase:
             )
         )
         ontology.versions = [draft]
-        await seed_ontology_from_template(
-            project_id=project_id,
-            ontology=ontology,
-            draft=draft,
-            project_repo=self.project_repo,
-            catalog_repo=self.catalog_repo,
-            input_def_repo=self.input_def_repo,
-            output_def_repo=self.output_def_repo,
-            input_repo=self.input_repo,
-            output_repo=self.output_repo,
-            category_repo=self.category_repo,
-            version_repo=self.versions,
-        )
+        if self.seeder:
+            await self.seeder.seed_from_project_template(
+                project_id=project_id,
+                ontology=ontology,
+                draft_version=draft,
+            )
         updated = await self.repo.get_by_project(project_id)
         if updated:
             ontology = updated
@@ -247,27 +231,17 @@ class CreateOntologyUseCase:
 
 
 class GetProjectOntologyUseCase:
+    """Retrieves or provisions the default project ontology with optional template seeding."""
+
     def __init__(
         self,
         repo: IOntologyRepository,
         versions: IOntologyVersionRepository,
-        project_repo: IProjectRepository,
-        catalog_repo: IProjectCatalogRepository,
-        input_def_repo: IInputDefinitionRepository,
-        output_def_repo: IOutputDefinitionRepository,
-        input_repo: IOntologyInputRepository,
-        output_repo: IOntologyOutputRepository,
-        category_repo: ICategoryRepository,
+        seeder: IOntologyTemplateSeederService | None = None,
     ) -> None:
         self.repo = repo
         self.versions = versions
-        self.project_repo = project_repo
-        self.catalog_repo = catalog_repo
-        self.input_def_repo = input_def_repo
-        self.output_def_repo = output_def_repo
-        self.input_repo = input_repo
-        self.output_repo = output_repo
-        self.category_repo = category_repo
+        self.seeder = seeder
 
     async def execute(self, project_id: str) -> OntologyResponseDTO:
         ontology = await self.repo.get_by_project(project_id)
@@ -285,19 +259,11 @@ class GetProjectOntologyUseCase:
 
         # If draft has no outputs, auto-seed from project template if available
         draft = next((v for v in ontology.versions if v.status == "draft"), None)
-        if draft and not draft.outputs:
-            await seed_ontology_from_template(
+        if draft and not draft.outputs and self.seeder:
+            await self.seeder.seed_from_project_template(
                 project_id=project_id,
                 ontology=ontology,
-                draft=draft,
-                project_repo=self.project_repo,
-                catalog_repo=self.catalog_repo,
-                input_def_repo=self.input_def_repo,
-                output_def_repo=self.output_def_repo,
-                input_repo=self.input_repo,
-                output_repo=self.output_repo,
-                category_repo=self.category_repo,
-                version_repo=self.versions,
+                draft_version=draft,
             )
             updated = await self.repo.get_by_project(project_id)
             if updated:

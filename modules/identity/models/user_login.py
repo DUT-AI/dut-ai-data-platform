@@ -21,7 +21,7 @@ class UserLoginMetadataModel(Base, TimestampMixin):
 
     def to_entity(self) -> UserLoginMetadataEntity:
         return UserLoginMetadataEntity(
-            user_id=self.user_id,
+            user_id=int(self.user_id) if str(self.user_id).isdigit() else self.user_id,
             last_login_at=self.last_login_at,
             created_at=self.created_at,
             updated_at=self.updated_at,
@@ -30,7 +30,7 @@ class UserLoginMetadataModel(Base, TimestampMixin):
     @classmethod
     def from_entity(cls, entity: UserLoginMetadataEntity) -> "UserLoginMetadataModel":
         return cls(
-            user_id=entity.user_id,
+            user_id=str(entity.user_id),
             last_login_at=entity.last_login_at,
             created_at=entity.created_at or datetime.now(UTC),
             updated_at=entity.updated_at or datetime.now(UTC),

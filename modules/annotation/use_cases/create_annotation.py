@@ -24,7 +24,7 @@ class CreateAnnotationUseCase:
         self.onto_repo = onto_repo
 
     async def execute(
-        self, payload: AnnotationCreateDTO, created_by: str
+        self, payload: AnnotationCreateDTO, created_by: int | str
     ) -> AnnotationResponseDTO:
         ontology_ver = await self.onto_repo.get_version_by_id(
             payload.ontology_version_id
@@ -54,15 +54,12 @@ class CreateAnnotationUseCase:
             )
             annotation = await self.anno_repo.save_annotation(annotation)
 
-        revision = AnnotationRevisionEntity(
-            id=generate_ulid(),
-            annotation_id=annotation.id,
-            revision_number=1,
-            ontology_version_id=payload.ontology_version_id,
-            created_by=created_by,
+        revision = annotation.add_revision(
             source=payload.source,
             results=payload.results,
             category_ids=extracted_cat_ids,
+            created_by=created_by,
+            ontology_version_id=payload.ontology_version_id,
         )
         created_rev = await self.anno_repo.create_revision(revision)
 

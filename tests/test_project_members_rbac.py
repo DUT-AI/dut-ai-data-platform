@@ -84,11 +84,11 @@ async def test_owner_can_invite_and_update_member_role():
         # Mời Annotator
         add_res = await client.post(
             f"/api/v1/projects/{project_id}/members",
-            json={"user_id": str(ANNOTATOR_USER.id), "role": "annotator"},
+            json={"user_id": ANNOTATOR_USER.id, "role": "annotator"},
         )
         assert add_res.status_code == 201
         assert add_res.json()["role"] == "annotator"
-        assert add_res.json()["user_id"] == str(ANNOTATOR_USER.id)
+        assert add_res.json()["user_id"] == ANNOTATOR_USER.id
 
         # Đổi role của Annotator -> Reviewer
         update_res = await client.put(
@@ -110,17 +110,17 @@ async def test_admin_can_invite_member():
         # Owner mời Admin trước
         await client.post(
             f"/api/v1/projects/{project_id}/members",
-            json={"user_id": str(ADMIN_USER.id), "role": "admin"},
+            json={"user_id": ADMIN_USER.id, "role": "admin"},
         )
 
         # Đổi auth thành Admin, Admin mời Annotator
         app.dependency_overrides[get_current_user] = make_auth_override(ADMIN_USER)
         add_res = await client.post(
             f"/api/v1/projects/{project_id}/members",
-            json={"user_id": str(ANNOTATOR_USER.id), "role": "annotator"},
+            json={"user_id": ANNOTATOR_USER.id, "role": "annotator"},
         )
         assert add_res.status_code == 201
-        assert add_res.json()["user_id"] == str(ANNOTATOR_USER.id)
+        assert add_res.json()["user_id"] == ANNOTATOR_USER.id
 
 
 # ─── Test 3: Annotator KHÔNG được mời hoặc xóa thành viên ──────────────────
@@ -134,7 +134,7 @@ async def test_annotator_cannot_add_or_remove_member():
         # Owner mời Annotator trước
         await client.post(
             f"/api/v1/projects/{project_id}/members",
-            json={"user_id": str(ANNOTATOR_USER.id), "role": "annotator"},
+            json={"user_id": ANNOTATOR_USER.id, "role": "annotator"},
         )
 
         # Đổi auth thành Annotator
@@ -143,7 +143,7 @@ async def test_annotator_cannot_add_or_remove_member():
         # Annotator cố mời thêm người -> 403
         invite_res = await client.post(
             f"/api/v1/projects/{project_id}/members",
-            json={"user_id": "999", "role": "annotator"},
+            json={"user_id": 999, "role": "annotator"},
         )
         assert invite_res.status_code == 403
 
@@ -165,7 +165,7 @@ async def test_reviewer_cannot_add_or_remove_member():
         # Owner mời Reviewer trước
         await client.post(
             f"/api/v1/projects/{project_id}/members",
-            json={"user_id": str(REVIEWER_USER.id), "role": "reviewer"},
+            json={"user_id": REVIEWER_USER.id, "role": "reviewer"},
         )
 
         # Đổi auth thành Reviewer
@@ -174,7 +174,7 @@ async def test_reviewer_cannot_add_or_remove_member():
         # Reviewer cố mời thêm người -> 403
         invite_res = await client.post(
             f"/api/v1/projects/{project_id}/members",
-            json={"user_id": "999", "role": "annotator"},
+            json={"user_id": 999, "role": "annotator"},
         )
         assert invite_res.status_code == 403
 
@@ -210,13 +210,13 @@ async def test_cannot_add_duplicate_member():
         # Mời Annotator lần đầu -> thành công
         await client.post(
             f"/api/v1/projects/{project_id}/members",
-            json={"user_id": str(ANNOTATOR_USER.id), "role": "annotator"},
+            json={"user_id": ANNOTATOR_USER.id, "role": "annotator"},
         )
 
         # Mời cùng user lần 2 -> 409
         dup_res = await client.post(
             f"/api/v1/projects/{project_id}/members",
-            json={"user_id": str(ANNOTATOR_USER.id), "role": "reviewer"},
+            json={"user_id": ANNOTATOR_USER.id, "role": "reviewer"},
         )
         assert dup_res.status_code == 409
 
@@ -232,7 +232,7 @@ async def test_all_roles_can_list_members():
         # Owner mời Annotator
         await client.post(
             f"/api/v1/projects/{project_id}/members",
-            json={"user_id": str(ANNOTATOR_USER.id), "role": "annotator"},
+            json={"user_id": ANNOTATOR_USER.id, "role": "annotator"},
         )
 
         # Đổi auth thành Annotator, vẫn xem được danh sách
@@ -243,32 +243,31 @@ async def test_all_roles_can_list_members():
         assert len(members) >= 2  # Owner + Annotator
 
 
-# ─── Test 8: Cập nhật và Xóa theo member.id (thay vì user_id) ───────────────
+# ─── Test 8: Cập nhật và Xóa theo user_id ──────────────────────────────────
 @pytest.mark.asyncio
 async def test_remove_and_update_by_member_id():
-    """Hỗ trợ cập nhật role và xóa member bằng member_id (UUID/ULID) hoặc user_id."""
+    """Hỗ trợ cập nhật role và xóa member bằng user_id: int."""
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         project_id = await create_test_project(client)
 
         add_res = await client.post(
             f"/api/v1/projects/{project_id}/members",
-            json={"user_id": str(ANNOTATOR_USER.id), "role": "annotator"},
+            json={"user_id": ANNOTATOR_USER.id, "role": "annotator"},
         )
         assert add_res.status_code == 201
-        member_id = add_res.json()["id"]
 
-        # Cập nhật bằng member_id
+        # Cập nhật bằng user_id: int
         update_res = await client.put(
-            f"/api/v1/projects/{project_id}/members/{member_id}",
+            f"/api/v1/projects/{project_id}/members/{ANNOTATOR_USER.id}",
             json={"role": "reviewer"},
         )
         assert update_res.status_code == 200
         assert update_res.json()["role"] == "reviewer"
 
-        # Xóa bằng member_id
+        # Xóa bằng user_id: int
         del_res = await client.delete(
-            f"/api/v1/projects/{project_id}/members/{member_id}"
+            f"/api/v1/projects/{project_id}/members/{ANNOTATOR_USER.id}"
         )
         assert del_res.status_code == 204
 

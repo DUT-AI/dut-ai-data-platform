@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 import httpx
@@ -15,9 +16,42 @@ class ManageClient:
 
     def __init__(
         self,
+        client: httpx.AsyncClient | None = None,
         timeout: float = 10.0,
-    ):
+    ) -> None:
         self.timeout = timeout
+        self._client = client
+        try:
+            self._client_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            self._client_loop = None
+
+    @property
+    def client(self) -> httpx.AsyncClient:
+        current_loop = None
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            pass
+
+        if (
+            self._client is None
+            or self._client.is_closed
+            or (
+                current_loop is not None
+                and self._client_loop is not None
+                and self._client_loop != current_loop
+            )
+            or (self._client_loop is not None and self._client_loop.is_closed())
+        ):
+            limits = httpx.Limits(
+                max_keepalive_connections=20,
+                max_connections=100,
+                keepalive_expiry=30.0,
+            )
+            self._client = httpx.AsyncClient(limits=limits, timeout=self.timeout)
+            self._client_loop = current_loop
+        return self._client
 
     @staticmethod
     def _parse_user(item: dict[str, Any]) -> ManageUserDTO:
@@ -50,57 +84,54 @@ class ManageClient:
             params["search"] = search
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(
-                    manage_settings.users_url, headers=headers, params=params
+            response = await self.client.get(
+                manage_settings.users_url, headers=headers, params=params
+            )
+            if response.status_code == 401:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Phiên đăng nhập hết hạn hoặc không có quyền truy cập Manage API.",
                 )
-                if response.status_code == 401:
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="Phiên đăng nhập hết hạn hoặc không có quyền truy cập Manage API.",
-                    )
-                response.raise_for_status()
+            response.raise_for_status()
 
-                payload: dict[str, Any] = response.json()
-                if (
-                    payload.get("is_success") is False
-                    or "data" not in payload
-                    or payload.get("data") is None
-                ):
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=payload.get(
-                            "message", "Lỗi lấy danh sách người dùng từ Manage API"
-                        ),
-                    )
+            payload: dict[str, Any] = response.json()
+            if (
+                payload.get("is_success") is False
+                or "data" not in payload
+                or payload.get("data") is None
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=payload.get(
+                        "message", "Lỗi lấy danh sách người dùng từ Manage API"
+                    ),
+                )
 
-                data: list[dict[str, Any]] = payload.get("data", [])
-                items: list[ManageUserDTO] = []
-                total = 0
+            data: list[dict[str, Any]] = payload.get("data", [])
+            items: list[ManageUserDTO] = []
+            total = 0
 
+            all_items = [
+                self._parse_user(item) for item in data if isinstance(item, dict)
+            ]
+
+            # In-memory search fallback if Manage server didn't filter
+            if search and search.strip():
+                s = search.strip().lower()
                 all_items = [
-                    self._parse_user(item) for item in data if isinstance(item, dict)
+                    u for u in all_items if s in u.name.lower() or s in u.email.lower()
                 ]
 
-                # In-memory search fallback if Manage server didn't filter
-                if search and search.strip():
-                    s = search.strip().lower()
-                    all_items = [
-                        u
-                        for u in all_items
-                        if s in u.name.lower() or s in u.email.lower()
-                    ]
+            total = len(all_items)
+            start_idx = (page - 1) * page_size
+            items = all_items[start_idx : start_idx + page_size]
 
-                total = len(all_items)
-                start_idx = (page - 1) * page_size
-                items = all_items[start_idx : start_idx + page_size]
-
-                return ManageUsersResponseDTO(
-                    items=items,
-                    total=total,
-                    page=page,
-                    page_size=page_size,
-                )
+            return ManageUsersResponseDTO(
+                items=items,
+                total=total,
+                page=page,
+                page_size=page_size,
+            )
         except httpx.ConnectError as exc:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,

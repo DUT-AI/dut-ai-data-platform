@@ -3,7 +3,11 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from core.exceptions import BadRequestException
-from modules.dataset.domain.entities import AssetEntity, DatasetEntity, DatasetVersionEntity
+from modules.dataset.domain.entities import (
+    AssetEntity,
+    DatasetEntity,
+    DatasetVersionEntity,
+)
 from modules.dataset.domain.policies import AssetDeletionPolicy, DatasetVersionPolicy
 from modules.dataset.dtos.dataset_dtos import (
     AssetResponseDTO,
@@ -39,16 +43,16 @@ def test_dataset_entity_phase1_fields():
         tags=["vision", "coco"],
         status="active",
         latest_published_version_number=1,
-        created_by="user_456",
+        created_by=456,
     )
     assert dataset.tags == ["vision", "coco"]
     assert dataset.latest_published_version_number == 1
-    assert dataset.created_by == "user_456"
+    assert dataset.created_by == 456
 
     dto = DatasetResponseDTO.model_validate(dataset)
     assert dto.tags == ["vision", "coco"]
     assert dto.latest_published_version_number == 1
-    assert dto.created_by == "user_456"
+    assert dto.created_by == 456
 
 
 def test_dataset_version_entity_phase1_fields():
@@ -61,18 +65,19 @@ def test_dataset_version_entity_phase1_fields():
         status="draft",
         version_config={"split": [0.8, 0.2]},
         manifest_hash="a1b2c3d4e5f6",
-        created_by="user_456",
+        created_by=456,
     )
     assert version.version_number == 1
     assert version.version_label == "v1.0.0"
     assert version.version_config == {"split": [0.8, 0.2]}
     assert version.manifest_hash == "a1b2c3d4e5f6"
-    assert version.created_by == "user_456"
+    assert version.created_by == 456
 
     dto = DatasetVersionResponseDTO.model_validate(version)
     assert dto.version_number == 1
     assert dto.version_config == {"split": [0.8, 0.2]}
     assert dto.manifest_hash == "a1b2c3d4e5f6"
+    assert dto.created_by == 456
 
 
 def test_asset_entity_phase1_fields():
@@ -86,17 +91,18 @@ def test_asset_entity_phase1_fields():
         data_format="JPEG",
         status="READY",
         provenance={"source": "camera_1"},
-        created_by="user_456",
+        created_by=456,
     )
     assert asset.data_format == "JPEG"
     assert asset.status == "READY"
     assert asset.provenance == {"source": "camera_1"}
-    assert asset.created_by == "user_456"
+    assert asset.created_by == 456
 
     dto = AssetResponseDTO.model_validate(asset)
     assert dto.data_format == "JPEG"
     assert dto.status == "READY"
     assert dto.provenance == {"source": "camera_1"}
+    assert dto.created_by == 456
 
 
 # ============================================================================
@@ -109,7 +115,9 @@ async def test_prepare_asset_upload_use_case_success():
     repo = MagicMock()
     storage = MagicMock()
 
-    mock_version = DatasetVersionEntity(dataset_id="ds_123", version="v1.0.0", status="draft")
+    mock_version = DatasetVersionEntity(
+        dataset_id="ds_123", version="v1.0.0", status="draft"
+    )
     mock_dataset = DatasetEntity(project_id="proj_456", name="Test DS")
 
     repo.get_version_by_id = AsyncMock(return_value=mock_version)
@@ -138,7 +146,9 @@ async def test_prepare_asset_upload_published_version_fails():
     repo = MagicMock()
     storage = MagicMock()
 
-    mock_version = DatasetVersionEntity(dataset_id="ds_123", version="v1.0.0", status="published")
+    mock_version = DatasetVersionEntity(
+        dataset_id="ds_123", version="v1.0.0", status="published"
+    )
     repo.get_version_by_id = AsyncMock(return_value=mock_version)
 
     use_case = PrepareAssetUploadUseCase(repo=repo, storage_provider=storage)
@@ -157,7 +167,9 @@ async def test_finalize_asset_import_use_case_success():
     repo = MagicMock()
     storage = MagicMock()
 
-    mock_version = DatasetVersionEntity(dataset_id="ds_123", version="v1.0.0", status="draft")
+    mock_version = DatasetVersionEntity(
+        dataset_id="ds_123", version="v1.0.0", status="draft"
+    )
     mock_dataset = DatasetEntity(project_id="proj_456", name="Test DS")
 
     repo.get_version_by_id = AsyncMock(return_value=mock_version)
@@ -165,7 +177,6 @@ async def test_finalize_asset_import_use_case_success():
     repo.find_asset_by_sha256 = AsyncMock(return_value=None)
     repo.save_asset = AsyncMock(side_effect=lambda a: a)
     repo.add_asset_to_version = AsyncMock()
-
 
     use_case = FinalizeAssetImportUseCase(repo=repo, storage_provider=storage)
     payload = FinalizeAssetImportRequestDTO(
@@ -182,7 +193,7 @@ async def test_finalize_asset_import_use_case_success():
         ]
     )
 
-    res = await use_case.execute("ver_789", payload, created_by="user_101")
+    res = await use_case.execute("ver_789", payload, created_by=101)
 
     assert len(res.imported_assets) == 1
     asset = res.imported_assets[0]
@@ -202,8 +213,12 @@ async def test_finalize_asset_import_use_case_success():
 
 
 def test_dataset_version_policy_ensure_can_modify_draft():
-    draft_ver = DatasetVersionEntity(dataset_id="ds_1", version="v1.0.0", status="draft")
-    pub_ver = DatasetVersionEntity(dataset_id="ds_1", version="v1.0.0", status="published")
+    draft_ver = DatasetVersionEntity(
+        dataset_id="ds_1", version="v1.0.0", status="draft"
+    )
+    pub_ver = DatasetVersionEntity(
+        dataset_id="ds_1", version="v1.0.0", status="published"
+    )
 
     DatasetVersionPolicy.ensure_can_modify_draft(draft_ver)
 
@@ -214,10 +229,16 @@ def test_dataset_version_policy_ensure_can_modify_draft():
 
 def test_dataset_version_policy_ensure_can_publish():
     active_dataset = DatasetEntity(project_id="p1", name="Active DS", status="active")
-    archived_dataset = DatasetEntity(project_id="p1", name="Archived DS", status="archived")
+    archived_dataset = DatasetEntity(
+        project_id="p1", name="Archived DS", status="archived"
+    )
 
-    draft_ver = DatasetVersionEntity(dataset_id="ds_1", version="v1.0.0", status="draft")
-    pub_ver = DatasetVersionEntity(dataset_id="ds_1", version="v1.0.0", status="published")
+    draft_ver = DatasetVersionEntity(
+        dataset_id="ds_1", version="v1.0.0", status="draft"
+    )
+    pub_ver = DatasetVersionEntity(
+        dataset_id="ds_1", version="v1.0.0", status="published"
+    )
 
     DatasetVersionPolicy.ensure_can_publish(active_dataset, draft_ver)
 
@@ -233,12 +254,32 @@ def test_dataset_version_policy_ensure_can_publish():
 def test_dataset_version_policy_compute_manifest_hash():
     version = DatasetVersionEntity(id="ver_001", dataset_id="ds_1", version="v1.0.0")
     assets = [
-        AssetEntity(id="ast_002", project_id="p1", filename="b.jpg", uri="/b", mime_type="image/jpeg", file_size=200, sha256="hash2"),
-        AssetEntity(id="ast_001", project_id="p1", filename="a.jpg", uri="/a", mime_type="image/jpeg", file_size=100, sha256="hash1"),
+        AssetEntity(
+            id="ast_002",
+            project_id="p1",
+            filename="b.jpg",
+            uri="/b",
+            mime_type="image/jpeg",
+            file_size=200,
+            sha256="hash2",
+        ),
+        AssetEntity(
+            id="ast_001",
+            project_id="p1",
+            filename="a.jpg",
+            uri="/a",
+            mime_type="image/jpeg",
+            file_size=100,
+            sha256="hash1",
+        ),
     ]
 
-    hash1 = DatasetVersionPolicy.compute_manifest_hash(version, assets, {"split": "train"})
-    hash2 = DatasetVersionPolicy.compute_manifest_hash(version, list(reversed(assets)), {"split": "train"})
+    hash1 = DatasetVersionPolicy.compute_manifest_hash(
+        version, assets, {"split": "train"}
+    )
+    hash2 = DatasetVersionPolicy.compute_manifest_hash(
+        version, list(reversed(assets)), {"split": "train"}
+    )
 
     assert len(hash1) == 64
     assert hash1 == hash2
@@ -248,10 +289,30 @@ def test_dataset_version_policy_compute_manifest_hash():
 async def test_publish_dataset_version_use_case_success():
     repo = MagicMock()
 
-    mock_version = DatasetVersionEntity(id="ver_001", dataset_id="ds_123", version="v1.0.0", version_number=1, status="draft")
-    mock_dataset = DatasetEntity(id="ds_123", project_id="proj_456", name="Test DS", status="active", latest_published_version_number=0)
+    mock_version = DatasetVersionEntity(
+        id="ver_001",
+        dataset_id="ds_123",
+        version="v1.0.0",
+        version_number=1,
+        status="draft",
+    )
+    mock_dataset = DatasetEntity(
+        id="ds_123",
+        project_id="proj_456",
+        name="Test DS",
+        status="active",
+        latest_published_version_number=0,
+    )
     mock_assets = [
-        AssetEntity(id="ast_001", project_id="proj_456", filename="file1.png", uri="/f1", mime_type="image/png", file_size=500, sha256="hash_a")
+        AssetEntity(
+            id="ast_001",
+            project_id="proj_456",
+            filename="file1.png",
+            uri="/f1",
+            mime_type="image/png",
+            file_size=500,
+            sha256="hash_a",
+        )
     ]
 
     repo.get_version_by_id = AsyncMock(return_value=mock_version)
@@ -275,13 +336,25 @@ async def test_publish_dataset_version_use_case_success():
 @pytest.mark.asyncio
 async def test_list_version_assets_cursor_use_case():
     repo = MagicMock()
-    mock_version = DatasetVersionEntity(id="ver_001", dataset_id="ds_123", version="v1.0.0")
+    mock_version = DatasetVersionEntity(
+        id="ver_001", dataset_id="ds_123", version="v1.0.0"
+    )
     mock_assets = [
-        AssetEntity(id="ast_002", project_id="p1", filename="img2.png", uri="/img2", mime_type="image/png", file_size=100, sha256="h2")
+        AssetEntity(
+            id="ast_002",
+            project_id="p1",
+            filename="img2.png",
+            uri="/img2",
+            mime_type="image/png",
+            file_size=100,
+            sha256="h2",
+        )
     ]
 
     repo.get_version_by_id = AsyncMock(return_value=mock_version)
-    repo.list_assets_by_version_cursor = AsyncMock(return_value=(mock_assets, "ast_002"))
+    repo.list_assets_by_version_cursor = AsyncMock(
+        return_value=(mock_assets, "ast_002")
+    )
 
     use_case = ListVersionAssetsCursorUseCase(repo=repo)
     res = await use_case.execute("ver_001", limit=1, cursor_id="ast_001")
@@ -289,7 +362,9 @@ async def test_list_version_assets_cursor_use_case():
     assert len(res.items) == 1
     assert res.items[0].id == "ast_002"
     assert res.next_cursor == "ast_002"
-    repo.list_assets_by_version_cursor.assert_called_once_with("ver_001", limit=1, cursor_id="ast_001")
+    repo.list_assets_by_version_cursor.assert_called_once_with(
+        "ver_001", limit=1, cursor_id="ast_001"
+    )
 
 
 # ============================================================================
@@ -300,7 +375,9 @@ async def test_list_version_assets_cursor_use_case():
 @pytest.mark.asyncio
 async def test_archive_dataset_use_case_success():
     repo = MagicMock()
-    mock_dataset = DatasetEntity(id="ds_123", project_id="p1", name="Active DS", status="active")
+    mock_dataset = DatasetEntity(
+        id="ds_123", project_id="p1", name="Active DS", status="active"
+    )
 
     repo.get_dataset_by_id = AsyncMock(return_value=mock_dataset)
     repo.save_dataset = AsyncMock(side_effect=lambda d: d)
@@ -315,7 +392,9 @@ async def test_archive_dataset_use_case_success():
 @pytest.mark.asyncio
 async def test_create_version_on_archived_dataset_fails():
     repo = MagicMock()
-    mock_dataset = DatasetEntity(id="ds_123", project_id="p1", name="Archived DS", status="archived")
+    mock_dataset = DatasetEntity(
+        id="ds_123", project_id="p1", name="Archived DS", status="archived"
+    )
 
     repo.get_dataset_by_id = AsyncMock(return_value=mock_dataset)
 
@@ -325,13 +404,24 @@ async def test_create_version_on_archived_dataset_fails():
     with pytest.raises(BadRequestException) as exc_info:
         await use_case.execute("ds_123", payload)
 
-    assert "Cannot create version for dataset 'ds_123' with status 'archived'" in str(exc_info.value)
+    assert "Cannot create version for dataset 'ds_123' with status 'archived'" in str(
+        exc_info.value
+    )
 
 
 @pytest.mark.asyncio
 async def test_retire_asset_with_linked_versions_fails():
     repo = MagicMock()
-    mock_asset = AssetEntity(id="ast_001", project_id="p1", filename="f1.png", uri="/f1", mime_type="image/png", file_size=100, sha256="h1", status="READY")
+    mock_asset = AssetEntity(
+        id="ast_001",
+        project_id="p1",
+        filename="f1.png",
+        uri="/f1",
+        mime_type="image/png",
+        file_size=100,
+        sha256="h1",
+        status="READY",
+    )
 
     repo.get_asset_by_id = AsyncMock(return_value=mock_asset)
     repo.count_active_version_links_by_asset = AsyncMock(return_value=2)
@@ -347,7 +437,16 @@ async def test_retire_asset_with_linked_versions_fails():
 @pytest.mark.asyncio
 async def test_retire_unlinked_asset_success():
     repo = MagicMock()
-    mock_asset = AssetEntity(id="ast_002", project_id="p1", filename="f2.png", uri="/f2", mime_type="image/png", file_size=100, sha256="h2", status="READY")
+    mock_asset = AssetEntity(
+        id="ast_002",
+        project_id="p1",
+        filename="f2.png",
+        uri="/f2",
+        mime_type="image/png",
+        file_size=100,
+        sha256="h2",
+        status="READY",
+    )
 
     repo.get_asset_by_id = AsyncMock(return_value=mock_asset)
     repo.count_active_version_links_by_asset = AsyncMock(return_value=0)
@@ -380,7 +479,7 @@ async def test_create_dataset_emits_outbox_event():
         project_id="proj_456",
         name="Outbox Dataset",
         status="active",
-        created_by="user_789",
+        created_by=789,
     )
     repo.save_dataset = AsyncMock(return_value=mock_saved)
     repo.save_version = AsyncMock(side_effect=lambda v: v)
@@ -518,9 +617,7 @@ async def test_finalize_asset_import_deduplicates_by_sha256():
     repo.find_asset_by_sha256 = AsyncMock(return_value=existing_asset)
     repo.add_asset_to_version = AsyncMock()
 
-    use_case = FinalizeAssetImportUseCase(
-        repo=repo, storage_provider=storage_provider
-    )
+    use_case = FinalizeAssetImportUseCase(repo=repo, storage_provider=storage_provider)
 
     payload = FinalizeAssetImportRequestDTO(
         items=[
@@ -541,7 +638,6 @@ async def test_finalize_asset_import_deduplicates_by_sha256():
     assert res.reused_assets_count == 1
     assert res.new_assets_count == 0
     repo.add_asset_to_version.assert_called_once_with("ver_111", "existing_001")
-
 
 
 @pytest.mark.asyncio
@@ -638,18 +734,28 @@ async def test_inherit_dataset_version_empty_target_success():
 
     repo = AsyncMock()
 
-    target_ver = MagicMock(id="ver_target", dataset_id="ds_100", status="draft", asset_count=2)
-    source_ver = MagicMock(id="ver_source", dataset_id="ds_100", status="published", asset_count=2)
+    target_ver = MagicMock(
+        id="ver_target", dataset_id="ds_100", status="draft", asset_count=2
+    )
+    source_ver = MagicMock(
+        id="ver_source", dataset_id="ds_100", status="published", asset_count=2
+    )
 
-    repo.get_version_by_id = AsyncMock(side_effect=lambda vid: target_ver if vid == "ver_target" else source_ver)
+    repo.get_version_by_id = AsyncMock(
+        side_effect=lambda vid: target_ver if vid == "ver_target" else source_ver
+    )
 
     ast1 = MagicMock(id="ast_01")
     ast2 = MagicMock(id="ast_02")
-    repo.get_all_assets_by_version = AsyncMock(side_effect=lambda vid: [ast1, ast2] if vid == "ver_source" else [])
+    repo.get_all_assets_by_version = AsyncMock(
+        side_effect=lambda vid: [ast1, ast2] if vid == "ver_source" else []
+    )
     repo.add_asset_to_version = AsyncMock()
 
     use_case = InheritDatasetVersionUseCase(repo=repo)
-    res = await use_case.execute("ver_target", InheritDatasetVersionRequestDTO(source_version_id="ver_source"))
+    res = await use_case.execute(
+        "ver_target", InheritDatasetVersionRequestDTO(source_version_id="ver_source")
+    )
 
     assert res.added_assets_count == 2
     assert res.reused_assets_count == 0
@@ -663,10 +769,16 @@ async def test_inherit_dataset_version_non_empty_target_deduplicates():
 
     repo = AsyncMock()
 
-    target_ver = MagicMock(id="ver_target", dataset_id="ds_100", status="draft", asset_count=3)
-    source_ver = MagicMock(id="ver_source", dataset_id="ds_100", status="published", asset_count=3)
+    target_ver = MagicMock(
+        id="ver_target", dataset_id="ds_100", status="draft", asset_count=3
+    )
+    source_ver = MagicMock(
+        id="ver_source", dataset_id="ds_100", status="published", asset_count=3
+    )
 
-    repo.get_version_by_id = AsyncMock(side_effect=lambda vid: target_ver if vid == "ver_target" else source_ver)
+    repo.get_version_by_id = AsyncMock(
+        side_effect=lambda vid: target_ver if vid == "ver_target" else source_ver
+    )
 
     ast1 = MagicMock(id="ast_01")
     ast2 = MagicMock(id="ast_02")
@@ -674,12 +786,16 @@ async def test_inherit_dataset_version_non_empty_target_deduplicates():
 
     # Target already has ast1 and ast2
     repo.get_all_assets_by_version = AsyncMock(
-        side_effect=lambda vid: [ast1, ast2, ast3] if vid == "ver_source" else [ast1, ast2]
+        side_effect=lambda vid: (
+            [ast1, ast2, ast3] if vid == "ver_source" else [ast1, ast2]
+        )
     )
     repo.add_asset_to_version = AsyncMock()
 
     use_case = InheritDatasetVersionUseCase(repo=repo)
-    res = await use_case.execute("ver_target", InheritDatasetVersionRequestDTO(source_version_id="ver_source"))
+    res = await use_case.execute(
+        "ver_target", InheritDatasetVersionRequestDTO(source_version_id="ver_source")
+    )
 
     assert res.added_assets_count == 1
     assert res.reused_assets_count == 2
@@ -699,10 +815,9 @@ async def test_inherit_published_target_version_fails():
     use_case = InheritDatasetVersionUseCase(repo=repo)
 
     with pytest.raises(BadRequestException) as exc:
-        await use_case.execute("ver_target", InheritDatasetVersionRequestDTO(source_version_id="ver_source"))
+        await use_case.execute(
+            "ver_target",
+            InheritDatasetVersionRequestDTO(source_version_id="ver_source"),
+        )
 
     assert "Only draft versions allow asset inheritance" in str(exc.value)
-
-
-
-

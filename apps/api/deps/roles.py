@@ -38,8 +38,7 @@ def require_project_role(*allowed_roles: str) -> Callable[..., Any]:
         current_user: AuthUser = Depends(get_current_user),
         repo: FromDishka[IProjectRepository] = None,  # type: ignore
     ) -> str:
-        user_id_str = str(current_user.id)
-        member = await repo.get_member(project_id, user_id_str)
+        member = await repo.get_member(project_id, current_user.id)
         if not member or member.status != "active":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

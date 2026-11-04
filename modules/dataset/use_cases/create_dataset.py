@@ -46,7 +46,7 @@ class CreateDatasetUseCase:
                     dataset_id=saved.id,
                     project_id=saved.project_id,
                     name=saved.name,
-                    created_by=str(saved.created_by) if saved.created_by is not None else None,
+                    created_by=saved.created_by,
                 )
             )
 

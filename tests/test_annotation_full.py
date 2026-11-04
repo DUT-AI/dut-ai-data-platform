@@ -1,5 +1,8 @@
+import io
+
 import httpx
 import pytest
+from PIL import Image
 
 from apps.api.deps import get_current_user
 from apps.api.main import app
@@ -137,9 +140,6 @@ async def test_annotation_full_lifecycle():
         draft_ver_id = d_res.json()["versions"][0]["id"]
 
         # 4. Upload an Asset
-        import io
-        from PIL import Image
-
         buf = io.BytesIO()
         Image.new("RGB", (10, 10), "red").save(buf, format="PNG")
         valid_png_content = buf.getvalue()
@@ -239,6 +239,7 @@ async def test_annotation_full_lifecycle():
             },
             "annotation": {
                 "created_username": "annotator_john",
+                "completed_by": 101,
                 "result": [
                     {
                         "type": "rectanglelabels",
@@ -261,6 +262,6 @@ async def test_annotation_full_lifecycle():
         assert sync_res.status_code == 200
         synced_rev = sync_res.json()
         assert synced_rev["revision_number"] == 3
-        assert synced_rev["created_by"] == "annotator_john"
+        assert synced_rev["created_by"] == 101
         assert len(synced_rev["results"]) == 1
         assert synced_rev["results"][0]["result_type"] == "bbox"

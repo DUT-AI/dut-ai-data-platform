@@ -33,7 +33,7 @@ class DatasetModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
     latest_published_version_number: Mapped[int | None] = mapped_column(
         Integer, nullable=True
     )
-    created_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    created_by: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     versions: Mapped[list["DatasetVersionModel"]] = relationship(
         "DatasetVersionModel",
@@ -70,7 +70,7 @@ class DatasetVersionModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
     asset_count: Mapped[int] = mapped_column(
         Integer, server_default="0", default=0, nullable=False
     )
-    created_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    created_by: Mapped[int | None] = mapped_column(Integer, nullable=True)
     published_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -109,7 +109,7 @@ class AssetModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
         String(50), server_default="READY", default="READY", nullable=False
     )
     provenance: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
-    created_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    created_by: Mapped[int | None] = mapped_column(Integer, nullable=True)
     retired_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

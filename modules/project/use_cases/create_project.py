@@ -24,14 +24,8 @@ class CreateProjectUseCase:
         self.outbox_repo = outbox_repo
 
     async def execute(
-        self, data: ProjectCreateDTO, owner_id: int | str
+        self, data: ProjectCreateDTO, owner_id: int
     ) -> ProjectResponseDTO:
-        parsed_owner_id = (
-            int(owner_id)
-            if isinstance(owner_id, int)
-            or (isinstance(owner_id, str) and str(owner_id).isdigit())
-            else 0
-        )
         template = None
         template_id = (
             data.template_id
@@ -48,12 +42,12 @@ class CreateProjectUseCase:
             name=data.name,
             description=data.description,
             template_id=template["id"] if template else template_id,
-            created_by=parsed_owner_id,
+            created_by=owner_id,
         )
         saved = await self.repo.save(project)
         owner_member = ProjectMemberEntity(
             project_id=saved.id,
-            user_id=parsed_owner_id,
+            user_id=owner_id,
             role="owner",
             status="active",
         )
@@ -73,7 +67,7 @@ class CreateProjectUseCase:
                 ProjectCreatedEvent(
                     project_id=saved.id,
                     name=saved.name,
-                    owner_id=parsed_owner_id,
+                    owner_id=owner_id,
                     template_id=saved.template_id,
                 )
             )

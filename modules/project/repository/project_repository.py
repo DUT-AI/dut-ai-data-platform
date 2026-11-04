@@ -24,7 +24,7 @@ class SqlProjectRepository(IProjectRepository):
 
     async def list_by_user(
         self,
-        user_id: str,
+        user_id: int,
         offset: int = 0,
         limit: int = 20,
         status: str | None = None,
@@ -36,7 +36,7 @@ class SqlProjectRepository(IProjectRepository):
                 ProjectModel.id == ProjectMemberModel.project_id,
             )
             .where(
-                ProjectMemberModel.user_id == user_id,
+                ProjectMemberModel.user_id == int(user_id),
                 ProjectMemberModel.status == "active",
             )
         )
@@ -59,14 +59,14 @@ class SqlProjectRepository(IProjectRepository):
         sort_by: str = "created_at",
         sort_order: str = "desc",
         accessible_project_ids: set[str] | None = None,
-        created_by: str | None = None,
+        created_by: int | None = None,
     ) -> Sequence[ProjectEntity]:
         stmt = select(ProjectModel)
-        if accessible_project_ids is not None and created_by:
+        if accessible_project_ids is not None and created_by is not None:
             stmt = stmt.where(
                 or_(
                     ProjectModel.id.in_(accessible_project_ids),
-                    ProjectModel.created_by == created_by,
+                    ProjectModel.created_by == int(created_by),
                 )
             )
         if status:
@@ -121,12 +121,11 @@ class SqlProjectRepository(IProjectRepository):
         return model.to_entity()
 
     async def get_member(
-        self, project_id: str, user_id: str
+        self, project_id: str, user_id: int
     ) -> ProjectMemberEntity | None:
         stmt = select(ProjectMemberModel).where(
             ProjectMemberModel.project_id == project_id,
-            (ProjectMemberModel.user_id == user_id)
-            | (ProjectMemberModel.id == user_id),
+            ProjectMemberModel.user_id == user_id,
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -155,11 +154,10 @@ class SqlProjectRepository(IProjectRepository):
             return model.to_entity()
         return member
 
-    async def remove_member(self, project_id: str, member_id: str) -> bool:
+    async def remove_member(self, project_id: str, user_id: int) -> bool:
         stmt = delete(ProjectMemberModel).where(
             ProjectMemberModel.project_id == project_id,
-            (ProjectMemberModel.id == member_id)
-            | (ProjectMemberModel.user_id == member_id),
+            ProjectMemberModel.user_id == user_id,
         )
         res = await self.session.execute(stmt)
         await self.session.flush()

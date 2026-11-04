@@ -17,14 +17,14 @@ class SqlUserLoginRepository(IUserLoginRepository):
         self.session = session
 
     async def upsert_last_login(
-        self, user_id: str, last_login_at: datetime
+        self, user_id: int, last_login_at: datetime
     ) -> UserLoginMetadataEntity:
         """Atomically insert or update last_login_at timestamp."""
         now = datetime.now(UTC)
         stmt = (
             insert(UserLoginMetadataModel)
             .values(
-                user_id=str(user_id),
+                user_id=int(user_id),
                 last_login_at=last_login_at,
                 created_at=now,
                 updated_at=now,
@@ -43,22 +43,22 @@ class SqlUserLoginRepository(IUserLoginRepository):
         model = result.scalar_one()
         return model.to_entity()
 
-    async def get_by_user_id(self, user_id: str) -> UserLoginMetadataEntity | None:
+    async def get_by_user_id(self, user_id: int) -> UserLoginMetadataEntity | None:
         """Fetch last login record for a single user."""
         stmt = select(UserLoginMetadataModel).where(
-            UserLoginMetadataModel.user_id == str(user_id)
+            UserLoginMetadataModel.user_id == int(user_id)
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         return model.to_entity() if model else None
 
-    async def get_by_user_ids(self, user_ids: Sequence[str]) -> dict[str, datetime]:
+    async def get_by_user_ids(self, user_ids: Sequence[int]) -> dict[int, datetime]:
         """Batch fetch last login timestamps mapped by user_id."""
         if not user_ids:
             return {}
         stmt = select(
             UserLoginMetadataModel.user_id,
             UserLoginMetadataModel.last_login_at,
-        ).where(UserLoginMetadataModel.user_id.in_(user_ids))
+        ).where(UserLoginMetadataModel.user_id.in_([int(uid) for uid in user_ids]))
         result = await self.session.execute(stmt)
         return {row[0]: row[1] for row in result.all()}

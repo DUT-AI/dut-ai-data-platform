@@ -21,7 +21,7 @@ async def test_list_users_use_case_merge_last_login():
     manage_client.list_users.return_value = ManageUsersResponseDTO(
         items=[
             ManageUserDTO(
-                id="101",
+                id=101,
                 name="Alice",
                 email="alice@dutai.io.vn",
                 status="ACTIVE",
@@ -29,7 +29,7 @@ async def test_list_users_use_case_merge_last_login():
                 role_names=["ADMIN"],
             ),
             ManageUserDTO(
-                id="102",
+                id=102,
                 name="Bob",
                 email="bob@dutai.io.vn",
                 status="INACTIVE",
@@ -37,7 +37,7 @@ async def test_list_users_use_case_merge_last_login():
                 role_names=["ANNOTATOR"],
             ),
             ManageUserDTO(
-                id="103",
+                id=103,
                 name="Charlie",
                 email="charlie@dutai.io.vn",
                 status="ACTIVE",
@@ -53,7 +53,7 @@ async def test_list_users_use_case_merge_last_login():
     t_earlier = datetime(2026, 8, 20, 10, 0, 0, tzinfo=UTC)
     t_latest = datetime(2026, 8, 20, 18, 0, 0, tzinfo=UTC)
     repo = AsyncMock(spec=IUserLoginRepository)
-    repo.get_by_user_ids.return_value = {"101": t_earlier, "103": t_latest}
+    repo.get_by_user_ids.return_value = {101: t_earlier, 103: t_latest}
 
     use_case = ListUsersUseCase(manage_client=manage_client, login_repo=repo)
     result = await use_case.execute(page=1, page_size=20)
@@ -65,19 +65,19 @@ async def test_list_users_use_case_merge_last_login():
     # 1. Charlie (t_latest)
     # 2. Alice (t_earlier)
     # 3. Bob (None - never logged in)
-    assert result.items[0].id == "103"
+    assert result.items[0].id == 103
     assert result.items[0].name == "Charlie"
     assert result.items[0].last_login_at == t_latest
 
-    assert result.items[1].id == "101"
+    assert result.items[1].id == 101
     assert result.items[1].name == "Alice"
     assert result.items[1].last_login_at == t_earlier
 
-    assert result.items[2].id == "102"
+    assert result.items[2].id == 102
     assert result.items[2].name == "Bob"
     assert result.items[2].last_login_at is None
 
-    repo.get_by_user_ids.assert_awaited_once_with(["101", "102", "103"])
+    repo.get_by_user_ids.assert_awaited_once_with([101, 102, 103])
 
 
 @pytest.mark.asyncio
@@ -175,7 +175,7 @@ async def test_api_get_users_authenticated_success(monkeypatch):
         return ManageUsersResponseDTO(
             items=[
                 ManageUserDTO(
-                    id="101",
+                    id=101,
                     name="Test Operator",
                     email="operator@dutai.io.vn",
                     status="ACTIVE",
@@ -183,7 +183,7 @@ async def test_api_get_users_authenticated_success(monkeypatch):
                     role_names=["ADMIN"],
                 ),
                 ManageUserDTO(
-                    id="102",
+                    id=102,
                     name="New User",
                     email="new@dutai.io.vn",
                     status="ACTIVE",
@@ -214,9 +214,9 @@ async def test_api_get_users_authenticated_success(monkeypatch):
             assert data["page"] == 1
             assert data["page_size"] == 20
             assert len(data["items"]) == 2
-            assert data["items"][0]["id"] == "101"
+            assert data["items"][0]["id"] == 101
             assert data["items"][0]["name"] == "Test Operator"
-            assert data["items"][1]["id"] == "102"
+            assert data["items"][1]["id"] == 102
             assert "last_login_at" in data["items"][0]
     finally:
         app.dependency_overrides.clear()

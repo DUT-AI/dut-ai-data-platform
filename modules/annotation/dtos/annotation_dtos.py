@@ -21,7 +21,7 @@ class AnnotationRevisionResponseDTO(BaseModel):
     annotation_id: str
     revision_number: int
     ontology_version_id: str
-    created_by: str
+    created_by: int
     source: str
     created_at: datetime | None = None
     results: list[dict[str, Any]] = Field(default_factory=list)
@@ -53,7 +53,7 @@ class AnnotationResponseDTO(BaseModel):
     target_type: str = "FULL_ASSET"
     target_selector: dict[str, Any] = Field(default_factory=dict)
     ontology_version_id: str | None = None
-    created_by: str
+    created_by: int
     created_at: datetime | None = None
     updated_at: datetime | None = None
     latest_revision: AnnotationRevisionResponseDTO | None = None

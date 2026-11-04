@@ -1,6 +1,8 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
+
+from modules.identity.dtos.auth_dtos import AuthUser, TokenResponse
 
 
 @dataclass
@@ -33,3 +35,12 @@ class UserLoginMetadataEntity:
     last_login_at: datetime
     created_at: datetime | None = None
     updated_at: datetime | None = None
+
+
+__all__ = [
+    "AuthPayload",
+    "AuthUser",
+    "TokenResponse",
+    "UserEntity",
+    "UserLoginMetadataEntity",
+]

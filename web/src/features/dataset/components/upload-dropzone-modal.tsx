@@ -23,7 +23,10 @@ import {
   DialogTitle,
 } from "@/components/ui";
 import { useUploadManager } from "@/contexts/upload-context";
-import { resolveModalityMeta, validateFileForModality } from "../utils/modality";
+import {
+  resolveModalityMeta,
+  validateFileForModality,
+} from "../utils/modality";
 
 interface UploadDropzoneModalProps {
   versionId: string;
@@ -219,7 +222,12 @@ function UploadDropzoneContent({
           </span>
         </DialogTitle>
         <DialogDescription>
-          Kéo thả hoặc chọn các tệp ({modalityMeta.allowedExtensions.map((e: string) => e.toUpperCase()).join(", ")}) phù hợp với bài toán {templateTitle || modalityMeta.domainGroup}. Tải trực tiếp ở chế độ nền.
+          Kéo thả hoặc chọn các tệp (
+          {modalityMeta.allowedExtensions
+            .map((e: string) => e.toUpperCase())
+            .join(", ")}
+          ) phù hợp với bài toán {templateTitle || modalityMeta.domainGroup}.
+          Tải trực tiếp ở chế độ nền.
         </DialogDescription>
       </DialogHeader>
 
@@ -261,13 +269,18 @@ function UploadDropzoneContent({
               {renderModalityIcon(modalityMeta.iconName, "h-6 w-6")}
             </div>
             <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-              Kéo & thả tập tin {modalityMeta.shortLabel.toLowerCase()} vào đây, hoặc{" "}
+              Kéo & thả tập tin {modalityMeta.shortLabel.toLowerCase()} vào đây,
+              hoặc{" "}
               <span className="text-primary-600 underline">
                 duyệt từ máy tính
               </span>
             </p>
             <p className="text-xs text-slate-400">
-              Chấp nhận: {modalityMeta.allowedExtensions.map((e: string) => e.toUpperCase()).join(", ")} (Tự động tải ngầm và kiểm tra SHA256)
+              Chấp nhận:{" "}
+              {modalityMeta.allowedExtensions
+                .map((e: string) => e.toUpperCase())
+                .join(", ")}{" "}
+              (Tự động tải ngầm và kiểm tra SHA256)
             </p>
           </div>
         </label>

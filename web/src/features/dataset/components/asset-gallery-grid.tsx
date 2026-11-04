@@ -116,7 +116,10 @@ function AssetGalleryCard({
               </div>
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center text-slate-400">
-                <AssetIcon className="h-8 w-8 text-slate-400" aria-hidden="true" />
+                <AssetIcon
+                  className="h-8 w-8 text-slate-400"
+                  aria-hidden="true"
+                />
                 <span className="mt-1 font-mono text-[10px] text-slate-400">
                   {imageError ? "Lỗi hiển thị" : "Không có ảnh"}
                 </span>
@@ -144,7 +147,7 @@ function AssetGalleryCard({
             }}
             title="Xóa khỏi phiên bản"
             aria-label={`Xoá ${asset.filename} khỏi version`}
-            className="absolute right-2 top-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/90 text-rose-600 shadow-sm backdrop-blur-sm transition-opacity hover:bg-rose-50 hover:text-rose-700 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:bg-slate-900/90 dark:text-rose-400 dark:hover:bg-rose-950/50 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
+            className="absolute right-2 top-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/90 text-rose-600 shadow-sm backdrop-blur-sm transition-opacity hover:bg-rose-50 hover:text-rose-700 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100 dark:bg-slate-900/90 dark:text-rose-400 dark:hover:bg-rose-950/50"
           >
             <Trash2 className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -156,7 +159,7 @@ function AssetGalleryCard({
         <button
           type="button"
           onClick={() => onSelect(asset)}
-          className="w-full truncate text-left font-mono text-xs font-semibold text-slate-900 transition-colors hover:text-blue-600 focus-visible:outline-none focus-visible:underline dark:text-slate-100 dark:hover:text-blue-400"
+          className="w-full truncate text-left font-mono text-xs font-semibold text-slate-900 transition-colors hover:text-blue-600 focus-visible:underline focus-visible:outline-none dark:text-slate-100 dark:hover:text-blue-400"
           title={asset.filename}
         >
           {asset.filename}
@@ -166,7 +169,8 @@ function AssetGalleryCard({
             {formatSize(asset.file_size)}
             {Boolean(asset.metadata?.width && asset.metadata?.height) && (
               <span className="ml-1 opacity-70">
-                · {String(asset.metadata?.width)}×{String(asset.metadata?.height)}
+                · {String(asset.metadata?.width)}×
+                {String(asset.metadata?.height)}
               </span>
             )}
           </span>

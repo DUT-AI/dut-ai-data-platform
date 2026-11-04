@@ -27,7 +27,8 @@ export function TabularEmptyGrid({
           Không thể tải dữ liệu bảng
         </h4>
         <p className="mt-1 max-w-md text-xs text-slate-400">
-          {errorMessage || "Đã xảy ra lỗi khi tải hoặc phân tích tập tin bảng này."}
+          {errorMessage ||
+            "Đã xảy ra lỗi khi tải hoặc phân tích tập tin bảng này."}
         </p>
         {onRetry && (
           <Button
@@ -78,7 +79,8 @@ export function TabularEmptyGrid({
         Tập tin bảng không có dữ liệu
       </h4>
       <p className="mt-1 max-w-md text-xs text-slate-400">
-        Tập tin CSV/JSON này không chứa bản ghi dữ liệu hoặc không đúng định dạng.
+        Tập tin CSV/JSON này không chứa bản ghi dữ liệu hoặc không đúng định
+        dạng.
       </p>
     </div>
   );

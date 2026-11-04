@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useCallback, useRef } from "react";
-import { TabularRow, TabularRecordResult, TabularLabelMode, TabularSortConfig } from "./tabular-types";
+import {
+  TabularRow,
+  TabularRecordResult,
+  TabularLabelMode,
+  TabularSortConfig,
+} from "./tabular-types";
 import { TabularGridHeader } from "./tabular-grid-header";
 import { TabularGridRow } from "./tabular-grid-row";
 import { TabularEmptyGrid } from "./tabular-empty-grid";
@@ -98,7 +103,7 @@ export function TabularDataGrid({
   if (isLoading) {
     return (
       <div className="flex h-72 w-full flex-col items-center justify-center space-y-3">
-        <div className="h-7 w-7 animate-spin rounded-full border-3 border-slate-700 border-t-blue-500" />
+        <div className="border-3 h-7 w-7 animate-spin rounded-full border-slate-700 border-t-blue-500" />
         <span className="font-mono text-xs text-slate-400">
           Đang đọc và hiển thị dữ liệu bảng...
         </span>
@@ -122,10 +127,7 @@ export function TabularDataGrid({
 
   if (filteredRowCount === 0) {
     return (
-      <TabularEmptyGrid
-        type="no-results"
-        onResetFilters={onResetFilters}
-      />
+      <TabularEmptyGrid type="no-results" onResetFilters={onResetFilters} />
     );
   }
 

@@ -40,7 +40,10 @@ import { InheritVersionModal } from "./inherit-version-modal";
 import { AssetGalleryGrid } from "./asset-gallery-grid";
 import { AssetListTable } from "./asset-list-table";
 import { useProjectOntologiesQuery } from "@/features/ontology";
-import { useProjectQuery, useProjectTemplateQuery } from "@/features/projects/hooks";
+import {
+  useProjectQuery,
+  useProjectTemplateQuery,
+} from "@/features/projects/hooks";
 import { resolveModalityMeta } from "../utils/modality";
 
 interface DatasetVersionViewProps {
@@ -404,19 +407,24 @@ export function DatasetVersionView({
           <span className="font-semibold text-blue-950 dark:text-blue-100">
             Quy chuẩn bài toán:
           </span>
-          <span className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2 py-0.5 font-medium text-white shadow-2xs">
+          <span className="shadow-2xs inline-flex items-center gap-1 rounded-md bg-blue-600 px-2 py-0.5 font-medium text-white">
             {template?.title || project?.project_type || "Quy chuẩn dự án"}
           </span>
           <span className="text-slate-400">•</span>
           <span className="text-slate-600 dark:text-slate-400">
-            Phân loại: <strong className="font-semibold text-slate-800 dark:text-slate-200">{modalityMeta.label}</strong>
+            Phân loại:{" "}
+            <strong className="font-semibold text-slate-800 dark:text-slate-200">
+              {modalityMeta.label}
+            </strong>
           </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
           <span>Định dạng chấp nhận:</span>
           <span className="font-mono font-medium text-slate-700 dark:text-slate-300">
-            {modalityMeta.allowedExtensions.map((e: string) => e.toUpperCase()).join(", ")}
+            {modalityMeta.allowedExtensions
+              .map((e: string) => e.toUpperCase())
+              .join(", ")}
           </span>
           {ontologyVersionId && (
             <span className="rounded bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">

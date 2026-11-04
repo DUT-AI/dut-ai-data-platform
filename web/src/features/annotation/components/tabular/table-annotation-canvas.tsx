@@ -8,8 +8,10 @@ import {
 } from "./tabular-annotation-workspace";
 import { CategoryOption } from "./tabular-label-cell";
 
-export interface TableAnnotationCanvasProps
-  extends Omit<TabularAnnotationWorkspaceProps, "results"> {
+export interface TableAnnotationCanvasProps extends Omit<
+  TabularAnnotationWorkspaceProps,
+  "results"
+> {
   tableUrl?: string;
   assetUrl?: string;
   results: AnnotationResult[];

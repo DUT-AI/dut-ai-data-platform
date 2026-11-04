@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import {
-  Search,
-  Columns3,
-  Key,
-  X,
-  Check,
-  ChevronDown,
-} from "lucide-react";
+import { Search, Columns3, Key, X, Check, ChevronDown } from "lucide-react";
 import { TabularFilterStatus } from "./tabular-types";
 import { CategoryOption } from "./tabular-label-cell";
 
@@ -86,7 +79,7 @@ export function TabularToolbar({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Tìm theo ID, giá trị..."
-            className="h-8 w-44 rounded-md border border-slate-700 bg-slate-950 pl-8 pr-7 text-xs text-slate-200 placeholder:text-slate-500 focus:border-blue-500 focus:outline-hidden md:w-56"
+            className="focus:outline-hidden h-8 w-44 rounded-md border border-slate-700 bg-slate-950 pl-8 pr-7 text-xs text-slate-200 placeholder:text-slate-500 focus:border-blue-500 md:w-56"
           />
           {searchQuery && (
             <button
@@ -106,7 +99,7 @@ export function TabularToolbar({
             onClick={() => onFilterChange("all")}
             className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
               filterStatus === "all"
-                ? "bg-slate-800 text-slate-100 shadow-xs"
+                ? "shadow-xs bg-slate-800 text-slate-100"
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
@@ -117,7 +110,7 @@ export function TabularToolbar({
             onClick={() => onFilterChange("labeled")}
             className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
               filterStatus === "labeled"
-                ? "bg-emerald-950/80 text-emerald-300 shadow-xs"
+                ? "shadow-xs bg-emerald-950/80 text-emerald-300"
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
@@ -128,7 +121,7 @@ export function TabularToolbar({
             onClick={() => onFilterChange("unlabeled")}
             className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
               filterStatus === "unlabeled"
-                ? "bg-amber-950/80 text-amber-300 shadow-xs"
+                ? "shadow-xs bg-amber-950/80 text-amber-300"
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
@@ -151,7 +144,7 @@ export function TabularToolbar({
                 const val = e.target.value;
                 onFilterChange(val ? val : "all");
               }}
-              className="h-8 rounded-md border border-slate-800 bg-slate-950 px-2 text-xs text-slate-300 focus:border-blue-500 focus:outline-hidden"
+              className="focus:outline-hidden h-8 rounded-md border border-slate-800 bg-slate-950 px-2 text-xs text-slate-300 focus:border-blue-500"
             >
               <option value="">Lọc theo nhãn...</option>
               {categories.map((c) => (
@@ -245,8 +238,10 @@ export function TabularToolbar({
                   return (
                     <label
                       key={col}
-                      className={`flex items-center gap-2 rounded px-1.5 py-1 text-xs select-none ${
-                        isKey ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:bg-slate-900 text-slate-300"
+                      className={`flex select-none items-center gap-2 rounded px-1.5 py-1 text-xs ${
+                        isKey
+                          ? "cursor-not-allowed opacity-60"
+                          : "cursor-pointer text-slate-300 hover:bg-slate-900"
                       }`}
                     >
                       <input
@@ -258,7 +253,7 @@ export function TabularToolbar({
                       />
                       <span className="truncate font-mono">{col}</span>
                       {isKey && (
-                        <span className="ml-auto text-[9px] text-blue-400 font-sans">
+                        <span className="ml-auto font-sans text-[9px] text-blue-400">
                           (Khóa)
                         </span>
                       )}
@@ -275,9 +270,7 @@ export function TabularToolbar({
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5 font-mono text-[11px]">
               <span className="text-slate-400">Tiến độ:</span>
-              <strong className="text-emerald-400">
-                {labeledRowsCount}
-              </strong>
+              <strong className="text-emerald-400">{labeledRowsCount}</strong>
               <span className="text-slate-500">/</span>
               <span className="text-slate-300">{totalRows}</span>
               <span className="text-[10px] font-bold text-slate-400">

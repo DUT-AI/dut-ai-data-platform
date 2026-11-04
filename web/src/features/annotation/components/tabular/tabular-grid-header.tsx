@@ -34,7 +34,7 @@ export function TabularGridHeader({
   }, [somePageRowsSelected]);
 
   return (
-    <thead className="sticky top-0 z-20 bg-slate-900 font-mono text-[11px] uppercase tracking-wider text-slate-400 shadow-xs">
+    <thead className="shadow-xs sticky top-0 z-20 bg-slate-900 font-mono text-[11px] uppercase tracking-wider text-slate-400">
       <tr>
         {/* 1. Select All Checkbox */}
         <th className="sticky left-0 z-30 w-10 border-b border-slate-800 bg-slate-900 px-2 py-2.5 text-center">
@@ -43,7 +43,7 @@ export function TabularGridHeader({
             type="checkbox"
             checked={allPageRowsSelected}
             onChange={onToggleSelectAllPage}
-            className="size-3.5 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900 cursor-pointer"
+            className="size-3.5 cursor-pointer rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900"
             title="Chọn tất cả dòng trên trang"
           />
         </th>
@@ -56,13 +56,13 @@ export function TabularGridHeader({
         {/* 3. Pinned Key Field Header */}
         <th
           onClick={() => onSortColumn(keyField)}
-          className="sticky left-10 z-30 min-w-[140px] cursor-pointer border-b border-slate-800 bg-slate-900 px-3 py-2.5 text-left text-blue-400 select-none hover:text-blue-300"
+          className="sticky left-10 z-30 min-w-[140px] cursor-pointer select-none border-b border-slate-800 bg-slate-900 px-3 py-2.5 text-left text-blue-400 hover:text-blue-300"
         >
           <div className="flex items-center gap-1.5">
             <Key className="h-3 w-3" />
             <span>{keyField}</span>
             {isKeyFieldSynthetic && (
-              <span className="rounded-xs bg-slate-800 px-1 text-[9px] text-amber-400 lowercase">
+              <span className="rounded-xs bg-slate-800 px-1 text-[9px] lowercase text-amber-400">
                 (auto)
               </span>
             )}
@@ -87,10 +87,10 @@ export function TabularGridHeader({
               <th
                 key={col}
                 onClick={() => onSortColumn(col)}
-                className="cursor-pointer border-b border-slate-800 px-3 py-2.5 text-left select-none hover:text-slate-200"
+                className="cursor-pointer select-none border-b border-slate-800 px-3 py-2.5 text-left hover:text-slate-200"
               >
                 <div className="flex items-center gap-1.5">
-                  <span className="truncate max-w-[180px]">{col}</span>
+                  <span className="max-w-[180px] truncate">{col}</span>
                   {isSorted ? (
                     sortConfig.direction === "asc" ? (
                       <ArrowUp className="h-3 w-3 text-blue-400" />

@@ -38,12 +38,13 @@ export function TabularBulkActionBar({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="flex animate-in fade-in slide-in-from-bottom-2 items-center justify-between gap-3 border-t border-blue-900/50 bg-blue-950/90 px-4 py-2 text-xs text-blue-100 shadow-lg backdrop-blur-md">
+    <div className="animate-in fade-in slide-in-from-bottom-2 flex items-center justify-between gap-3 border-t border-blue-900/50 bg-blue-950/90 px-4 py-2 text-xs text-blue-100 shadow-lg backdrop-blur-md">
       {/* Left: Selected count */}
       <div className="flex items-center gap-2">
         <Layers className="h-4 w-4 text-blue-400" />
         <span className="font-semibold">
-          Đang chọn <strong className="font-mono text-white">{selectedCount}</strong> dòng
+          Đang chọn{" "}
+          <strong className="font-mono text-white">{selectedCount}</strong> dòng
         </span>
       </div>
 
@@ -120,7 +121,7 @@ export function TabularBulkActionBar({
           onClick={onDeselectAll}
           className="h-7 text-xs text-slate-400 hover:bg-slate-900 hover:text-slate-200"
         >
-          <X className="h-3.5 w-3.5 mr-1" />
+          <X className="mr-1 h-3.5 w-3.5" />
           <span>Bỏ chọn</span>
         </Button>
       </div>

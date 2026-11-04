@@ -157,7 +157,10 @@ function VideoEditor(props: BaseEditorComponentProps) {
 function NerEditor(props: BaseEditorComponentProps) {
   return (
     <NerAnnotationCanvas
-      textContent={(props.metadata as Record<string, unknown> | undefined)?.textContent as string | undefined}
+      textContent={
+        (props.metadata as Record<string, unknown> | undefined)?.textContent as
+          string | undefined
+      }
       {...props}
     />
   );
@@ -166,8 +169,13 @@ function NerEditor(props: BaseEditorComponentProps) {
 function TextClassificationEditor(props: BaseEditorComponentProps) {
   return (
     <TextClassificationCanvas
-      textContent={(props.metadata as Record<string, unknown> | undefined)?.textContent as string | undefined}
-      multiple={!!(props.metadata as Record<string, unknown> | undefined)?.multiple}
+      textContent={
+        (props.metadata as Record<string, unknown> | undefined)?.textContent as
+          string | undefined
+      }
+      multiple={
+        !!(props.metadata as Record<string, unknown> | undefined)?.multiple
+      }
       {...props}
     />
   );
@@ -244,7 +252,8 @@ export const EDITOR_REGISTRY: Record<string, EditorRegistration> = {
   named_entity: {
     code: "named_entity",
     label: "Named Entity Recognition Editor",
-    description: "Bôi đen văn bản và gán nhãn thực thể (NER, Spans) — editor nâng cao với inline popover",
+    description:
+      "Bôi đen văn bản và gán nhãn thực thể (NER, Spans) — editor nâng cao với inline popover",
     supportedInputTypes: ["document"],
     component: NerEditor,
   },
@@ -273,7 +282,7 @@ export const EDITOR_REGISTRY: Record<string, EditorRegistration> = {
     supportedInputTypes: ["audio"],
     component: AudioEditor,
   },
-  
+
   video_segment: {
     code: "video_segment",
     label: "Video Segment Editor",
@@ -305,7 +314,8 @@ export const EDITOR_REGISTRY: Record<string, EditorRegistration> = {
   named_entity_recognition: {
     code: "named_entity_recognition",
     label: "Named Entity Recognition Editor (alias)",
-    description: "Bôi đen văn bản, chọn loại thực thể từ popover (PER, LOC, ORG…)",
+    description:
+      "Bôi đen văn bản, chọn loại thực thể từ popover (PER, LOC, ORG…)",
     supportedInputTypes: ["document"],
     component: NerEditor,
   },
@@ -377,11 +387,16 @@ export function resolveEditorComponent(
 
   // 3. Fallback only if outputTypeCode is unspecified and input modality matches dedicated editors
   if (!outputTypeCode && inputTypeCode) {
-    if (inputTypeCode === "image") return EDITOR_REGISTRY["bounding_box"].component;
-    if (inputTypeCode === "video") return EDITOR_REGISTRY["video_segment"].component;
-    if (inputTypeCode === "audio") return EDITOR_REGISTRY["audio_segment"].component;
-    if (inputTypeCode === "tabular") return EDITOR_REGISTRY["tabular"].component;
-    if (inputTypeCode === "document") return EDITOR_REGISTRY["named_entity"].component;
+    if (inputTypeCode === "image")
+      return EDITOR_REGISTRY["bounding_box"].component;
+    if (inputTypeCode === "video")
+      return EDITOR_REGISTRY["video_segment"].component;
+    if (inputTypeCode === "audio")
+      return EDITOR_REGISTRY["audio_segment"].component;
+    if (inputTypeCode === "tabular")
+      return EDITOR_REGISTRY["tabular"].component;
+    if (inputTypeCode === "document")
+      return EDITOR_REGISTRY["named_entity"].component;
   }
 
   // 4. Fail-fast error if no valid editor can be safely resolved

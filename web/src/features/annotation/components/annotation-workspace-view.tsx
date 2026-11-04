@@ -581,8 +581,10 @@ function AnnotationWorkspaceInner({
               {availableCategories.length === 0 && (
                 <div className="flex shrink-0 items-center justify-between rounded-lg border border-amber-500/30 bg-amber-950/20 px-3 py-1.5 text-xs text-amber-300">
                   <span>
-                    Chưa có nhãn (Category) trong cấu hình Ontology. Bạn vẫn có thể vẽ gán nhãn, hoặc vào tab{" "}
-                    <span className="font-semibold underline">Ontology</span> để thêm danh mục nhãn.
+                    Chưa có nhãn (Category) trong cấu hình Ontology. Bạn vẫn có
+                    thể vẽ gán nhãn, hoặc vào tab{" "}
+                    <span className="font-semibold underline">Ontology</span> để
+                    thêm danh mục nhãn.
                   </span>
                 </div>
               )}

@@ -36,7 +36,12 @@ export function detectRecordKeyField(
     if (found) {
       // Validate that at least some rows have non-empty values for this candidate
       const sample = rows.slice(0, 50);
-      const hasValues = sample.some((r) => r[found] !== undefined && r[found] !== null && String(r[found]).trim() !== "");
+      const hasValues = sample.some(
+        (r) =>
+          r[found] !== undefined &&
+          r[found] !== null &&
+          String(r[found]).trim() !== ""
+      );
       if (hasValues) {
         return { keyField: found, isSynthetic: false };
       }
@@ -46,11 +51,18 @@ export function detectRecordKeyField(
   // 2. Check headers that end with "_id" or "id" (e.g. "user_id", "item_id", "order_id")
   const idLike = headers.find((h) => {
     const lower = h.toLowerCase();
-    return lower.endsWith("_id") || lower.endsWith(".id") || lower.endsWith("id");
+    return (
+      lower.endsWith("_id") || lower.endsWith(".id") || lower.endsWith("id")
+    );
   });
   if (idLike) {
     const sample = rows.slice(0, 50);
-    const hasValues = sample.some((r) => r[idLike] !== undefined && r[idLike] !== null && String(r[idLike]).trim() !== "");
+    const hasValues = sample.some(
+      (r) =>
+        r[idLike] !== undefined &&
+        r[idLike] !== null &&
+        String(r[idLike]).trim() !== ""
+    );
     if (hasValues) {
       return { keyField: idLike, isSynthetic: false };
     }
@@ -169,7 +181,9 @@ export function parseCsvOrTsv(
   }
 
   // First row is headers
-  const rawHeaders = rows[0].map((h, idx) => (h.trim() ? h.trim() : `Column_${idx + 1}`));
+  const rawHeaders = rows[0].map((h, idx) =>
+    h.trim() ? h.trim() : `Column_${idx + 1}`
+  );
   // Ensure header names are unique
   const headers: string[] = [];
   const headerCountMap = new Map<string, number>();

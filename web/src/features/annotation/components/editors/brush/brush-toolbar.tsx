@@ -71,7 +71,9 @@ export function BrushToolbar({
           onChange={(e) => onChangeBrushSize(parseInt(e.target.value, 10))}
           className="h-1.5 w-16 cursor-pointer appearance-none rounded bg-slate-700 accent-blue-500"
         />
-        <span className="w-5 font-mono text-[10px] text-slate-400">{brushSize}px</span>
+        <span className="w-5 font-mono text-[10px] text-slate-400">
+          {brushSize}px
+        </span>
       </div>
 
       {/* Mask Opacity Slider */}

@@ -9,7 +9,6 @@ import {
   Layers,
   Sparkles,
   Table as TableIcon,
-  Tag,
   Video,
 } from "lucide-react";
 import {
@@ -32,7 +31,10 @@ import {
   useProjectDatasetsQuery,
   useUpdateDatasetMutation,
 } from "../hooks";
-import { useProjectQuery, useProjectTemplateQuery } from "@/features/projects/hooks";
+import {
+  useProjectQuery,
+  useProjectTemplateQuery,
+} from "@/features/projects/hooks";
 import { useProjectOntologyQuery } from "@/features/ontology/hooks/use-ontologies";
 import { resolveModalityMeta } from "../utils/modality";
 import { DatasetVersionView } from "./dataset-version-view";
@@ -68,15 +70,24 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
   const activeOntologyVersion = useMemo(() => {
     if (!ontology?.versions || ontology.versions.length === 0) return null;
     return (
-      ontology.versions.find((v: { status: string }) => v.status === "published") ||
-      ontology.versions[0]
+      ontology.versions.find(
+        (v: { status: string }) => v.status === "published"
+      ) || ontology.versions[0]
     );
   }, [ontology]);
 
   const resolvedTools = useMemo(() => {
-    if (activeOntologyVersion?.outputs && activeOntologyVersion.outputs.length > 0) {
+    if (
+      activeOntologyVersion?.outputs &&
+      activeOntologyVersion.outputs.length > 0
+    ) {
       const names = activeOntologyVersion.outputs
-        .map((o: { output?: { name: string } | null; ontology_output_id?: string }) => o.output?.name || o.ontology_output_id)
+        .map(
+          (o: {
+            output?: { name: string } | null;
+            ontology_output_id?: string;
+          }) => o.output?.name || o.ontology_output_id
+        )
         .filter(Boolean) as string[];
       if (names.length > 0) return names;
     }
@@ -84,21 +95,30 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
       return template.tools.map((t: { name: string }) => t.name);
     }
     return modalityMeta.defaultTools.map((t: { name: string }) => t.name);
-  }, [activeOntologyVersion, template?.tools, modalityMeta]);
+  }, [activeOntologyVersion, template, modalityMeta]);
 
   const resolvedLabels = useMemo(() => {
-    if (activeOntologyVersion?.outputs && activeOntologyVersion.outputs.length > 0) {
+    if (
+      activeOntologyVersion?.outputs &&
+      activeOntologyVersion.outputs.length > 0
+    ) {
       const labels: Array<{ name: string; color: string }> = [];
-      activeOntologyVersion.outputs.forEach((out: { categories?: Array<{ category?: { name: string; color?: string | null } | null }> }) => {
-        out.categories?.forEach((catLink) => {
-          if (catLink.category) {
-            labels.push({
-              name: catLink.category.name,
-              color: catLink.category.color || "#2563eb",
-            });
-          }
-        });
-      });
+      activeOntologyVersion.outputs.forEach(
+        (out: {
+          categories?: Array<{
+            category?: { name: string; color?: string | null } | null;
+          }>;
+        }) => {
+          out.categories?.forEach((catLink) => {
+            if (catLink.category) {
+              labels.push({
+                name: catLink.category.name,
+                color: catLink.category.color || "#2563eb",
+              });
+            }
+          });
+        }
+      );
       if (labels.length > 0) return labels;
     }
     if (template?.labels && template.labels.length > 0) {
@@ -108,7 +128,7 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
       }));
     }
     return modalityMeta.defaultLabels;
-  }, [activeOntologyVersion, template?.labels, modalityMeta]);
+  }, [activeOntologyVersion, template, modalityMeta]);
 
   const renderModalityIcon = (iconName: string, className = "h-4 w-4") => {
     switch (iconName) {
@@ -277,7 +297,10 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
                     {/* Modality & Task badge inherited from project */}
                     <div className="flex items-center gap-2 pt-0.5">
                       <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-800/80 dark:text-slate-300">
-                        {renderModalityIcon(modalityMeta.iconName, "h-3 w-3 text-blue-600 dark:text-blue-400")}
+                        {renderModalityIcon(
+                          modalityMeta.iconName,
+                          "h-3 w-3 text-blue-600 dark:text-blue-400"
+                        )}
                         <span>{modalityMeta.shortLabel}</span>
                       </span>
                       <span className="truncate text-[11px] text-slate-500">
@@ -322,7 +345,8 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
           <DialogHeader>
             <DialogTitle>Tạo bộ Dữ liệu Dataset mới</DialogTitle>
             <DialogDescription>
-              Khởi tạo Dataset đồng bộ với bài toán và cấu hình Ontology của Dự án.
+              Khởi tạo Dataset đồng bộ với bài toán và cấu hình Ontology của Dự
+              án.
             </DialogDescription>
           </DialogHeader>
 
@@ -337,7 +361,7 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
             <div className="space-y-2.5 rounded-xl border border-blue-200 bg-blue-50/60 p-3.5 dark:border-blue-900/50 dark:bg-blue-950/30">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs dark:bg-blue-500">
+                  <div className="shadow-xs flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white dark:bg-blue-500">
                     {renderModalityIcon(modalityMeta.iconName, "h-4 w-4")}
                   </div>
                   <div>
@@ -364,7 +388,7 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
                   {resolvedTools.map((t, idx) => (
                     <span
                       key={idx}
-                      className="rounded bg-white px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-800 shadow-2xs dark:bg-slate-900 dark:text-slate-200"
+                      className="shadow-2xs rounded bg-white px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-800 dark:bg-slate-900 dark:text-slate-200"
                     >
                       {t}
                     </span>
@@ -379,9 +403,11 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
                     {resolvedLabels.slice(0, 6).map((lbl, idx) => (
                       <span
                         key={idx}
-                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium shadow-2xs"
+                        className="shadow-2xs inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium"
                         style={{
-                          backgroundColor: lbl.color ? `${lbl.color}18` : "#f1f5f9",
+                          backgroundColor: lbl.color
+                            ? `${lbl.color}18`
+                            : "#f1f5f9",
                           color: lbl.color || "#1e293b",
                           border: `1px solid ${lbl.color ? `${lbl.color}35` : "#cbd5e1"}`,
                         }}
@@ -406,7 +432,9 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
                   <span>
                     Định dạng tệp hợp lệ:{" "}
                     <strong className="font-mono text-slate-700 dark:text-slate-200">
-                      {modalityMeta.allowedExtensions.map((e) => e.toUpperCase()).join(", ")}
+                      {modalityMeta.allowedExtensions
+                        .map((e) => e.toUpperCase())
+                        .join(", ")}
                     </strong>
                   </span>
                 </div>

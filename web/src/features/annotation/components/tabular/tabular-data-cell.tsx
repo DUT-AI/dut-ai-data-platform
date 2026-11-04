@@ -14,7 +14,7 @@ export const TabularDataCell = memo(function TabularDataCell({
   // Format null / undefined / empty
   if (value === null || value === undefined || value === "") {
     return (
-      <span className="font-mono text-[11px] text-slate-600 select-none">
+      <span className="select-none font-mono text-[11px] text-slate-600">
         —
       </span>
     );
@@ -41,7 +41,7 @@ export const TabularDataCell = memo(function TabularDataCell({
         className="block max-w-[280px] truncate font-mono text-[11px] text-slate-300"
       >
         <span>{before}</span>
-        <mark className="rounded-xs bg-amber-400/30 text-amber-200 px-0.5">
+        <mark className="rounded-xs bg-amber-400/30 px-0.5 text-amber-200">
           {match}
         </mark>
         <span>{after}</span>

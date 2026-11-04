@@ -115,7 +115,7 @@ export const TabularLabelCell = memo(function TabularLabelCell({
           onBlur={handleNumBlur}
           onKeyDown={handleNumKeyDown}
           placeholder="Nhập số..."
-          className="h-7 w-28 rounded border border-slate-700 bg-slate-900 px-2 font-mono text-xs text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:outline-hidden disabled:opacity-50"
+          className="focus:outline-hidden h-7 w-28 rounded border border-slate-700 bg-slate-900 px-2 font-mono text-xs text-slate-100 placeholder:text-slate-500 focus:border-blue-500 disabled:opacity-50"
         />
         {isLabeled && !readOnly && (
           <button
@@ -135,7 +135,10 @@ export const TabularLabelCell = memo(function TabularLabelCell({
   }
 
   // 2. Binary or <= 3 Categories: Pill Buttons inline
-  if ((labelMode === "binary" || categories.length <= 3) && labelMode !== "multi-label") {
+  if (
+    (labelMode === "binary" || categories.length <= 3) &&
+    labelMode !== "multi-label"
+  ) {
     return (
       <div className="flex items-center gap-1">
         {categories.map((cat, idx) => {
@@ -162,7 +165,7 @@ export const TabularLabelCell = memo(function TabularLabelCell({
               }}
               className={`group flex h-7 items-center gap-1.5 rounded-md border px-2 text-[11px] font-medium transition-colors ${
                 isSelected
-                  ? "font-semibold shadow-xs"
+                  ? "shadow-xs font-semibold"
                   : "hover:border-slate-600 hover:bg-slate-800/60 hover:text-slate-200"
               }`}
             >
@@ -170,7 +173,7 @@ export const TabularLabelCell = memo(function TabularLabelCell({
                 className="h-1.5 w-1.5 rounded-full"
                 style={{ backgroundColor: color }}
               />
-              <span className="truncate max-w-[80px]">{cat.name}</span>
+              <span className="max-w-[80px] truncate">{cat.name}</span>
               {shortcutNum && (
                 <span className="font-mono text-[9px] opacity-40 group-hover:opacity-80">
                   {shortcutNum}
@@ -360,7 +363,7 @@ export const TabularLabelCell = memo(function TabularLabelCell({
                 }}
                 className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors ${
                   isSelected
-                    ? "bg-blue-950/60 text-blue-300 font-semibold"
+                    ? "bg-blue-950/60 font-semibold text-blue-300"
                     : "text-slate-300 hover:bg-slate-900"
                 }`}
               >

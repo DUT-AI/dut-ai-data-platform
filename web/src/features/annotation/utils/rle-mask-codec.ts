@@ -74,10 +74,10 @@ export function decodeRLEToContext(
     if (currentVal === 1) {
       for (let k = 0; k < len; k++) {
         const offset = (pixelIndex + k) * 4;
-        data[offset] = color[0];     // R
+        data[offset] = color[0]; // R
         data[offset + 1] = color[1]; // G
         data[offset + 2] = color[2]; // B
-        data[offset + 3] = 255;      // A
+        data[offset + 3] = 255; // A
       }
     }
     pixelIndex += len;

@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from core.config import db_settings
+from core.events.outbox import IOutboxRepository, SqlOutboxRepository
 
 
 def create_engine(url: str, echo: bool = False) -> AsyncEngine:
@@ -50,6 +51,10 @@ class DatabaseProvider(Provider):
         self,
     ) -> async_sessionmaker[AsyncSession]:
         return AsyncSessionLocal
+
+    @provide(scope=Scope.REQUEST)
+    def get_outbox_repository(self, session: AsyncSession) -> IOutboxRepository | None:
+        return SqlOutboxRepository(session)
 
     @provide(scope=Scope.REQUEST)
     async def get_session(self) -> AsyncIterable[AsyncSession]:

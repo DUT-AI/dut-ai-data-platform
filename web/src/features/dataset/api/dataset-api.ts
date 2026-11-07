@@ -101,7 +101,10 @@ export const datasetApi = {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open("PUT", uploadUrl, true);
-      xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+      xhr.setRequestHeader(
+        "Content-Type",
+        file.type || "application/octet-stream"
+      );
 
       if (onProgress && xhr.upload) {
         xhr.upload.onprogress = (event) => {
@@ -191,4 +194,3 @@ export const datasetApi = {
     return response.data;
   },
 };
-

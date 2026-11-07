@@ -34,7 +34,9 @@ export function EditorFooter({
     }
   };
 
-  const isPercent = cursorNormPos ? cursorNormPos.x > 1.0 || cursorNormPos.y > 1.0 : false;
+  const isPercent = cursorNormPos
+    ? cursorNormPos.x > 1.0 || cursorNormPos.y > 1.0
+    : false;
   const divisor = isPercent ? 100 : 1;
 
   const cursorPixelX =

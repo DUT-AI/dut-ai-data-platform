@@ -4,6 +4,7 @@ from typing import Optional, Self
 from sqlalchemy import (
     DateTime,
     ForeignKey,
+    Integer,
     String,
     Text,
     UniqueConstraint,
@@ -22,8 +23,8 @@ class ProjectModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     project_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    owner_id: Mapped[str] = mapped_column(String(255), nullable=False)
-    created_by: Mapped[str] = mapped_column(String(255), nullable=False)
+    owner_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_by: Mapped[int] = mapped_column(Integer, nullable=False)
     task_definition_version_id: Mapped[str | None] = mapped_column(
         String(255), nullable=True
     )
@@ -45,7 +46,8 @@ class ProjectModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
             id=self.id,
             name=self.name,
             description=self.description,
-            template_id=self.project_template_version_id or self.task_definition_version_id,
+            template_id=self.project_template_version_id
+            or self.task_definition_version_id,
             created_by=self.created_by,
             status=self.status,
             created_at=self.created_at,
@@ -83,7 +85,7 @@ class ProjectMemberModel(Base, ULIDPrimaryKeyMixin):
     project_id: Mapped[str] = mapped_column(
         ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
     )
-    user_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, nullable=False)
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)
     joined_at: Mapped[datetime] = mapped_column(

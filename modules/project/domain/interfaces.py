@@ -9,7 +9,7 @@ class IProjectRepository(Protocol):
 
     async def list_by_user(
         self,
-        user_id: str,
+        user_id: int,
         offset: int = 0,
         limit: int = 20,
         status: str | None = None,
@@ -26,7 +26,7 @@ class IProjectRepository(Protocol):
         sort_by: str = "created_at",
         sort_order: str = "desc",
         accessible_project_ids: set[str] | None = None,
-        created_by: str | None = None,
+        created_by: int | None = None,
     ) -> Sequence[ProjectEntity]: ...
 
     async def save(self, project: ProjectEntity) -> ProjectEntity: ...
@@ -34,7 +34,7 @@ class IProjectRepository(Protocol):
     async def add_member(self, member: ProjectMemberEntity) -> ProjectMemberEntity: ...
 
     async def get_member(
-        self, project_id: str, user_id: str
+        self, project_id: str, user_id: int
     ) -> ProjectMemberEntity | None: ...
 
     async def list_members(self, project_id: str) -> Sequence[ProjectMemberEntity]: ...
@@ -43,7 +43,7 @@ class IProjectRepository(Protocol):
         self, member: ProjectMemberEntity
     ) -> ProjectMemberEntity: ...
 
-    async def remove_member(self, project_id: str, member_id: str) -> bool: ...
+    async def remove_member(self, project_id: str, user_id: int) -> bool: ...
 
     async def get_configuration(self, project_id: str) -> dict | None: ...
 

@@ -20,10 +20,10 @@ class InMemoryUserLoginRepository(IUserLoginRepository):
     """In-memory mock repository for isolated Use Case testing."""
 
     def __init__(self):
-        self.records: dict[str, UserLoginMetadataEntity] = {}
+        self.records: dict[int, UserLoginMetadataEntity] = {}
 
     async def upsert_last_login(
-        self, user_id: str, last_login_at: datetime
+        self, user_id: int, last_login_at: datetime
     ) -> UserLoginMetadataEntity:
         now = datetime.now(UTC)
         existing = self.records.get(user_id)
@@ -37,10 +37,10 @@ class InMemoryUserLoginRepository(IUserLoginRepository):
         self.records[user_id] = entity
         return entity
 
-    async def get_by_user_id(self, user_id: str) -> UserLoginMetadataEntity | None:
+    async def get_by_user_id(self, user_id: int) -> UserLoginMetadataEntity | None:
         return self.records.get(user_id)
 
-    async def get_by_user_ids(self, user_ids: list[str]) -> dict[str, datetime]:
+    async def get_by_user_ids(self, user_ids: list[int]) -> dict[int, datetime]:
         return {
             uid: rec.last_login_at
             for uid, rec in self.records.items()
@@ -86,9 +86,9 @@ async def test_first_login_creates_last_login_record():
     )
     auth_client.get_me.assert_awaited_once_with("acc_tok_1")
 
-    record = await repo.get_by_user_id("101")
+    record = await repo.get_by_user_id(101)
     assert record is not None
-    assert record.user_id == "101"
+    assert record.user_id == 101
     assert record.last_login_at is not None
     assert record.last_login_at.tzinfo is not None
 
@@ -113,12 +113,12 @@ async def test_second_login_updates_existing_record():
     repo = InMemoryUserLoginRepository()
     # Pre-seed existing record
     initial_time = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
-    await repo.upsert_last_login("101", initial_time)
+    await repo.upsert_last_login(101, initial_time)
 
     use_case = LoginUseCase(auth_client=auth_client, login_repo=repo)
     await use_case.execute(LoginRequestDTO(email="test@dutai.io.vn", password="pass"))
 
-    record = await repo.get_by_user_id("101")
+    record = await repo.get_by_user_id(101)
     assert record is not None
     assert len(repo.records) == 1
     assert record.last_login_at > initial_time
@@ -209,21 +209,21 @@ async def test_repository_model_conversion_and_batch_query():
     """Test 5 & 6: ORM Model entity conversion and batch query mapping."""
     now = datetime.now(UTC)
     model = UserLoginMetadataModel(
-        user_id="user_999",
+        user_id=999,
         last_login_at=now,
         created_at=now,
         updated_at=now,
     )
     entity = model.to_entity()
-    assert entity.user_id == "user_999"
+    assert entity.user_id == 999
     assert entity.last_login_at == now
 
     # Test batch query logic
     repo = InMemoryUserLoginRepository()
     t1 = datetime(2026, 8, 1, 10, 0, 0, tzinfo=UTC)
     t2 = datetime(2026, 8, 2, 10, 0, 0, tzinfo=UTC)
-    await repo.upsert_last_login("user_a", t1)
-    await repo.upsert_last_login("user_b", t2)
+    await repo.upsert_last_login(1, t1)
+    await repo.upsert_last_login(2, t2)
 
-    batch_res = await repo.get_by_user_ids(["user_a", "user_b", "user_c"])
-    assert batch_res == {"user_a": t1, "user_b": t2}
+    batch_res = await repo.get_by_user_ids([1, 2, 3])
+    assert batch_res == {1: t1, 2: t2}

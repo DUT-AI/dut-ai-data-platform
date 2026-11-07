@@ -1,3 +1,5 @@
+from core.events.domain_event import ProjectCreatedEvent
+from core.events.outbox import IOutboxRepository
 from modules.project.domain.catalog_interfaces import IProjectCatalogRepository
 from modules.project.domain.entities import ProjectEntity, ProjectMemberEntity
 from modules.project.domain.events import IProjectEventPublisher, ProjectDomainEvent
@@ -14,13 +16,15 @@ class CreateProjectUseCase:
         repo: IProjectRepository,
         catalog_repo: IProjectCatalogRepository,
         event_publisher: IProjectEventPublisher,
+        outbox_repo: IOutboxRepository | None = None,
     ) -> None:
         self.repo = repo
         self.catalog_repo = catalog_repo
         self.event_publisher = event_publisher
+        self.outbox_repo = outbox_repo
 
     async def execute(
-        self, data: ProjectCreateDTO, owner_id: str
+        self, data: ProjectCreateDTO, owner_id: int
     ) -> ProjectResponseDTO:
         template = None
         template_id = (
@@ -58,6 +62,15 @@ class CreateProjectUseCase:
                 "settings_schema_version": "1.0",
             },
         )
+        if self.outbox_repo:
+            await self.outbox_repo.save_event(
+                ProjectCreatedEvent(
+                    project_id=saved.id,
+                    name=saved.name,
+                    owner_id=owner_id,
+                    template_id=saved.template_id,
+                )
+            )
         await self.event_publisher.publish(
             ProjectDomainEvent(
                 event_type="ProjectCreated",

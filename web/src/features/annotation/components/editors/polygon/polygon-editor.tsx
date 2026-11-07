@@ -29,7 +29,9 @@ export function PolygonSegmentationEditor({
   const prevToolRef = useRef<string>("select");
 
   const [currentTool, setCurrentTool] = useState<string>("select");
-  const [internalSelectedShapeId, setInternalSelectedShapeId] = useState<string | null>(null);
+  const [internalSelectedShapeId, setInternalSelectedShapeId] = useState<
+    string | null
+  >(null);
 
   const selectedShapeId =
     externalSelectedShapeId !== undefined
@@ -63,8 +65,13 @@ export function PolygonSegmentationEditor({
   });
 
   // Active in-progress drawing points
-  const [polygonPoints, setPolygonPoints] = useState<Array<[number, number]>>([]);
-  const [currentMousePos, setCurrentMousePos] = useState<{ x: number; y: number } | null>(null);
+  const [polygonPoints, setPolygonPoints] = useState<Array<[number, number]>>(
+    []
+  );
+  const [currentMousePos, setCurrentMousePos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   const getColor = useCallback(
     (catId?: string | null, idx = 0) => {
@@ -105,7 +112,14 @@ export function PolygonSegmentationEditor({
     setPolygonPoints([]);
     setCurrentMousePos(null);
     setCurrentTool("select");
-  }, [polygonPoints, screenToNormalized, selectedCategoryId, results, onChange, setSelectedShapeId]);
+  }, [
+    polygonPoints,
+    screenToNormalized,
+    selectedCategoryId,
+    results,
+    onChange,
+    setSelectedShapeId,
+  ]);
 
   // Keyboard shortcuts (P: polygon, V: select, Enter: finish, Esc: cancel, Delete: delete)
   useEffect(() => {
@@ -341,7 +355,9 @@ export function PolygonSegmentationEditor({
               <Line
                 points={[
                   ...polygonPoints.flat(),
-                  ...(currentMousePos ? [currentMousePos.x, currentMousePos.y] : []),
+                  ...(currentMousePos
+                    ? [currentMousePos.x, currentMousePos.y]
+                    : []),
                 ]}
                 stroke={getColor(selectedCategoryId)}
                 strokeWidth={2 / stageScale}

@@ -4,6 +4,7 @@ from typing import Any
 from loguru import logger
 
 from core.config import settings
+from core.constants import SYSTEM_USER_ID
 from core.utils.id_generator import generate_ulid
 from modules.annotation.domain.entities import (
     AnnotationEntity,
@@ -148,19 +149,21 @@ class SyncLabelStudioWebhookUseCase:
                         res["category_id"] = cat_display_to_id[cid]
 
         anno_obj = payload.get("annotation", {})
-        created_by = (
-            str(
-                anno_obj.get("created_username")
-                or anno_obj.get("completed_by")
-                or "label_studio"
-            )
+        raw_user = (
+            anno_obj.get("completed_by")
+            or anno_obj.get("user_id")
+            or anno_obj.get("created_by")
+            or anno_obj.get("created_username")
             if isinstance(anno_obj, dict)
-            else "label_studio"
+            else None
+        )
+        created_by: int = (
+            int(raw_user)
+            if raw_user is not None and str(raw_user).isdigit()
+            else SYSTEM_USER_ID
         )
 
-        extracted_cat_ids = [
-            r["category_id"] for r in results if r.get("category_id")
-        ]
+        extracted_cat_ids = [r["category_id"] for r in results if r.get("category_id")]
 
         revision = AnnotationRevisionEntity(
             id=generate_ulid(),

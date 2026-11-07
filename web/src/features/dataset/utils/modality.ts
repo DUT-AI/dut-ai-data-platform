@@ -1,11 +1,5 @@
 export type ModalityCode =
-  | "image"
-  | "document"
-  | "text"
-  | "chat"
-  | "audio"
-  | "video"
-  | "tabular";
+  "image" | "document" | "text" | "chat" | "audio" | "video" | "tabular";
 
 export interface ModalityMeta {
   code: ModalityCode;
@@ -49,7 +43,8 @@ const MODALITY_CONFIGS: Record<ModalityCode, ModalityMeta> = {
     shortLabel: "Văn bản (Document / Text)",
     domainGroup: "Natural Language Processing",
     allowedExtensions: ["txt", "json", "jsonl", "csv", "pdf"],
-    acceptAttribute: ".txt,.json,.jsonl,.csv,.pdf,text/plain,application/json,text/csv,application/pdf",
+    acceptAttribute:
+      ".txt,.json,.jsonl,.csv,.pdf,text/plain,application/json,text/csv,application/pdf",
     exampleDatasetName: "VD: Tập văn bản đánh giá sản phẩm khách hàng",
     exampleDescription:
       "Dữ liệu văn bản phục vụ phân loại ý kiến và trích xuất thực thể tên riêng (NER)...",
@@ -70,7 +65,8 @@ const MODALITY_CONFIGS: Record<ModalityCode, ModalityMeta> = {
     shortLabel: "Văn bản (Text)",
     domainGroup: "Natural Language Processing",
     allowedExtensions: ["txt", "json", "jsonl", "csv"],
-    acceptAttribute: ".txt,.json,.jsonl,.csv,text/plain,application/json,text/csv",
+    acceptAttribute:
+      ".txt,.json,.jsonl,.csv,text/plain,application/json,text/csv",
     exampleDatasetName: "VD: Tập ngữ liệu hỏi đáp tiếng Việt",
     exampleDescription:
       "Tập ngữ liệu câu văn phục vụ bài toán trả lời câu hỏi và tóm tắt văn bản...",
@@ -152,7 +148,8 @@ const MODALITY_CONFIGS: Record<ModalityCode, ModalityMeta> = {
     shortLabel: "Bảng dữ liệu (Tabular)",
     domainGroup: "Tabular & Structured Data",
     allowedExtensions: ["csv", "parquet", "xlsx", "json"],
-    acceptAttribute: ".csv,.parquet,.xlsx,.json,text/csv,application/vnd.ms-excel",
+    acceptAttribute:
+      ".csv,.parquet,.xlsx,.json,text/csv,application/vnd.ms-excel",
     exampleDatasetName: "VD: Bảng thông tin giao dịch khách hàng",
     exampleDescription:
       "Bảng dữ liệu có cấu trúc phục vụ phân tích hồi quy và phân lớp hành vi...",

@@ -6,7 +6,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from core.config.auth import auth_settings
 from core.exceptions import UnauthorizedException
 from core.security.jwt import decode_access_token
-from modules.identity.domain.entities import AuthUser
+from modules.identity.dtos.auth_dtos import AuthUserDTO as AuthUser
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -52,7 +52,11 @@ async def get_current_user(
     try:
         user_id = int(user_id_raw)
     except (ValueError, TypeError):
-        user_id = user_id_raw
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Mã định danh người dùng không hợp lệ (phải là số nguyên int): {user_id_raw}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     return AuthUser(
         id=user_id,

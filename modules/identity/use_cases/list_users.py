@@ -36,7 +36,7 @@ class ListUsersUseCase:
             )
 
         # 2. Extract user IDs for batch query (Prevent N+1 query)
-        user_ids = [str(u.id) for u in manage_resp.items]
+        user_ids = [int(u.id) for u in manage_resp.items]
 
         # 3. Fetch all last_login_at timestamps in 1 single DB query
         last_login_map = await self.login_repo.get_by_user_ids(user_ids)
@@ -44,13 +44,13 @@ class ListUsersUseCase:
         # 4. Merge data into UserReadDTO
         all_user_dtos = [
             UserReadDTO(
-                id=u.id,
+                id=int(u.id),
                 name=u.name,
                 email=u.email,
                 status=u.status,
                 avatar_url=u.avatar_url,
                 role_names=u.role_names,
-                last_login_at=last_login_map.get(str(u.id)),
+                last_login_at=last_login_map.get(int(u.id)),
             )
             for u in manage_resp.items
         ]

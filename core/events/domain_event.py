@@ -92,3 +92,27 @@ class AssetReadyEvent(DomainEvent):
                 "sha256": sha256,
             },
         )
+
+
+@dataclass(frozen=True)
+class ProjectCreatedEvent(DomainEvent):
+    """Emitted when a new project is created."""
+
+    def __init__(
+        self,
+        project_id: str,
+        name: str,
+        owner_id: int,
+        template_id: str | None = None,
+    ) -> None:
+        super().__init__(
+            event_type="ProjectCreated",
+            aggregate_type="Project",
+            aggregate_id=project_id,
+            payload={
+                "project_id": project_id,
+                "name": name,
+                "owner_id": owner_id,
+                "template_id": template_id,
+            },
+        )

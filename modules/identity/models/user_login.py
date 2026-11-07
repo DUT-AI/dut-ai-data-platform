@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, String
+from sqlalchemy import DateTime, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.database.base import Base, TimestampMixin
@@ -12,7 +12,7 @@ class UserLoginMetadataModel(Base, TimestampMixin):
 
     __tablename__ = "user_login_metadata"
 
-    user_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     last_login_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),

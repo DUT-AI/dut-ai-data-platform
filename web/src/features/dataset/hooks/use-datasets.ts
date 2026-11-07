@@ -131,7 +131,10 @@ export function useDirectUploadVersionAssetsMutation(versionId: string) {
         })),
       };
 
-      const prepareRes = await datasetApi.prepareAssetUpload(versionId, preparePayload);
+      const prepareRes = await datasetApi.prepareAssetUpload(
+        versionId,
+        preparePayload
+      );
 
       // Step 2: Upload Files directly to S3 and Compute SHA-256
       const finalizeItems = await Promise.all(
@@ -195,7 +198,6 @@ export function useUploadVersionAssetsMutation(versionId: string) {
     },
   });
 }
-
 
 export function useRemoveVersionAssetMutation(versionId: string) {
   const queryClient = useQueryClient();

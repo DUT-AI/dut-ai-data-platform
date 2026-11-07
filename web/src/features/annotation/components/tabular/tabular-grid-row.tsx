@@ -1,7 +1,11 @@
 "use client";
 
 import React, { memo } from "react";
-import { TabularRow, TabularRecordResult, TabularLabelMode } from "./tabular-types";
+import {
+  TabularRow,
+  TabularRecordResult,
+  TabularLabelMode,
+} from "./tabular-types";
 import { TabularDataCell } from "./tabular-data-cell";
 import { TabularLabelCell, CategoryOption } from "./tabular-label-cell";
 
@@ -62,7 +66,7 @@ export const TabularGridRow = memo(function TabularGridRow({
     <tr
       onClick={() => onFocusRow(recordKey)}
       tabIndex={0}
-      className={`group transition-colors outline-hidden ${
+      className={`outline-hidden group transition-colors ${
         isFocused
           ? "bg-blue-950/30 ring-1 ring-inset ring-blue-500/40"
           : isSelected
@@ -74,7 +78,7 @@ export const TabularGridRow = memo(function TabularGridRow({
     >
       {/* 1. Selection Checkbox */}
       <td
-        className="sticky left-0 z-10 w-10 border-b border-slate-800 bg-slate-950/95 px-2 py-2 text-center backdrop-blur-xs group-hover:bg-slate-900/95"
+        className="backdrop-blur-xs sticky left-0 z-10 w-10 border-b border-slate-800 bg-slate-950/95 px-2 py-2 text-center group-hover:bg-slate-900/95"
         onClick={(e) => {
           e.stopPropagation();
           onSelectRow(recordKey, e.shiftKey);
@@ -84,7 +88,7 @@ export const TabularGridRow = memo(function TabularGridRow({
           type="checkbox"
           checked={isSelected}
           onChange={() => {}}
-          className="size-3.5 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-950 cursor-pointer"
+          className="size-3.5 cursor-pointer rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-950"
         />
       </td>
 
@@ -94,7 +98,7 @@ export const TabularGridRow = memo(function TabularGridRow({
       </td>
 
       {/* 3. Pinned Record ID Column */}
-      <td className="sticky left-10 z-10 max-w-[140px] truncate border-b border-slate-800 bg-slate-950/95 px-3 py-2 font-mono text-xs font-semibold text-slate-200 backdrop-blur-xs group-hover:bg-slate-900/95">
+      <td className="backdrop-blur-xs sticky left-10 z-10 max-w-[140px] truncate border-b border-slate-800 bg-slate-950/95 px-3 py-2 font-mono text-xs font-semibold text-slate-200 group-hover:bg-slate-900/95">
         <span
           title={recordKey}
           className="rounded-xs bg-slate-900 px-1.5 py-0.5 text-[11px] text-blue-300"
@@ -119,7 +123,7 @@ export const TabularGridRow = memo(function TabularGridRow({
         ))}
 
       {/* 5. Sticky Pinned Target Label Column */}
-      <td className="sticky right-0 z-10 min-w-[160px] border-b border-slate-800 bg-slate-950/95 px-3 py-2 backdrop-blur-xs group-hover:bg-slate-900/95">
+      <td className="backdrop-blur-xs sticky right-0 z-10 min-w-[160px] border-b border-slate-800 bg-slate-950/95 px-3 py-2 group-hover:bg-slate-900/95">
         <TabularLabelCell
           recordKey={recordKey}
           currentResult={currentResult}

@@ -24,6 +24,11 @@ class AuthUserResponseDTO(BaseModel):
     role_names: list[str] = Field(default_factory=list)
 
 
+AuthUserDTO = AuthUserResponseDTO
+AuthUser = AuthUserResponseDTO
+TokenResponse = TokenResponseDTO
+
+
 class LogoutResponseDTO(BaseModel):
     is_success: bool = True
     message: str = "Đăng xuất thành công."

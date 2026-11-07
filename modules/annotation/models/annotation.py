@@ -49,7 +49,7 @@ class AnnotationModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
         ForeignKey("ontology_versions.id", ondelete="SET NULL"),
         nullable=True,
     )
-    created_by: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_by: Mapped[int] = mapped_column(Integer, nullable=False)
     label_studio_task_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     revisions: Mapped[list["AnnotationRevisionModel"]] = relationship(
@@ -108,7 +108,7 @@ class AnnotationRevisionModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
         ForeignKey("ontology_versions.id", ondelete="CASCADE"),
         nullable=False,
     )
-    created_by: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_by: Mapped[int] = mapped_column(Integer, nullable=False)
     source: Mapped[RevisionSource] = mapped_column(
         String(50), default="human", nullable=False
     )

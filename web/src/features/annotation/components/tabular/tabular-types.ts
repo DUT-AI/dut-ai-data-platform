@@ -10,11 +10,7 @@ export interface TabularSortConfig {
 }
 
 export type TabularLabelMode =
-  | "binary"
-  | "single-class"
-  | "multi-label"
-  | "number"
-  | "legacy-cell";
+  "binary" | "single-class" | "multi-label" | "number" | "legacy-cell";
 
 export interface TabularRecordResult extends AnnotationResult {
   id: string;

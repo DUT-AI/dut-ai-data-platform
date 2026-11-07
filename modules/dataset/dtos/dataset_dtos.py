@@ -33,7 +33,7 @@ class AssetResponseDTO(BaseModel):
     data_format: str | None = None
     status: str = "READY"
     provenance: dict[str, Any] | None = None
-    created_by: str | None = None
+    created_by: int | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
     retired_at: datetime | None = None
@@ -59,7 +59,7 @@ class DatasetVersionResponseDTO(BaseModel):
     version_config: dict[str, Any] | None = None
     manifest_hash: str | None = None
     asset_count: int
-    created_by: str | None = None
+    created_by: int | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
     published_at: datetime | None = None
@@ -76,7 +76,7 @@ class DatasetResponseDTO(BaseModel):
     tags: list[str] = Field(default_factory=list)
     status: str
     latest_published_version_number: int | None = None
-    created_by: str | None = None
+    created_by: int | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
     versions: list[DatasetVersionResponseDTO] = Field(default_factory=list)

@@ -11,11 +11,11 @@ class UpdateProjectMemberUseCase:
         self.repo = repo
 
     async def execute(
-        self, project_id: str, member_id: str, data: ProjectMemberUpdateDTO
+        self, project_id: str, user_id: int, data: ProjectMemberUpdateDTO
     ) -> ProjectMemberResponseDTO:
-        member = await self.repo.get_member(project_id, member_id)
+        member = await self.repo.get_member(project_id, user_id)
         if not member:
-            raise NotFoundException(f"Member '{member_id}' not found in project.")
+            raise NotFoundException(f"Member '{user_id}' not found in project.")
 
         if data.role is not None:
             member.role = data.role

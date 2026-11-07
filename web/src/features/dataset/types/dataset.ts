@@ -125,5 +125,3 @@ export interface FinalizeAssetImportResponse {
   reused_assets_count: number;
   new_assets_count: number;
 }
-
-

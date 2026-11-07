@@ -21,7 +21,7 @@ def test_project_name_cannot_be_blank() -> None:
 
 def test_archive_and_restore_are_idempotent() -> None:
     project = ProjectEntity(
-        name="Traffic", template_id="traffic-classification", created_by="u1"
+        name="Traffic", template_id="traffic-classification", created_by=1
     )
     assert project.archive(now_utc()) is True
     assert project.archive(now_utc()) is False
@@ -47,10 +47,8 @@ async def test_create_project_publishes_contract_and_creates_owner_member() -> N
     use_case = CreateProjectUseCase(repo, catalog, events)
     result = await use_case.execute(
         ProjectCreateDTO(name="Traffic", template_id="traffic-classification"),
-        "u1",
+        1,
     )
-    assert result.created_by == "u1"
+    assert result.created_by == 1
     assert events.events[0].event_type == "ProjectCreated"
     repo.add_member.assert_awaited_once()
-
-

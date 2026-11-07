@@ -1,48 +1,82 @@
+import asyncio
 from typing import Any
 
 import httpx
 from fastapi import HTTPException, status
 
 from core.config.auth import auth_settings
-from modules.identity.domain.entities import AuthUser, TokenResponse
+from modules.identity.dtos.auth_dtos import AuthUser, TokenResponse
 
 
 class AuthClient:
     """HTTP Client to interact with external Auth Server API."""
 
-    def __init__(self, timeout: float = 10.0):
+    def __init__(
+        self, client: httpx.AsyncClient | None = None, timeout: float = 10.0
+    ) -> None:
         self.timeout = timeout
+        self._client = client
+        try:
+            self._client_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            self._client_loop = None
+
+    @property
+    def client(self) -> httpx.AsyncClient:
+        current_loop = None
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            pass
+
+        if (
+            self._client is None
+            or self._client.is_closed
+            or (
+                current_loop is not None
+                and self._client_loop is not None
+                and self._client_loop != current_loop
+            )
+            or (self._client_loop is not None and self._client_loop.is_closed())
+        ):
+            limits = httpx.Limits(
+                max_keepalive_connections=20,
+                max_connections=100,
+                keepalive_expiry=30.0,
+            )
+            self._client = httpx.AsyncClient(limits=limits, timeout=self.timeout)
+            self._client_loop = current_loop
+        return self._client
 
     async def get_me(self, token: str) -> AuthUser:
         """Fetch current user data from Auth Server GET /api/v1/auth/me."""
         headers = {"Authorization": f"Bearer {token}"}
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(auth_settings.me_url, headers=headers)
-                if response.status_code == 401:
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="Phiên đăng nhập hết hạn hoặc không hợp lệ.",
-                    )
-                response.raise_for_status()
-
-                payload: dict[str, Any] = response.json()
-                if not payload.get("is_success") or "data" not in payload:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=payload.get("message", "Lỗi lấy thông tin người dùng"),
-                    )
-
-                data = payload["data"]
-                return AuthUser(
-                    id=data["id"],
-                    name=data["name"],
-                    email=data["email"],
-                    status=data.get("status", "ACTIVE"),
-                    avatar_url=data.get("avatar_url"),
-                    role_names=data.get("role_names", []),
+            response = await self.client.get(auth_settings.me_url, headers=headers)
+            if response.status_code == 401:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Phiên đăng nhập hết hạn hoặc không hợp lệ.",
                 )
+            response.raise_for_status()
+
+            payload: dict[str, Any] = response.json()
+            if not payload.get("is_success") or "data" not in payload:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=payload.get("message", "Lỗi lấy thông tin người dùng"),
+                )
+
+            data = payload["data"]
+            return AuthUser(
+                id=data["id"],
+                name=data["name"],
+                email=data["email"],
+                status=data.get("status", "ACTIVE"),
+                avatar_url=data.get("avatar_url"),
+                role_names=data.get("role_names", []),
+            )
         except httpx.ConnectError as exc:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
@@ -64,34 +98,29 @@ class AuthClient:
         payload = {"email": email, "password": password}
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    auth_settings.login_url, json=payload
+            response = await self.client.post(auth_settings.login_url, json=payload)
+            if response.status_code in (400, 401, 422):
+                res_err = response.json() if response.content else {}
+                msg = res_err.get("message") or "Email hoặc mật khẩu không chính xác."
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=msg,
                 )
-                if response.status_code in (400, 401, 422):
-                    res_err = response.json() if response.content else {}
-                    msg = (
-                        res_err.get("message") or "Email hoặc mật khẩu không chính xác."
-                    )
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail=msg,
-                    )
-                response.raise_for_status()
+            response.raise_for_status()
 
-                res_json: dict[str, Any] = response.json()
-                if not res_json.get("is_success") or "data" not in res_json:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=res_json.get("message", "Đăng nhập không thành công"),
-                    )
-
-                data = res_json["data"]
-                return TokenResponse(
-                    access_token=data["access_token"],
-                    refresh_token=data["refresh_token"],
-                    token_type=data.get("token_type", "bearer"),
+            res_json: dict[str, Any] = response.json()
+            if not res_json.get("is_success") or "data" not in res_json:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=res_json.get("message", "Đăng nhập không thành công"),
                 )
+
+            data = res_json["data"]
+            return TokenResponse(
+                access_token=data["access_token"],
+                refresh_token=data["refresh_token"],
+                token_type=data.get("token_type", "bearer"),
+            )
         except httpx.ConnectError as exc:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,

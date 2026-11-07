@@ -22,7 +22,7 @@ class CreateRevisionUseCase:
         self.onto_repo = onto_repo
 
     async def execute(
-        self, annotation_id: str, payload: RevisionCreateDTO, created_by: str
+        self, annotation_id: str, payload: RevisionCreateDTO, created_by: int | str
     ) -> AnnotationRevisionResponseDTO:
         annotation = await self.anno_repo.get_annotation_by_id(annotation_id)
         if not annotation:
@@ -52,15 +52,13 @@ class CreateRevisionUseCase:
             payload.results, ontology_ver
         )
 
-        revision = AnnotationRevisionEntity(
-            id=generate_ulid(),
-            annotation_id=annotation_id,
-            revision_number=0,
-            ontology_version_id=ontology_version_id,
-            created_by=created_by,
+        revision = annotation.add_revision(
             source=payload.source,
             results=payload.results,
             category_ids=extracted_cat_ids,
+            created_by=created_by,
+            ontology_version_id=ontology_version_id,
         )
-        created = await self.anno_repo.create_revision(revision)
-        return AnnotationRevisionResponseDTO.model_validate(created)
+        created_rev = await self.anno_repo.create_revision(revision)
+
+        return AnnotationRevisionResponseDTO.model_validate(created_rev)

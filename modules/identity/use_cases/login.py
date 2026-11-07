@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from loguru import logger
 
 from core.security.jwt import create_access_token
-from modules.identity.client.auth_client import AuthClient
+from modules.identity.domain.interfaces import IAuthClient
 from modules.identity.domain.interfaces import IUserLoginRepository
 from modules.identity.dtos.auth_dtos import LoginRequestDTO, TokenResponseDTO
 
@@ -13,7 +13,7 @@ class LoginUseCase:
 
     def __init__(
         self,
-        auth_client: AuthClient,
+        auth_client: IAuthClient,
         login_repo: IUserLoginRepository,
     ) -> None:
         self.auth_client = auth_client
@@ -29,7 +29,7 @@ class LoginUseCase:
         auth_user = await self.auth_client.get_me(manage_access_token)
 
         try:
-            user_id = str(auth_user.id)
+            user_id = int(auth_user.id)
             now = datetime.now(UTC)
             await self.login_repo.upsert_last_login(user_id=user_id, last_login_at=now)
             logger.info(f"Updated last_login_at for user_id={user_id}")

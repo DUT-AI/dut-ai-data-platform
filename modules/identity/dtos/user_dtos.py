@@ -8,7 +8,7 @@ class UserReadDTO(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    id: int | str
+    id: int
     name: str
     email: str
     status: str = "ACTIVE"

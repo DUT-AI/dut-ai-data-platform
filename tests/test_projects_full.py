@@ -39,7 +39,7 @@ async def test_project_full_lifecycle():
         project_id = project["id"]
         assert project["name"] == "Integration Test Project"
         assert project["status"] == "active"
-        assert project["owner_id"] == "101"
+        assert project["owner_id"] == 101
 
         # 2. Get project detail
         get_res = await client.get(f"/api/v1/projects/{project_id}")
@@ -67,10 +67,10 @@ async def test_project_full_lifecycle():
         # 5. Add member
         add_res = await client.post(
             f"/api/v1/projects/{project_id}/members",
-            json={"user_id": "102", "role": "annotator"},
+            json={"user_id": 102, "role": "annotator"},
         )
         assert add_res.status_code == 201
-        assert add_res.json()["user_id"] == "102"
+        assert add_res.json()["user_id"] == 102
         assert add_res.json()["role"] == "annotator"
 
         # 6. Update member role

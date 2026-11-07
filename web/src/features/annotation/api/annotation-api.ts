@@ -2,6 +2,7 @@ import { api } from "@/lib/api";
 import {
   Annotation,
   AnnotationRevision,
+  BatchAssetStatusResponse,
   CreateAnnotationRequest,
   CreateRevisionRequest,
 } from "../types";
@@ -78,6 +79,16 @@ export async function openAssetInLabelStudio(
   const { data } = await api.post<OpenInLabelStudioResponse>(
     `/assets/${assetId}/open-in-label-studio`,
     request
+  );
+  return data;
+}
+
+export async function getBatchAssetStatus(
+  assetIds: string[]
+): Promise<BatchAssetStatusResponse> {
+  const { data } = await api.post<BatchAssetStatusResponse>(
+    "/annotations/batch-status",
+    { asset_ids: assetIds }
   );
   return data;
 }

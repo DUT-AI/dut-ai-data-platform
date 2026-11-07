@@ -9,6 +9,7 @@ from modules.dataset.di import DatasetProvider
 from modules.identity.di import IdentityProvider
 from modules.ontology.di import OntologyProvider
 from modules.project.di import ProjectProvider
+from modules.workflow.infrastructure.di.provider import WorkflowProvider
 
 
 def create_container() -> AsyncContainer:
@@ -21,6 +22,7 @@ def create_container() -> AsyncContainer:
         DatasetProvider(),
         OntologyProvider(),
         AnnotationProvider(),
+        WorkflowProvider(),
     )
 
 

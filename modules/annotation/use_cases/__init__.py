@@ -6,6 +6,7 @@ from modules.annotation.use_cases.create_revision import (
 )
 from modules.annotation.use_cases.get_annotation import (
     GetAnnotationDetailUseCase,
+    GetBatchAssetStatusUseCase,
     ListAssetAnnotationsUseCase,
 )
 from modules.annotation.use_cases.get_revision import (
@@ -21,6 +22,7 @@ __all__ = [
     "CreateAnnotationUseCase",
     "CreateRevisionUseCase",
     "GetAnnotationDetailUseCase",
+    "GetBatchAssetStatusUseCase",
     "GetRevisionDetailUseCase",
     "ListAnnotationRevisionsUseCase",
     "ListAssetAnnotationsUseCase",

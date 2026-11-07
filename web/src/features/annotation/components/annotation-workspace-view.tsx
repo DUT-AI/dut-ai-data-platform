@@ -16,7 +16,8 @@ import {
   useProjectOntologyQuery,
   useOntologySchemaQuery,
 } from "@/features/ontology";
-import { Info } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, Info } from "lucide-react";
+import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useProjectQuery } from "@/features/projects";
 import { AnnotationEditorDispatcher } from "./annotation-editor-dispatcher";
@@ -36,14 +37,20 @@ import { createAnnotation, createRevision } from "../api";
 import {
   resolveAudioLabelMode,
   serializeAnnotationResults,
-  validateAudioAnnotation,
 } from "../utils/audio-label-utils";
+import {
+  ReviewCommentModal,
+  useRecordAssetReviewMutation,
+  useWorkItemDetailQuery,
+} from "@/features/workflow";
+import type { AssetReviewItem } from "@/features/workflow";
 
 interface AnnotationWorkspaceViewProps {
   projectId: string;
   assetId: string;
   ontologyVersionId?: string;
   datasetVersionId?: string;
+  workItemId?: string;
 }
 
 export function AnnotationWorkspaceView(props: AnnotationWorkspaceViewProps) {
@@ -61,11 +68,22 @@ function AnnotationWorkspaceInner({
   assetId,
   ontologyVersionId,
   datasetVersionId,
+  workItemId,
 }: AnnotationWorkspaceViewProps) {
   const router = useRouter();
   const workspaceContainerRef = useRef<HTMLDivElement>(null);
 
   // Queries
+  const { data: workItem } = useWorkItemDetailQuery(workItemId);
+  const batchName = workItem?.resource_id;
+  const batchAssetIds = useMemo(() => {
+    const meta = workItem?.metadata as Record<string, unknown> | undefined;
+    if (meta && Array.isArray(meta.asset_ids)) {
+      return meta.asset_ids as string[];
+    }
+    return [];
+  }, [workItem]);
+
   const {
     data: project,
     isLoading: isProjectLoading,
@@ -154,10 +172,23 @@ function AnnotationWorkspaceInner({
     error: downloadError,
   } = useAssetDownloadUrlQuery(assetId);
   const {
-    data: assets,
+    data: rawVersionAssets,
     isLoading: isAssetsLoading,
     error: assetsError,
   } = useVersionAssetsQuery(datasetVersionId || "");
+
+  // Scope assets strictly to batch assets when workItemId / batchAssetIds is provided
+  const assets = useMemo(() => {
+    if (!rawVersionAssets || rawVersionAssets.length === 0) return [];
+    if (batchAssetIds.length > 0) {
+      const assetMap = new Map(rawVersionAssets.map((a) => [a.id, a]));
+      const scoped = batchAssetIds
+        .map((id) => assetMap.get(id))
+        .filter((a): a is (typeof rawVersionAssets)[0] => Boolean(a));
+      if (scoped.length > 0) return scoped;
+    }
+    return rawVersionAssets;
+  }, [rawVersionAssets, batchAssetIds]);
 
   const downloadUrl = downloadData?.download_url;
   const activeAnnotation = annotations?.[0];
@@ -179,6 +210,14 @@ function AnnotationWorkspaceInner({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
   const [savedResultsHash, setSavedResultsHash] = useState("[]");
+  const [isReviewCommentModalOpen, setIsReviewCommentModalOpen] = useState(false);
+  const recordAssetReviewMutation = useRecordAssetReviewMutation();
+
+  const assetReviews = useMemo(() => {
+    const meta = workItem?.metadata as Record<string, unknown> | undefined;
+    return (meta?.asset_reviews || {}) as Record<string, AssetReviewItem>;
+  }, [workItem]);
+  const currentAssetReview = assetReviews[assetId];
 
   // Modality & Task Type Detection
   const currentAssetIdx = useMemo(() => {
@@ -192,6 +231,8 @@ function AnnotationWorkspaceInner({
     }
     return null;
   }, [assets, currentAssetIdx]);
+
+  const assetFilename = currentAsset?.filename || "Asset";
 
   const {
     effectiveInputType,
@@ -381,8 +422,12 @@ function AnnotationWorkspaceInner({
   const hasNext = !!(assets && currentAssetIdx < assets.length - 1);
 
   const navigateToAsset = (targetAssetId: string) => {
+    const query = new URLSearchParams();
+    if (ontologyVersionId) query.set("ontologyVersionId", ontologyVersionId);
+    if (datasetVersionId) query.set("datasetVersionId", datasetVersionId);
+    if (workItemId) query.set("workItemId", workItemId);
     router.push(
-      `/projects/${projectId}/annotate/${targetAssetId}?ontologyVersionId=${ontologyVersionId || ""}&datasetVersionId=${datasetVersionId || ""}`
+      `/projects/${projectId}/annotate/${targetAssetId}?${query.toString()}`
     );
   };
 
@@ -411,7 +456,24 @@ function AnnotationWorkspaceInner({
           results: workingResults,
         });
       }
-      setFeedbackMsg("Đã lưu kết quả gán nhãn thành công!");
+      if (workItemId && currentAssetReview?.status === "NEEDS_REVISION") {
+        try {
+          await recordAssetReviewMutation.mutateAsync({
+            workItemId,
+            data: {
+              asset_id: assetId,
+              status: "FIXED",
+              comment: currentAssetReview.comment,
+              asset_filename: assetFilename,
+            },
+          });
+          setFeedbackMsg("✓ Đã lưu kết quả gán nhãn & đánh dấu hoàn thành sửa theo góp ý!");
+        } catch {
+          setFeedbackMsg("Đã lưu kết quả gán nhãn thành công!");
+        }
+      } else {
+        setFeedbackMsg("Đã lưu kết quả gán nhãn thành công!");
+      }
       await refetchAnnotations();
     } catch (err: unknown) {
       const errorMsg =
@@ -493,7 +555,65 @@ function AnnotationWorkspaceInner({
   }, [hasPrev, hasNext, assets, currentAssetIdx]);
 
   const isLoading = isAnnoLoading || isDownloadLoading || isAssetsLoading;
-  const assetFilename = currentAsset?.filename || "Asset";
+
+  const handleApproveCurrentAsset = async () => {
+    if (!workItemId || !assetId) return;
+    try {
+      await recordAssetReviewMutation.mutateAsync({
+        workItemId,
+        data: {
+          asset_id: assetId,
+          status: "APPROVED",
+          asset_filename: assetFilename,
+        },
+      });
+      setFeedbackMsg(`✓ Đã duyệt đạt asset ${assetFilename}`);
+      setTimeout(() => setFeedbackMsg(null), 2500);
+      if (hasNext && assets) {
+        navigateToAsset(assets[currentAssetIdx + 1].id);
+      }
+    } catch {
+      // Handled
+    }
+  };
+
+  const handleMarkAsFixed = async () => {
+    if (!workItemId || !assetId) return;
+    try {
+      await recordAssetReviewMutation.mutateAsync({
+        workItemId,
+        data: {
+          asset_id: assetId,
+          status: "FIXED",
+          comment: currentAssetReview?.comment,
+          asset_filename: assetFilename,
+        },
+      });
+      setFeedbackMsg(`✓ Đã đánh dấu hoàn thành sửa cho asset ${assetFilename}`);
+      setTimeout(() => setFeedbackMsg(null), 2500);
+    } catch {
+      // Handled
+    }
+  };
+
+  const handleRevertNeedsRevision = async () => {
+    if (!workItemId || !assetId) return;
+    try {
+      await recordAssetReviewMutation.mutateAsync({
+        workItemId,
+        data: {
+          asset_id: assetId,
+          status: "NEEDS_REVISION",
+          comment: currentAssetReview?.comment,
+          asset_filename: assetFilename,
+        },
+      });
+      setFeedbackMsg(`Đã chuyển lại trạng thái Cần sửa cho ${assetFilename}`);
+      setTimeout(() => setFeedbackMsg(null), 2500);
+    } catch {
+      // Handled
+    }
+  };
 
   return (
     <div
@@ -505,6 +625,14 @@ function AnnotationWorkspaceInner({
         projectId={projectId}
         assetFilename={assetFilename}
         activeAnnotation={activeAnnotation}
+        batchName={batchName}
+        onNavigateBack={() =>
+          router.push(
+            workItemId
+              ? `/projects/${projectId}?tab=workflow`
+              : `/projects/${projectId}`
+          )
+        }
         currentAssetIdx={currentAssetIdx}
         totalAssets={assets?.length || 0}
         hasPrev={hasPrev}
@@ -525,6 +653,12 @@ function AnnotationWorkspaceInner({
         }
         onOpenInstructions={() => setIsInstructionsOpen(true)}
         onOpenHotkeySettings={() => setIsHotkeySettingsOpen(true)}
+        isReviewMode={Boolean(
+          workItem && (workItem.status === "IN_REVIEW" || workItem.status === "SUBMITTED")
+        )}
+        assetReviewStatus={currentAssetReview?.status || null}
+        onApproveAsset={handleApproveCurrentAsset}
+        onRequestRevisionAsset={() => setIsReviewCommentModalOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -554,6 +688,80 @@ function AnnotationWorkspaceInner({
                   : "max-w-5xl"
               )}
             >
+              {/* Prominent Reviewer Feedback Banner on this Asset */}
+              {currentAssetReview?.status === "NEEDS_REVISION" && (
+                <div className="flex shrink-0 items-start justify-between gap-3 rounded-lg border border-rose-500/50 bg-rose-950/70 p-3 text-xs text-rose-200 shadow-sm animate-fade-in">
+                  <div className="flex items-start gap-2.5">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-500/20 text-rose-400 mt-0.5">
+                      <AlertCircle className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 font-semibold text-rose-300">
+                        <span>Reviewer yêu cầu sửa lại nhãn asset này:</span>
+                        {currentAssetReview.reviewed_at && (
+                          <span className="text-[11px] font-normal text-rose-400/80">
+                            ({new Date(currentAssetReview.reviewed_at).toLocaleTimeString("vi-VN", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              day: "2-digit",
+                              month: "2-digit",
+                            })})
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-sm font-semibold text-white whitespace-pre-wrap">
+                        {currentAssetReview.comment || "Vui lòng kiểm tra và hiệu chỉnh lại nhãn theo nhận xét."}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={handleMarkAsFixed}
+                    className="shrink-0 h-7 px-2.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white gap-1"
+                    title="Bấm để đánh dấu đã hoàn thành sửa cho asset này"
+                  >
+                    <Check className="h-3 w-3" />
+                    <span>Đánh dấu đã sửa</span>
+                  </Button>
+                </div>
+              )}
+
+              {currentAssetReview?.status === "FIXED" && (
+                <div className="flex shrink-0 items-center justify-between gap-3 rounded-lg border border-blue-500/50 bg-blue-950/70 p-2.5 text-xs text-blue-200 shadow-sm animate-fade-in">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-500/20 text-blue-400">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <span className="font-semibold text-blue-300">
+                        Đã sửa nhãn theo góp ý của Reviewer:
+                      </span>{" "}
+                      <span className="text-slate-300 italic">
+                        &ldquo;{currentAssetReview.comment || "Đã điều chỉnh lại nhãn"}&rdquo;
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleRevertNeedsRevision}
+                    className="h-6 px-2 text-[11px] text-blue-300 hover:text-blue-100 hover:bg-blue-900/40"
+                    title="Chuyển lại về trạng thái Cần sửa"
+                  >
+                    Đánh dấu cần sửa lại
+                  </Button>
+                </div>
+              )}
+
+              {currentAssetReview?.status === "APPROVED" && (
+                <div className="flex shrink-0 items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-3 py-1.5 text-xs text-emerald-300">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                    <span className="font-medium">Asset này đã được Reviewer đánh giá: Đạt yêu cầu.</span>
+                  </div>
+                </div>
+              )}
+
               {/* Category Legend, Label Selector & Quick Action Bar */}
               <WorkspaceCategoryBar
                 categories={availableCategories}
@@ -729,6 +937,19 @@ function AnnotationWorkspaceInner({
         isOpen={isHotkeySettingsOpen}
         onClose={() => setIsHotkeySettingsOpen(false)}
       />
+
+      {/* Reviewer Comment Modal */}
+      {workItem && (
+        <ReviewCommentModal
+          isOpen={isReviewCommentModalOpen}
+          onClose={() => setIsReviewCommentModalOpen(false)}
+          workItemId={workItem.id}
+          batchName={workItem.resource_id}
+          assetId={assetId}
+          assetFilename={assetFilename}
+          existingComment={currentAssetReview?.comment || ""}
+        />
+      )}
     </div>
   );
 }

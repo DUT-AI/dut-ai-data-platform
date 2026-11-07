@@ -80,3 +80,18 @@ class OpenInLabelStudioResponseDTO(BaseModel):
     task_url: str
     ls_project_id: int
     ls_task_id: int
+
+
+class BatchAssetStatusItemDTO(BaseModel):
+    asset_id: str
+    is_annotated: bool
+    objects_count: int
+    last_updated_at: datetime | None = None
+
+
+class BatchAssetStatusRequestDTO(BaseModel):
+    asset_ids: list[str] = Field(default_factory=list)
+
+
+class BatchAssetStatusResponseDTO(BaseModel):
+    statuses: dict[str, BatchAssetStatusItemDTO] = Field(default_factory=dict)

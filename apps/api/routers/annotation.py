@@ -8,6 +8,8 @@ from modules.annotation.dtos.annotation_dtos import (
     AnnotationCreateDTO,
     AnnotationResponseDTO,
     AnnotationRevisionResponseDTO,
+    BatchAssetStatusRequestDTO,
+    BatchAssetStatusResponseDTO,
     OpenInLabelStudioRequestDTO,
     OpenInLabelStudioResponseDTO,
     RevisionCreateDTO,
@@ -16,6 +18,7 @@ from modules.annotation.use_cases import (
     CreateAnnotationUseCase,
     CreateRevisionUseCase,
     GetAnnotationDetailUseCase,
+    GetBatchAssetStatusUseCase,
     GetRevisionDetailUseCase,
     ListAnnotationRevisionsUseCase,
     ListAssetAnnotationsUseCase,
@@ -72,6 +75,20 @@ async def open_asset_in_label_studio(
         ls_project_id=result.ls_project_id,
         ls_task_id=result.ls_task_id,
     )
+
+
+@router.post(
+    "/api/v1/annotations/batch-status",
+    response_model=BatchAssetStatusResponseDTO,
+    summary="Get annotation completion status for a batch of asset IDs",
+)
+@inject
+async def get_batch_asset_status(
+    payload: BatchAssetStatusRequestDTO,
+    current_user: CurrentUser,
+    use_case: FromDishka[GetBatchAssetStatusUseCase],
+):
+    return await use_case.execute(payload.asset_ids)
 
 
 # ---------------------------------------------------------------------------

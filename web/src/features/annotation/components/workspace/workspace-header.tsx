@@ -4,6 +4,7 @@ import React from "react";
 import { Button, Badge } from "@/components/ui";
 import {
   ArrowLeft,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Expand,
@@ -14,6 +15,7 @@ import {
   PanelRightOpen,
   Save,
   ScrollText,
+  XCircle,
 } from "lucide-react";
 import type { Annotation } from "../../types";
 
@@ -21,6 +23,8 @@ interface WorkspaceHeaderProps {
   projectId?: string;
   assetFilename: string;
   activeAnnotation?: Annotation;
+  batchName?: string;
+  backLabel?: string;
   currentAssetIdx: number;
   totalAssets: number;
   hasPrev: boolean;
@@ -29,6 +33,8 @@ interface WorkspaceHeaderProps {
   isSidebarOpen: boolean;
   isFullscreen: boolean;
   hasUnsavedChanges?: boolean;
+  isReviewMode?: boolean;
+  assetReviewStatus?: "APPROVED" | "NEEDS_REVISION" | "FIXED" | null;
   onNavigateBack?: () => void;
   onNavigatePrev: () => void;
   onNavigateNext: () => void;
@@ -37,6 +43,8 @@ interface WorkspaceHeaderProps {
   onToggleFullscreen: () => void;
   onOpenInstructions: () => void;
   onOpenHotkeySettings: () => void;
+  onApproveAsset?: () => void;
+  onRequestRevisionAsset?: () => void;
 }
 
 /**
@@ -46,6 +54,8 @@ export function WorkspaceHeader({
   projectId,
   assetFilename,
   activeAnnotation,
+  batchName,
+  backLabel,
   currentAssetIdx,
   totalAssets,
   hasPrev,
@@ -54,6 +64,8 @@ export function WorkspaceHeader({
   isSidebarOpen,
   isFullscreen,
   hasUnsavedChanges = false,
+  isReviewMode = false,
+  assetReviewStatus = null,
   onNavigateBack,
   onNavigatePrev,
   onNavigateNext,
@@ -62,6 +74,8 @@ export function WorkspaceHeader({
   onToggleFullscreen,
   onOpenInstructions,
   onOpenHotkeySettings,
+  onApproveAsset,
+  onRequestRevisionAsset,
 }: WorkspaceHeaderProps) {
   const handleBack = () => {
     if (onNavigateBack) {
@@ -83,7 +97,9 @@ export function WorkspaceHeader({
           className="flex items-center space-x-1.5 text-xs font-medium text-slate-400 transition-colors hover:text-slate-200"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span className="hidden sm:inline">Quay lại Dataset</span>
+          <span className="hidden sm:inline">
+            {backLabel || (batchName ? `Quay lại Lô việc (${batchName})` : "Quay lại Dataset")}
+          </span>
         </button>
         <div className="h-4 w-px bg-slate-800" />
         <span
@@ -124,9 +140,16 @@ export function WorkspaceHeader({
             <ChevronLeft className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Trước ([)</span>
           </Button>
-          <span className="font-mono text-xs text-slate-400">
-            Tệp {currentAssetIdx + 1} / {totalAssets}
-          </span>
+          <div className="flex items-center gap-2 font-mono text-xs text-slate-400">
+            {batchName && (
+              <span className="rounded bg-blue-950/80 px-2 py-0.5 text-[11px] font-semibold text-blue-300 border border-blue-800/60">
+                Lô {batchName}
+              </span>
+            )}
+            <span>
+              Tệp {currentAssetIdx + 1} / {totalAssets}
+            </span>
+          </div>
           <Button
             size="sm"
             variant="outline"
@@ -191,6 +214,54 @@ export function WorkspaceHeader({
           <Save className="mr-1 h-3.5 w-3.5" />
           {isSubmitting ? "Đang lưu..." : "Lưu"}
         </Button>
+
+        {/* Review Controls for Reviewers on Current Asset */}
+        {isReviewMode && (
+          <div className="flex items-center gap-1.5 border-l border-slate-800 pl-2">
+            {assetReviewStatus === "APPROVED" && (
+              <span className="hidden sm:inline-flex items-center gap-1 rounded bg-emerald-950/80 border border-emerald-700/60 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
+                <CheckCircle2 className="h-3 w-3" /> Đã duyệt đạt
+              </span>
+            )}
+            {assetReviewStatus === "NEEDS_REVISION" && (
+              <span className="hidden sm:inline-flex items-center gap-1 rounded bg-rose-950/80 border border-rose-700/60 px-2 py-0.5 text-[11px] font-semibold text-rose-300">
+                <XCircle className="h-3 w-3" /> Đã yêu cầu sửa
+              </span>
+            )}
+            {assetReviewStatus === "FIXED" && (
+              <span className="hidden sm:inline-flex items-center gap-1 rounded bg-blue-950/80 border border-blue-700/60 px-2 py-0.5 text-[11px] font-semibold text-blue-300">
+                <CheckCircle2 className="h-3 w-3" /> Đã sửa xong
+              </span>
+            )}
+
+            {/* 1. Duyệt đạt asset này */}
+            {onApproveAsset && (
+              <Button
+                size="sm"
+                onClick={onApproveAsset}
+                className="h-8 gap-1.5 bg-emerald-600 px-2.5 text-xs font-semibold text-white hover:bg-emerald-500 shadow-xs"
+                title="Duyệt đạt asset này"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                <span>Duyệt đạt</span>
+              </Button>
+            )}
+
+            {/* 2. Nhận xét thêm yêu cầu sửa asset này */}
+            {onRequestRevisionAsset && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onRequestRevisionAsset}
+                className="h-8 gap-1.5 border-rose-500/60 bg-rose-950/40 px-2 text-xs font-semibold text-rose-300 hover:bg-rose-900/50 hover:text-rose-100"
+                title="Góp ý và yêu cầu sửa nhãn cho asset này"
+              >
+                <XCircle className="h-3.5 w-3.5 shrink-0" />
+                <span>Yêu cầu sửa</span>
+              </Button>
+            )}
+          </div>
+        )}
 
         <Button
           size="sm"

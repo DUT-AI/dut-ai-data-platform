@@ -92,6 +92,21 @@ class SqlAnnotationRepository(IAnnotationRepository):
         models = res.scalars().all()
         return [m.to_entity() for m in models]
 
+    async def list_annotations_by_asset_ids(
+        self, asset_ids: Sequence[str]
+    ) -> Sequence[AnnotationEntity]:
+        if not asset_ids:
+            return []
+        query = (
+            select(AnnotationModel)
+            .options(selectinload(AnnotationModel.revisions))
+            .where(AnnotationModel.asset_id.in_(asset_ids))
+            .order_by(AnnotationModel.created_at.desc())
+        )
+        res = await self.session.execute(query)
+        models = res.scalars().all()
+        return [m.to_entity() for m in models]
+
     async def create_revision(
         self, revision: AnnotationRevisionEntity
     ) -> AnnotationRevisionEntity:

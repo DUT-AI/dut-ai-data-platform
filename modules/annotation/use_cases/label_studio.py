@@ -5,11 +5,13 @@ from loguru import logger
 
 from core.config import settings
 from core.constants import SYSTEM_USER_ID
+from core.exceptions import NotFoundException
 from core.utils.id_generator import generate_ulid
 from modules.annotation.domain.entities import (
     AnnotationEntity,
     AnnotationRevisionEntity,
 )
+from modules.annotation.domain.exceptions import AnnotationValidationError
 from modules.annotation.domain.interfaces import IAnnotationRepository
 from modules.annotation.dtos.annotation_dtos import (
     AnnotationRevisionResponseDTO,
@@ -20,6 +22,11 @@ from modules.annotation.integrations.label_studio_adapter import (
 from modules.annotation.integrations.label_studio_client import (
     LabelStudioClient,
 )
+from modules.annotation.services.annotation_validator import (
+    AnnotationValidator,
+    load_annotatable_version,
+)
+from modules.ontology.domain.entities import OntologyVersionEntity
 from modules.ontology.domain.interfaces import IOntologyRepository
 
 
@@ -116,6 +123,24 @@ class SyncLabelStudioWebhookUseCase:
             )
             return None
 
+        results = self.ls_adapter.convert_external_annotation_to_internal(payload)
+        try:
+            ontology_ver = await load_annotatable_version(
+                self.onto_repo, ontology_version_id, project_id
+            )
+            _map_category_labels_to_ids(results, ontology_ver)
+            extracted_cat_ids = AnnotationValidator.validate_results(
+                results, ontology_ver
+            )
+        except (NotFoundException, AnnotationValidationError) as exc:
+            # Never persist results that break the Ontology contract; LS keeps
+            # the original annotation, so the work can be fixed and re-synced.
+            logger.warning(
+                f"[LS Webhook] Rejected sync for asset={asset_id}: {exc.message} "
+                f"details={exc.details}"
+            )
+            return None
+
         annotation = await self.anno_repo.get_annotation_by_target(
             asset_id, "FULL_ASSET", {}
         )
@@ -131,23 +156,6 @@ class SyncLabelStudioWebhookUseCase:
             )
             annotation = await self.anno_repo.save_annotation(annotation)
 
-        results = self.ls_adapter.convert_external_annotation_to_internal(payload)
-
-        ontology_ver = await self.onto_repo.get_version_by_id(ontology_version_id)
-        if ontology_ver and ontology_ver.categories:
-            cat_name_to_id = {c.name: c.id for c in ontology_ver.categories}
-            cat_display_to_id = {
-                c.display_name: c.id for c in ontology_ver.categories if c.display_name
-            }
-
-            for res in results:
-                cid = res.get("category_id")
-                if cid:
-                    if cid in cat_name_to_id:
-                        res["category_id"] = cat_name_to_id[cid]
-                    elif cid in cat_display_to_id:
-                        res["category_id"] = cat_display_to_id[cid]
-
         anno_obj = payload.get("annotation", {})
         raw_user = (
             anno_obj.get("completed_by")
@@ -162,8 +170,6 @@ class SyncLabelStudioWebhookUseCase:
             if raw_user is not None and str(raw_user).isdigit()
             else SYSTEM_USER_ID
         )
-
-        extracted_cat_ids = [r["category_id"] for r in results if r.get("category_id")]
 
         revision = AnnotationRevisionEntity(
             id=generate_ulid(),
@@ -181,3 +187,19 @@ class SyncLabelStudioWebhookUseCase:
             f"for annotation={annotation.id} with {len(results)} results"
         )
         return AnnotationRevisionResponseDTO.model_validate(saved_rev)
+
+
+def _map_category_labels_to_ids(
+    results: list[dict[str, Any]], version: OntologyVersionEntity
+) -> None:
+    """Label Studio reports labels by text; map them to category ids.
+
+    ``key`` is unique per ontology, so it wins over the display ``name``.
+    """
+    by_name = {category.name: category.id for category in version.categories}
+    by_key = {category.key: category.id for category in version.categories}
+    lookup = {**by_name, **by_key}
+    for result in results:
+        label = result.get("category_id")
+        if label in lookup:
+            result["category_id"] = lookup[label]

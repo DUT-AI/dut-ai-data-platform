@@ -1,7 +1,9 @@
 """Unit tests for Tabular ML annotation result format and validator compatibility."""
 
 import pytest
+
 from core.exceptions import BadRequestException
+from modules.annotation.domain.exceptions import AnnotationValidationError
 from modules.annotation.services.annotation_validator import AnnotationValidator
 from modules.ontology.domain.entities import (
     CategoryEntity,
@@ -126,9 +128,9 @@ def test_tabular_record_invalid_category_rejected():
         }
     ]
 
-    with pytest.raises(BadRequestException) as exc_info:
+    with pytest.raises(AnnotationValidationError) as exc_info:
         AnnotationValidator.validate_results(results, onto_ver)
-    assert "Category 'cat_unknown_fake' is not permitted" in str(exc_info.value)
+    assert [issue.code for issue in exc_info.value.issues] == ["category_not_allowed"]
 
 
 def test_tabular_number_regression_with_schema():

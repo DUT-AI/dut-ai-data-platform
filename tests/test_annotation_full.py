@@ -154,7 +154,52 @@ async def test_annotation_full_lifecycle():
         assert upload_res.status_code == 201
         asset_id = upload_res.json()["uploaded_assets"][0]["id"]
 
-        # 5. Create Initial Annotation + Revision 1
+        # 5a. Results that break the Ontology contract are rejected with every
+        #     issue listed, and nothing is persisted.
+        rejected_res = await client.post(
+            "/api/v1/annotations",
+            json={
+                "asset_id": asset_id,
+                "project_id": project_id,
+                "ontology_version_id": ontology_ver_id,
+                "source": "human",
+                "results": [
+                    {
+                        # The version only defines a Bounding Box output.
+                        "category_id": ped_cat_id,
+                        "result_type": "polygon",
+                        "geometry": {"points": [[5.0, 5.0], [15.0, 5.0], [10.0, 20.0]]},
+                    },
+                    {
+                        "category_id": "cat_not_in_ontology",
+                        "result_type": "bbox",
+                        "geometry": {"x": 1.0, "y": 2.0, "width": 3.0, "height": 4.0},
+                    },
+                ],
+            },
+        )
+        assert rejected_res.status_code == 400, rejected_res.text
+        rejected_error = rejected_res.json()["error"]
+        assert rejected_error["code"] == "AnnotationValidationError"
+        assert [issue["code"] for issue in rejected_error["details"]["issues"]] == [
+            "unknown_output",
+            "category_not_allowed",
+        ]
+        assert (await client.get(f"/api/v1/assets/{asset_id}/annotations")).json() == []
+
+        # 5b. A version id of another (unknown) project is reported as not found.
+        foreign_res = await client.post(
+            "/api/v1/annotations",
+            json={
+                "asset_id": asset_id,
+                "project_id": "prj_other_project",
+                "ontology_version_id": ontology_ver_id,
+                "results": [],
+            },
+        )
+        assert foreign_res.status_code == 404, foreign_res.text
+
+        # 5c. Create Initial Annotation + Revision 1
         create_anno_res = await client.post(
             "/api/v1/annotations",
             json={
@@ -174,16 +219,20 @@ async def test_annotation_full_lifecycle():
                         },
                     },
                     {
+                        "output_id": output_id,
                         "category_id": ped_cat_id,
-                        "result_type": "polygon",
-                        "geometry": {"points": [[5.0, 5.0], [15.0, 5.0], [10.0, 20.0]]},
+                        "result_type": "bbox",
+                        "geometry": {"x": 5.0, "y": 5.0, "width": 10.0, "height": 15.0},
                     },
                 ],
             },
         )
-        assert create_anno_res.status_code == 201
+        assert create_anno_res.status_code == 201, create_anno_res.text
         anno_data = create_anno_res.json()
         anno_id = anno_data["id"]
+        assert sorted(anno_data["latest_revision"]["category_ids"]) == sorted(
+            [car_cat_id, ped_cat_id]
+        )
 
         # 6. Fetch Annotation Detail
         detail_res = await client.get(f"/api/v1/annotations/{anno_id}")
@@ -265,3 +314,20 @@ async def test_annotation_full_lifecycle():
         assert synced_rev["created_by"] == 101
         assert len(synced_rev["results"]) == 1
         assert synced_rev["results"][0]["result_type"] == "bbox"
+        # LS label "car" (category key) is stored as the category id.
+        assert synced_rev["category_ids"] == [car_cat_id]
+
+        # 10. A webhook label outside the Ontology is not persisted.
+        ls_webhook_payload["annotation"]["result"][0]["value"]["rectanglelabels"] = [
+            "truck"
+        ]
+        bad_sync_res = await client.post(
+            "/api/v1/annotations/sync",
+            json=ls_webhook_payload,
+        )
+        assert bad_sync_res.status_code == 200
+        assert bad_sync_res.json() is None
+        revs_after = (
+            await client.get(f"/api/v1/annotations/{anno_id}/revisions")
+        ).json()
+        assert len(revs_after) == 3

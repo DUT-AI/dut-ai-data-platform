@@ -1,8 +1,4 @@
 from core.exceptions import NotFoundException
-from core.utils.id_generator import generate_ulid
-from modules.annotation.domain.entities import (
-    AnnotationRevisionEntity,
-)
 from modules.annotation.domain.interfaces import IAnnotationRepository
 from modules.annotation.dtos.annotation_dtos import (
     AnnotationRevisionResponseDTO,
@@ -10,6 +6,7 @@ from modules.annotation.dtos.annotation_dtos import (
 )
 from modules.annotation.services.annotation_validator import (
     AnnotationValidator,
+    load_annotatable_version,
 )
 from modules.ontology.domain.interfaces import IOntologyRepository
 
@@ -42,12 +39,9 @@ class CreateRevisionUseCase:
                 "No ontology_version_id provided or found on annotation."
             )
 
-        ontology_ver = await self.onto_repo.get_version_by_id(ontology_version_id)
-        if not ontology_ver:
-            raise NotFoundException(
-                f"Ontology Version '{ontology_version_id}' not found."
-            )
-
+        ontology_ver = await load_annotatable_version(
+            self.onto_repo, ontology_version_id, annotation.project_id
+        )
         extracted_cat_ids = AnnotationValidator.validate_results(
             payload.results, ontology_ver
         )

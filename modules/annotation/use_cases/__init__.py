@@ -13,10 +13,6 @@ from modules.annotation.use_cases.get_revision import (
     GetRevisionDetailUseCase,
     ListAnnotationRevisionsUseCase,
 )
-from modules.annotation.use_cases.label_studio import (
-    OpenAssetInLabelStudioUseCase,
-    SyncLabelStudioWebhookUseCase,
-)
 
 __all__ = [
     "CreateAnnotationUseCase",
@@ -26,6 +22,4 @@ __all__ = [
     "GetRevisionDetailUseCase",
     "ListAnnotationRevisionsUseCase",
     "ListAssetAnnotationsUseCase",
-    "OpenAssetInLabelStudioUseCase",
-    "SyncLabelStudioWebhookUseCase",
 ]

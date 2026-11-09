@@ -227,41 +227,19 @@ async def test_annotation_full_lifecycle():
         assert revisions_list[0]["revision_number"] == 2
         assert revisions_list[1]["revision_number"] == 1
 
-        # 9. Test Label Studio Webhook Sync (passing category name "car")
-        ls_webhook_payload = {
-            "event": "ANNOTATION_CREATED",
-            "task": {
-                "data": {
-                    "asset_id": asset_id,
-                    "project_id": project_id,
-                    "ontology_version_id": ontology_ver_id,
-                }
-            },
-            "annotation": {
-                "created_username": "annotator_john",
-                "completed_by": 101,
-                "result": [
-                    {
-                        "type": "rectanglelabels",
-                        "value": {
-                            "x": 15.0,
-                            "y": 25.0,
-                            "width": 35.0,
-                            "height": 45.0,
-                            "rectanglelabels": ["car"],
-                        },
-                    }
-                ],
-            },
-        }
 
-        sync_res = await client.post(
-            "/api/v1/annotations/sync",
-            json=ls_webhook_payload,
-        )
-        assert sync_res.status_code == 200
-        synced_rev = sync_res.json()
-        assert synced_rev["revision_number"] == 3
-        assert synced_rev["created_by"] == 101
-        assert len(synced_rev["results"]) == 1
-        assert synced_rev["results"][0]["result_type"] == "bbox"
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("path", "expected_status"),
+    [
+        ("/api/v1/assets/{asset_id}/open-in-label-studio", 404),
+        # The remaining GET /annotations/{annotation_id} route matches this URL.
+        ("/api/v1/annotations/sync", 405),
+    ],
+)
+async def test_external_annotation_endpoints_removed(path, expected_status):
+    assert path not in app.openapi()["paths"]
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(path.format(asset_id="retired-asset"), json={})
+    assert response.status_code == expected_status

@@ -1,5 +1,7 @@
 import pytest
+
 from core.exceptions import BadRequestException
+from modules.annotation.domain.exceptions import AnnotationValidationError
 from modules.annotation.services.annotation_validator import AnnotationValidator
 from modules.ontology.domain.entities import (
     CategoryEntity,
@@ -21,7 +23,7 @@ def _create_test_ontology_version() -> OntologyVersionEntity:
 
     out_def = OutputDefinitionEntity(
         id="def_bbox",
-        code="bbox",
+        code="bounding_box",
         name="Bounding Box",
         supports_categories=True,
         default_schema={},
@@ -100,9 +102,11 @@ def test_validator_invalid_category_raises_bad_request():
             "value": {"x": 10.0, "y": 20.0, "width": 30.0, "height": 40.0},
         }
     ]
-    with pytest.raises(BadRequestException) as exc_info:
+    with pytest.raises(AnnotationValidationError) as exc_info:
         AnnotationValidator.validate_results(results, onto_ver)
-    assert "not permitted for this Ontology Version" in str(exc_info.value)
+    assert isinstance(exc_info.value, BadRequestException)
+    assert [issue.code for issue in exc_info.value.issues] == ["category_not_allowed"]
+    assert exc_info.value.details["issues"][0]["path"] == "results.0.category_id"
 
 
 def test_validator_invalid_value_schema_raises_bad_request():
@@ -115,6 +119,10 @@ def test_validator_invalid_value_schema_raises_bad_request():
             "value": {"x": 10.0, "y": 20.0, "width": 30.0},
         }
     ]
-    with pytest.raises(BadRequestException) as exc_info:
+    with pytest.raises(AnnotationValidationError) as exc_info:
         AnnotationValidator.validate_results(results, onto_ver)
-    assert "Value violates output schema" in str(exc_info.value)
+    # Every violation is reported at once: schema + bounding-box geometry.
+    assert [issue.code for issue in exc_info.value.issues] == [
+        "value_schema_violation",
+        "geometry_invalid",
+    ]

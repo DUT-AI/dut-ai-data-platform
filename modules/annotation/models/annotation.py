@@ -50,8 +50,6 @@ class AnnotationModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
         nullable=True,
     )
     created_by: Mapped[int] = mapped_column(Integer, nullable=False)
-    label_studio_task_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
-
     revisions: Mapped[list["AnnotationRevisionModel"]] = relationship(
         "AnnotationRevisionModel",
         back_populates="annotation",

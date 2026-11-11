@@ -16,7 +16,13 @@ import {
   useProjectOntologyQuery,
   useOntologySchemaQuery,
 } from "@/features/ontology";
-import { AlertCircle, Check, CheckCircle2, Info } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  Info,
+} from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useProjectQuery } from "@/features/projects";
@@ -34,6 +40,7 @@ import {
   WorkspaceSidebar,
 } from "./workspace";
 import { createAnnotation, createRevision } from "../api";
+import { getAnnotationSaveErrorMessage } from "../utils/api-error";
 import {
   resolveAudioLabelMode,
   serializeAnnotationResults,
@@ -209,6 +216,8 @@ function AnnotationWorkspaceInner({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+  // Every error message in this workspace starts with "Lỗi".
+  const isFeedbackError = feedbackMsg?.startsWith("Lỗi") ?? false;
   const [savedResultsHash, setSavedResultsHash] = useState("[]");
   const [isReviewCommentModalOpen, setIsReviewCommentModalOpen] = useState(false);
   const recordAssetReviewMutation = useRecordAssetReviewMutation();
@@ -436,6 +445,13 @@ function AnnotationWorkspaceInner({
       setFeedbackMsg("Lỗi: Không tìm thấy Ontology Version của dự án.");
       return;
     }
+    // Annotations are only accepted against a published Ontology Version.
+    if (exportedSchema && exportedSchema.status !== "published") {
+      setFeedbackMsg(
+        `Lỗi: Ontology Version "${exportedSchema.version_name}" đang là Draft. Hãy Publish ontology trước khi lưu nhãn.`
+      );
+      return;
+    }
     setIsSubmitting(true);
     setFeedbackMsg(null);
     try {
@@ -476,9 +492,7 @@ function AnnotationWorkspaceInner({
       }
       await refetchAnnotations();
     } catch (err: unknown) {
-      const errorMsg =
-        err instanceof Error ? err.message : "Lỗi khi lưu kết quả gán nhãn";
-      setFeedbackMsg(`Lỗi: ${errorMsg}`);
+      setFeedbackMsg(`Lỗi: ${getAnnotationSaveErrorMessage(err)}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -666,8 +680,23 @@ function AnnotationWorkspaceInner({
         {/* Canvas & Editor Workspace */}
         <main className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-auto bg-slate-950 p-2 sm:p-4">
           {feedbackMsg && (
-            <div className="absolute left-6 right-6 top-3 z-50 rounded border border-blue-900/50 bg-blue-950/90 px-4 py-2 text-xs text-blue-300 shadow">
-              <Info className="mr-1 inline h-3.5 w-3.5" />
+            <div
+              role={isFeedbackError ? "alert" : "status"}
+              className={cn(
+                "absolute left-6 right-6 top-3 z-50 rounded border px-4 py-2 text-xs shadow",
+                isFeedbackError
+                  ? "border-rose-900/60 bg-rose-950/90 text-rose-200"
+                  : "border-blue-900/50 bg-blue-950/90 text-blue-300"
+              )}
+            >
+              {isFeedbackError ? (
+                <AlertTriangle
+                  aria-hidden="true"
+                  className="mr-1 inline h-3.5 w-3.5"
+                />
+              ) : (
+                <Info aria-hidden="true" className="mr-1 inline h-3.5 w-3.5" />
+              )}
               {feedbackMsg}
             </div>
           )}

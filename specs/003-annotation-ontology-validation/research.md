@@ -28,7 +28,7 @@
 
 ## R4. Category references
 
-- **Decision**: The public API accepts category **ids** only. Tabular multi-label lists ids in `value`, and all of them are checked and stored. The Label Studio adapter maps label text to an id by `key` (which is unique) and then by `name` before validating.
+- **Decision**: The public API accepts category **ids** only. Tabular multi-label lists ids in `value`, and all of them are checked and stored.
 
 ## R5. `multiple` and `required`
 
@@ -47,10 +47,6 @@
 
 - **Decision**: Keep HTTP 400 (`AnnotationValidationError` extends `BadRequestException`), and add `error.details.issues[] = {path, code, message}` through an optional `details` attribute on `DomainException`.
 - **Rationale**: Non-breaking for existing clients. The shape mirrors Ontology version validation issues. 422 was considered, but it would change the status family for existing consumers.
-
-## R8. Label Studio webhook
-
-- **Decision**: Validate before creating anything. On a violation, log and return `null` (nothing is stored; Label Studio keeps the annotation). Revision numbering is left as on `dev`: the repository assigns `max + 1` when `revision_number=0`, so the webhook stays sequential without changes.
 
 ## R9. Prerequisite regressions (commit `4fc115e`)
 

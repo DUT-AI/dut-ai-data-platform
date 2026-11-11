@@ -62,17 +62,6 @@ As an Annotator, I want to see the concrete reasons a save was rejected (which r
 
 ---
 
-### User Story 4 - Same rules for every write channel (Priority: P3)
-
-As a Platform Maintainer, I want results synced from the (legacy) Label Studio webhook to pass the same validation and revision numbering as the in-app workspace, so that no channel can bypass the ontology contract.
-
-**Independent Test**: Send a webhook payload whose label does not exist in the version → rejected and nothing stored; a valid payload creates the next sequential revision.
-
-**Acceptance Scenarios**:
-
-1. **Given** a webhook payload with labels referenced by category name or key, **When** it is synced, **Then** labels are mapped to category ids and validated with the same rules as Story 1.
-2. **Given** an annotation with revision 1, **When** a valid webhook arrives, **Then** revision 2 is created (no duplicate revision numbers).
-
 ### Edge Cases
 
 - `result_type` decides *what* a result is; `output_id` only selects one output among those of that type. Editors stamp the workspace's primary output id on every result (e.g. audio transcripts carry the segment output id), so a mismatching `output_id` must not turn a transcript into a segment. Editor-specific/legacy types unknown to the catalog (e.g. `table_cell`) fall back to `output_id`.
@@ -84,13 +73,12 @@ As a Platform Maintainer, I want results synced from the (legacy) Label Studio w
 - `value` is checked against the output's `value_schema` only when it is a real constraint: the template seeder copies each definition's `default_schema` into `value_schema`, and that copy is a type hint, not a rule (editors send `value: ""` for audio segments and lists for tabular multi-label).
 - A broken `value_schema` stored in the ontology is reported as `invalid_value_schema` instead of crashing.
 - Empty `results` is a valid revision (user cleared labels).
-- Validation happens before anything is persisted, so a rejected webhook never leaves an orphan annotation.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: Every write of annotation results (create annotation, create revision, Label Studio sync) MUST validate the results against the referenced Ontology Version before persisting anything.
+- **FR-001**: Every write of annotation results (create annotation and create revision) MUST validate the results against the referenced Ontology Version before persisting anything.
 - **FR-002**: The system MUST accept only Ontology Versions in `published` status that belong to the annotation's project.
 - **FR-003**: Each result MUST resolve to exactly one Output of the version: by `output_id` when present, otherwise by `result_type` mapped to the output definition code (`bbox → bounding_box`, `ner`/`named_entity_recognition → named_entity`). No implicit fallback is allowed.
 - **FR-004**: For outputs that support categories a result MUST carry a `category_id` that is linked to that output in this version; outputs without category support MUST NOT carry one.
@@ -101,7 +89,6 @@ As a Platform Maintainer, I want results synced from the (legacy) Label Studio w
 - **FR-009**: Rejections MUST return all violations together as a list of `{path, code, message}` while keeping the existing error envelope and status family (client error), so existing clients keep working.
 - **FR-010**: Stored `category_ids` of a revision MUST be the de-duplicated, validated category ids of its results.
 - **FR-011**: The Annotation Workspace MUST display the returned violation messages on a failed save and MUST block saving against a draft version with an explanation.
-- **FR-012**: Webhook-synced revisions MUST use the same sequential revision numbering as in-app revisions.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -114,8 +101,8 @@ As a Platform Maintainer, I want results synced from the (legacy) Label Studio w
 
 ### Measurable Outcomes
 
-- **SC-001**: 100% of the rule scenarios in User Stories 1, 2 and 4 are covered by automated tests and pass.
-- **SC-002**: 0 annotation revisions can be stored against a draft or foreign Ontology Version through any channel.
+- **SC-001**: 100% of the rule scenarios in the supported user stories are covered by automated tests and pass.
+- **SC-002**: 0 annotation revisions can be stored against a draft or foreign Ontology Version through the annotation API.
 - **SC-003**: All payload shapes produced by the current workspace editors that have a catalog output definition (bounding box, polygon, keypoint, classification, named entity, text, number, audio/video segments, tabular rows incl. multi-label) are accepted when they conform to the published version.
 - **SC-004**: A rejected save shows the annotator every violated rule (up to 3 inline + count of the rest) in one attempt.
 - **SC-005**: The existing annotation test suites (`test_annotation_validator_unit`, `test_tabular_annotation_format`, `test_annotation_full`) pass after being updated to the stricter contract.
@@ -125,9 +112,8 @@ As a Platform Maintainer, I want results synced from the (legacy) Label Studio w
 - Ontology rules are those already enforced at publish time by `modules/ontology/domain/validators.py` and documented in `docs/ontology.md`; this feature consumes them, it does not change ontology authoring.
 - Annotation (not Ontology) owns result validation rules; Ontology only provides the version contract (per `docs/ontology.md`: Ontology does not own annotation results).
 - Error status stays HTTP 400 (`BadRequestException` family) to avoid a breaking change for the frontend; detailed issues are added under `error.details.issues`.
-- Category references in the public API are ids; name/key mapping is only performed for the Label Studio adapter.
+- Category references in the public API are ids.
 - Results for output types without a catalog definition (e.g. `brush_mask`) are accepted only if the ontology defines such an output; otherwise they are rejected as `unknown_output`.
 - Definition `default_schema` type hints are not enforced on `value` until the editors are aligned with them (tracked as follow-up).
-- Label Studio is a legacy channel: a webhook that violates the contract is logged and not stored (Label Studio keeps the original annotation), instead of failing the webhook call.
 - Prerequisite: the application must start on `dev`. Regressions introduced by commit `4fc115e` (identity imports, DI bindings, user-id DTO typing) are fixed minimally as a foundational task, without further refactoring. *(Superseded 2026-11-08: fixed upstream on `dev` by `87ec4e2`.)*
 - `.specify/memory/constitution.md` has not been ratified yet; the Constitution Check uses `AGENTS.md`, `.agent/rules/GEMINI.md`, the backend-development skill and spec 001 principles as gates.

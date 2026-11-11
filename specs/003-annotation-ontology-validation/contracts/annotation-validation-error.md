@@ -3,7 +3,6 @@
 Applies to:
 - `POST /api/v1/annotations`
 - `POST /api/v1/annotations/{annotation_id}/revisions`
-- `POST /api/v1/annotations/sync` (Label Studio webhook; see the last section)
 
 ## Rejection (HTTP 400)
 
@@ -55,7 +54,3 @@ Applies to:
 ## Not found (HTTP 404)
 
 The version does not exist, **or** belongs to another project. The envelope is the same, with `code: "NotFoundException"`.
-
-## Label Studio webhook
-
-When the payload violates the contract, the webhook answers `200 null`, logs the issues, and stores nothing. A valid payload creates the next sequential revision. Label text is mapped to a category id by `key`, then by `name`.

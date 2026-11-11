@@ -64,7 +64,7 @@ async def worker_loop():
     """Background Task Worker entrypoint.
 
     Listens to RabbitMQ AMQP task queue for async jobs (e.g. batch asset processing,
-    dataset export, Label Studio synchronization) and processes Transactional Outbox events.
+    dataset export) and processes Transactional Outbox events.
     """
     logger.info("Initializing DUT AI Data Platform Worker (AMQP + Outbox Processor)...")
     await asyncio.gather(

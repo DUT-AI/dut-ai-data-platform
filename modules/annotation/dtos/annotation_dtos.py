@@ -60,28 +60,6 @@ class AnnotationResponseDTO(BaseModel):
     revisions: list[AnnotationRevisionResponseDTO] = Field(default_factory=list)
 
 
-# For backward compatibility if needed
-class LabelStudioSyncWebhookDTO(BaseModel):
-    event: str | None = None
-    project: dict[str, Any] | None = None
-    task: dict[str, Any] | None = None
-    annotation: dict[str, Any] | None = None
-    result: list[dict[str, Any]] | None = None
-
-
-class OpenInLabelStudioRequestDTO(BaseModel):
-    ontology_version_id: str
-    project_id: str
-    presigned_url: str
-    dataset_version_id: str | None = None
-
-
-class OpenInLabelStudioResponseDTO(BaseModel):
-    task_url: str
-    ls_project_id: int
-    ls_task_id: int
-
-
 class BatchAssetStatusItemDTO(BaseModel):
     asset_id: str
     is_annotated: bool

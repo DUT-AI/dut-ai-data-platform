@@ -299,7 +299,7 @@ def test_geometry_rules(code: str, result: dict[str, Any], expected: str) -> Non
     assert _codes([{**result, "category_id": "c"}], version) == [expected]
 
 
-def test_label_studio_polygon_points_in_value_are_accepted() -> None:
+def test_polygon_points_in_value_are_accepted() -> None:
     version = _version(OutputSpec("out_poly", "polygon", categories=["c"]))
     results = [
         {

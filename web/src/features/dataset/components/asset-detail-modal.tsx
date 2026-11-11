@@ -19,9 +19,9 @@ interface AssetDetailModalProps {
   asset: Asset | null;
   isOpen: boolean;
   onClose: () => void;
-  /** ID project Platform — dùng để gọi open-in-label-studio */
+  /** Project ID used to navigate to the native annotation workspace. */
   projectId?: string;
-  /** Ontology version ID đang active của project — dùng cho LS label config */
+  /** Active ontology version passed to the native annotation workspace. */
   ontologyVersionId?: string;
   /** Dataset Version ID để điều hướng và load asset queue gán nhãn liên tục */
   datasetVersionId?: string;

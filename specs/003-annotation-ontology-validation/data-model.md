@@ -48,4 +48,4 @@ No database schema change. The feature adds pure domain value objects and reads 
 | `polygon` | `points`: ≥ 3 `[x, y]` numeric pairs |
 | `named_entity`, `audio_segment`, `video_segment` | numeric `start` < `end` |
 
-Geometry is read from `geometry`, or from `value` when `value` is an object (Label Studio format).
+Geometry is read from `geometry`, or from `value` when `value` is an object.

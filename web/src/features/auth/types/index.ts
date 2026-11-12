@@ -12,7 +12,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type LoginPayload = LoginInput;
 
 export type User = {
-  id: number | string;
+  id: number;
   name: string;
   email: string;
   status: string;

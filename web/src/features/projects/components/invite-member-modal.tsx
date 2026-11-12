@@ -128,7 +128,7 @@ export function InviteMemberModal({
   const onSubmit = (values: InviteMemberFormValues) => {
     setErrorMsg(null);
     addMemberMutation.mutate(
-      { user_id: values.user_id.trim(), role: values.role },
+      { user_id: Number(values.user_id.trim()), role: values.role },
       {
         onSuccess: () => {
           form.reset();

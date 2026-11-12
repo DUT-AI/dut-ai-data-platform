@@ -6,8 +6,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from modules.identity.client.auth_client import AuthClient
 from modules.identity.client.manage_client import ManageClient
-from modules.identity.domain.interfaces import IAuthClient, IUserLoginRepository
+from modules.identity.domain.interfaces import (
+    IAuthClient,
+    IUserDirectory,
+    IUserLoginRepository,
+)
 from modules.identity.repository.user_login_repository import SqlUserLoginRepository
+from modules.identity.services import UserDirectoryService
 from modules.identity.use_cases import GetMeUseCase, ListUsersUseCase, LoginUseCase
 
 
@@ -37,6 +42,10 @@ class IdentityProvider(Provider):
     @provide(scope=Scope.APP)
     def get_manage_client(self, client: httpx.AsyncClient) -> ManageClient:
         return ManageClient(client=client)
+
+    @provide(scope=Scope.APP)
+    def get_user_directory(self, manage_client: ManageClient) -> IUserDirectory:
+        return UserDirectoryService(manage_client)
 
     @provide
     def get_user_login_repository(self, session: AsyncSession) -> IUserLoginRepository:

@@ -11,8 +11,16 @@ class IAuthClient(Protocol):
 
     async def login(self, email: str, password: str) -> Any: ...
     async def get_me(self, token: str) -> Any: ...
-    async def list_users(
-        self, token: str, page: int = 1, page_size: int = 100
+
+
+class IUserDirectory(Protocol):
+    """Application boundary for reading users from the external directory."""
+
+    async def list(
+        self,
+        page: int = 1,
+        page_size: int = 20,
+        search: str | None = None,
     ) -> Any: ...
 
 

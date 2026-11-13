@@ -6,7 +6,7 @@ class ManageUserDTO(BaseModel):
 
     model_config = ConfigDict(extra="ignore", from_attributes=True)
 
-    id: int | str
+    id: int
     name: str
     email: str
     status: str = "ACTIVE"

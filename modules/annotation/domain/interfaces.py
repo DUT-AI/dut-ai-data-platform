@@ -29,6 +29,11 @@ class IAnnotationRepository(Protocol):
         target_type: str | None = None,
     ) -> Sequence[AnnotationEntity]: ...
 
+    async def list_annotations_by_asset_ids(
+        self,
+        asset_ids: Sequence[str],
+    ) -> Sequence[AnnotationEntity]: ...
+
     async def create_revision(
         self, revision: AnnotationRevisionEntity
     ) -> AnnotationRevisionEntity: ...

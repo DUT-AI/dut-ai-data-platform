@@ -49,7 +49,7 @@ class AnnotationModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
         ForeignKey("ontology_versions.id", ondelete="SET NULL"),
         nullable=True,
     )
-    created_by: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_by: Mapped[int] = mapped_column(Integer, nullable=False)
     label_studio_task_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     revisions: Mapped[list["AnnotationRevisionModel"]] = relationship(
@@ -74,7 +74,7 @@ class AnnotationModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
             target_type=self.target_type,
             target_selector=self.target_selector or {},
             ontology_version_id=self.ontology_version_id,
-            created_by=int(self.created_by) if str(self.created_by).isdigit() else self.created_by,
+            created_by=self.created_by,
             created_at=self.created_at,
             updated_at=self.updated_at,
             revisions=revs,
@@ -108,7 +108,7 @@ class AnnotationRevisionModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
         ForeignKey("ontology_versions.id", ondelete="CASCADE"),
         nullable=False,
     )
-    created_by: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_by: Mapped[int] = mapped_column(Integer, nullable=False)
     source: Mapped[RevisionSource] = mapped_column(
         String(50), default="human", nullable=False
     )
@@ -127,7 +127,7 @@ class AnnotationRevisionModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
             annotation_id=self.annotation_id,
             revision_number=self.revision_number,
             ontology_version_id=self.ontology_version_id,
-            created_by=int(self.created_by) if str(self.created_by).isdigit() else self.created_by,
+            created_by=self.created_by,
             source=self.source,
             results=self.results or [],
             category_ids=self.category_ids or [],

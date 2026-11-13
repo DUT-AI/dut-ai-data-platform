@@ -4,6 +4,7 @@ from typing import Optional, Self
 from sqlalchemy import (
     DateTime,
     ForeignKey,
+    Integer,
     String,
     Text,
     UniqueConstraint,
@@ -22,8 +23,8 @@ class ProjectModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     project_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    owner_id: Mapped[str] = mapped_column(String(255), nullable=False)
-    created_by: Mapped[str] = mapped_column(String(255), nullable=False)
+    owner_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_by: Mapped[int] = mapped_column(Integer, nullable=False)
     task_definition_version_id: Mapped[str | None] = mapped_column(
         String(255), nullable=True
     )
@@ -45,8 +46,9 @@ class ProjectModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
             id=self.id,
             name=self.name,
             description=self.description,
-            template_id=self.project_template_version_id or self.task_definition_version_id,
-            created_by=int(self.created_by) if str(self.created_by).isdigit() else self.created_by,
+            template_id=self.project_template_version_id
+            or self.task_definition_version_id,
+            created_by=self.created_by,
             status=self.status,
             created_at=self.created_at,
             updated_at=self.updated_at,
@@ -60,8 +62,8 @@ class ProjectModel(Base, ULIDPrimaryKeyMixin, TimestampMixin):
             name=entity.name,
             description=entity.description,
             project_type=None,
-            owner_id=str(entity.created_by),
-            created_by=str(entity.created_by),
+            owner_id=entity.created_by,
+            created_by=entity.created_by,
             task_definition_version_id=entity.template_id,
             project_template_version_id=entity.template_id,
             status=entity.status,
@@ -83,7 +85,7 @@ class ProjectMemberModel(Base, ULIDPrimaryKeyMixin):
     project_id: Mapped[str] = mapped_column(
         ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
     )
-    user_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, nullable=False)
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)
     joined_at: Mapped[datetime] = mapped_column(
@@ -96,7 +98,7 @@ class ProjectMemberModel(Base, ULIDPrimaryKeyMixin):
         return ProjectMemberEntity(
             id=self.id,
             project_id=self.project_id,
-            user_id=int(self.user_id) if str(self.user_id).isdigit() else self.user_id,
+            user_id=self.user_id,
             role=self.role,
             status=self.status,
             joined_at=self.joined_at,
@@ -107,7 +109,7 @@ class ProjectMemberModel(Base, ULIDPrimaryKeyMixin):
         return cls(
             id=entity.id,
             project_id=entity.project_id,
-            user_id=str(entity.user_id),
+            user_id=entity.user_id,
             role=entity.role,
             status=entity.status,
             joined_at=entity.joined_at,

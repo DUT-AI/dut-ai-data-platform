@@ -1,9 +1,5 @@
-from core.exceptions import NotFoundException
 from core.utils.id_generator import generate_ulid
-from modules.annotation.domain.entities import (
-    AnnotationEntity,
-    AnnotationRevisionEntity,
-)
+from modules.annotation.domain.entities import AnnotationEntity
 from modules.annotation.domain.interfaces import IAnnotationRepository
 from modules.annotation.dtos.annotation_dtos import (
     AnnotationCreateDTO,
@@ -12,6 +8,7 @@ from modules.annotation.dtos.annotation_dtos import (
 )
 from modules.annotation.services.annotation_validator import (
     AnnotationValidator,
+    load_annotatable_version,
 )
 from modules.ontology.domain.interfaces import IOntologyRepository
 
@@ -26,15 +23,11 @@ class CreateAnnotationUseCase:
     async def execute(
         self, payload: AnnotationCreateDTO, created_by: int | str
     ) -> AnnotationResponseDTO:
-        ontology_ver = await self.onto_repo.get_version_by_id(
-            payload.ontology_version_id
+        ontology_ver = await load_annotatable_version(
+            self.onto_repo, payload.ontology_version_id, payload.project_id
         )
-        if not ontology_ver:
-            raise NotFoundException(
-                f"Ontology Version '{payload.ontology_version_id}' not found."
-            )
 
-        # Dynamic schema validation against OntologyVersion outputs & categories
+        # Validate against the published Ontology Version before persisting anything.
         extracted_cat_ids = AnnotationValidator.validate_results(
             payload.results, ontology_ver
         )

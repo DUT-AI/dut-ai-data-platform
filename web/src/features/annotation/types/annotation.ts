@@ -81,3 +81,14 @@ export interface CreateRevisionRequest {
   source?: RevisionSource;
   results: AnnotationResult[];
 }
+
+export interface BatchAssetStatusItem {
+  asset_id: string;
+  is_annotated: boolean;
+  objects_count: number;
+  last_updated_at?: string | null;
+}
+
+export interface BatchAssetStatusResponse {
+  statuses: Record<string, BatchAssetStatusItem>;
+}

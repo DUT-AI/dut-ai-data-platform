@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Database,
   FolderKanban,
+  GitBranch,
   Layers3,
   Settings,
   Users,
@@ -15,12 +16,19 @@ import {
 import { Badge, Button, EmptyState } from "@/components/ui";
 import { DatasetListView } from "@/features/dataset";
 import { OntologyListView } from "@/features/ontology";
+import { WorkflowTabView } from "@/features/workflow";
 import { useProjectQuery } from "../hooks";
 import { ProjectMembersTab } from "./project-members-tab";
 import { ProjectOverviewTab } from "./project-overview-tab";
 import { ProjectSettingsTab } from "./project-settings-tab";
 
-type TabType = "overview" | "datasets" | "ontology" | "members" | "settings";
+type TabType =
+  | "overview"
+  | "datasets"
+  | "ontology"
+  | "workflow"
+  | "members"
+  | "settings";
 
 const TABS: Array<{
   key: TabType;
@@ -30,6 +38,7 @@ const TABS: Array<{
   { key: "overview", label: "Tổng quan", icon: FolderKanban },
   { key: "datasets", label: "Tập dữ liệu", icon: Database },
   { key: "ontology", label: "Ontology", icon: Layers3 },
+  { key: "workflow", label: "Workflow", icon: GitBranch },
   { key: "members", label: "Thành viên", icon: Users },
   { key: "settings", label: "Cài đặt", icon: Settings },
 ];
@@ -159,6 +168,7 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
         {activeTab === "overview" && <ProjectOverviewTab project={project} />}
         {activeTab === "datasets" && <DatasetListView projectId={projectId} />}
         {activeTab === "ontology" && <OntologyListView projectId={projectId} />}
+        {activeTab === "workflow" && <WorkflowTabView projectId={projectId} />}
         {activeTab === "members" && <ProjectMembersTab projectId={projectId} />}
         {activeTab === "settings" && <ProjectSettingsTab project={project} />}
       </div>

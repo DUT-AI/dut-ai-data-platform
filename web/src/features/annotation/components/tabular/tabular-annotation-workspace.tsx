@@ -53,7 +53,8 @@ export function TabularAnnotationWorkspace({
   const [dataRows, setDataRows] = useState<TabularRow[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [keyField, setKeyField] = useState<string>("id");
-  const [isKeyFieldSynthetic, setIsKeyFieldSynthetic] = useState<boolean>(false);
+  const [isKeyFieldSynthetic, setIsKeyFieldSynthetic] =
+    useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState<number>(0);
@@ -65,7 +66,9 @@ export function TabularAnnotationWorkspace({
   const [filterStatus, setFilterStatus] = useState<TabularFilterStatus>("all");
   const [sortConfig, setSortConfig] = useState<TabularSortConfig | null>(null);
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
-  const [selectedRowKeys, setSelectedRowKeys] = useState<Set<string>>(new Set());
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Set<string>>(
+    new Set()
+  );
   const [focusedRowKey, setFocusedRowKey] = useState<string | null>(null);
   const [lastSelectedKey, setLastSelectedKey] = useState<string | null>(null);
 
@@ -136,9 +139,7 @@ export function TabularAnnotationWorkspace({
     const resolvedOutputType =
       outputTypeCode || (metadata?.outputType as string | undefined);
     const resolvedMultiple =
-      outputMultiple !== undefined
-        ? outputMultiple
-        : !!metadata?.multiple;
+      outputMultiple !== undefined ? outputMultiple : !!metadata?.multiple;
 
     if (resolvedOutputType === "number") {
       return "number";
@@ -229,7 +230,9 @@ export function TabularAnnotationWorkspace({
           return res.value === undefined || res.value === null;
         }
         if (labelMode === "multi-label") {
-          return !Array.isArray(res.value) || (res.value as string[]).length === 0;
+          return (
+            !Array.isArray(res.value) || (res.value as string[]).length === 0
+          );
         }
         return !res.category_id;
       });
@@ -269,16 +272,30 @@ export function TabularAnnotationWorkspace({
     }
 
     return rows;
-  }, [dataRows, searchQuery, filterStatus, sortConfig, rowResultMap, labelMode, getRecordKey]);
+  }, [
+    dataRows,
+    searchQuery,
+    filterStatus,
+    sortConfig,
+    rowResultMap,
+    labelMode,
+    getRecordKey,
+  ]);
 
   // Derive effective page index safely without triggering cascading renders in an effect
-  const maxPage = Math.max(0, Math.ceil(filteredAndSortedRows.length / pageSize) - 1);
+  const maxPage = Math.max(
+    0,
+    Math.ceil(filteredAndSortedRows.length / pageSize) - 1
+  );
   const effectivePageIndex = Math.min(pageIndex, maxPage);
 
   // Paginated rows for current page
   const pageStartIndex = effectivePageIndex * pageSize;
   const pageRows = useMemo(() => {
-    return filteredAndSortedRows.slice(pageStartIndex, pageStartIndex + pageSize);
+    return filteredAndSortedRows.slice(
+      pageStartIndex,
+      pageStartIndex + pageSize
+    );
   }, [filteredAndSortedRows, pageStartIndex, pageSize]);
 
   // Visible feature columns
@@ -296,7 +313,8 @@ export function TabularAnnotationWorkspace({
         if (labelMode === "number") {
           if (res.value !== undefined && res.value !== null) count++;
         } else if (labelMode === "multi-label") {
-          if (Array.isArray(res.value) && (res.value as string[]).length > 0) count++;
+          if (Array.isArray(res.value) && (res.value as string[]).length > 0)
+            count++;
         } else if (res.category_id) {
           count++;
         }
@@ -336,7 +354,15 @@ export function TabularAnnotationWorkspace({
       ];
       onChange?.(newResults);
     },
-    [readOnly, outputId, metadata, keyField, rowResultMap, otherResults, onChange]
+    [
+      readOnly,
+      outputId,
+      metadata,
+      keyField,
+      rowResultMap,
+      otherResults,
+      onChange,
+    ]
   );
 
   // Toggle Multi-label Category for a Row
@@ -384,7 +410,15 @@ export function TabularAnnotationWorkspace({
       ];
       onChange?.(newResults);
     },
-    [readOnly, outputId, metadata, keyField, rowResultMap, otherResults, onChange]
+    [
+      readOnly,
+      outputId,
+      metadata,
+      keyField,
+      rowResultMap,
+      otherResults,
+      onChange,
+    ]
   );
 
   // Set Numeric Value for a Row
@@ -418,7 +452,15 @@ export function TabularAnnotationWorkspace({
       ];
       onChange?.(newResults);
     },
-    [readOnly, outputId, metadata, keyField, rowResultMap, otherResults, onChange]
+    [
+      readOnly,
+      outputId,
+      metadata,
+      keyField,
+      rowResultMap,
+      otherResults,
+      onChange,
+    ]
   );
 
   // Clear Label for a Row
@@ -468,7 +510,17 @@ export function TabularAnnotationWorkspace({
       onChange?.(newResults);
       setSelectedRowKeys(new Set());
     },
-    [readOnly, selectedRowKeys, outputId, metadata, keyField, labelMode, rowResultMap, otherResults, onChange]
+    [
+      readOnly,
+      selectedRowKeys,
+      outputId,
+      metadata,
+      keyField,
+      labelMode,
+      rowResultMap,
+      otherResults,
+      onChange,
+    ]
   );
 
   // Clear Labels for All Selected Rows (Bulk)
@@ -578,7 +630,14 @@ export function TabularAnnotationWorkspace({
       // Advance to next page
       setPageIndex((p: number) => p + 1);
     }
-  }, [focusedRowKey, pageRows, getRecordKey, pageIndex, filteredAndSortedRows.length, pageSize]);
+  }, [
+    focusedRowKey,
+    pageRows,
+    getRecordKey,
+    pageIndex,
+    filteredAndSortedRows.length,
+    pageSize,
+  ]);
 
   // Move focus up/down
   const moveFocus = useCallback(
@@ -655,7 +714,12 @@ export function TabularAnnotationWorkspace({
       }
 
       // Enter key assigns currently selected category from workspace category bar
-      if (e.key === "Enter" && focusedRowKey && selectedCategoryId && !readOnly) {
+      if (
+        e.key === "Enter" &&
+        focusedRowKey &&
+        selectedCategoryId &&
+        !readOnly
+      ) {
         e.preventDefault();
         handleSelectCategory(focusedRowKey, selectedCategoryId);
         advanceToNextRow();

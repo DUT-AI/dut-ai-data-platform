@@ -1,5 +1,4 @@
-from modules.identity.client.manage_client import ManageClient
-from modules.identity.domain.interfaces import IUserLoginRepository
+from modules.identity.domain.interfaces import IUserDirectory, IUserLoginRepository
 from modules.identity.dtos.user_dtos import UserReadDTO, UsersListResponseDTO
 
 
@@ -8,10 +7,10 @@ class ListUsersUseCase:
 
     def __init__(
         self,
-        manage_client: ManageClient,
+        user_directory: IUserDirectory,
         login_repo: IUserLoginRepository,
     ) -> None:
-        self.manage_client = manage_client
+        self.user_directory = user_directory
         self.login_repo = login_repo
 
     async def execute(
@@ -21,7 +20,7 @@ class ListUsersUseCase:
         search: str | None = None,
     ) -> UsersListResponseDTO:
         # 1. Fetch users from external Manage Service (Read-Only)
-        manage_resp = await self.manage_client.list_users(
+        manage_resp = await self.user_directory.list(
             page=page,
             page_size=page_size,
             search=search,
@@ -36,7 +35,7 @@ class ListUsersUseCase:
             )
 
         # 2. Extract user IDs for batch query (Prevent N+1 query)
-        user_ids = [str(u.id) for u in manage_resp.items]
+        user_ids = [int(u.id) for u in manage_resp.items]
 
         # 3. Fetch all last_login_at timestamps in 1 single DB query
         last_login_map = await self.login_repo.get_by_user_ids(user_ids)
@@ -44,13 +43,13 @@ class ListUsersUseCase:
         # 4. Merge data into UserReadDTO
         all_user_dtos = [
             UserReadDTO(
-                id=u.id,
+                id=int(u.id),
                 name=u.name,
                 email=u.email,
                 status=u.status,
                 avatar_url=u.avatar_url,
                 role_names=u.role_names,
-                last_login_at=last_login_map.get(str(u.id)),
+                last_login_at=last_login_map.get(int(u.id)),
             )
             for u in manage_resp.items
         ]
@@ -64,14 +63,9 @@ class ListUsersUseCase:
             )
         )
 
-        # 6. Cắt trang (Pagination Slicing)
-        total = manage_resp.total or len(all_user_dtos)
-        start_idx = (page - 1) * page_size
-        paginated_items = all_user_dtos[start_idx : start_idx + page_size]
-
         return UsersListResponseDTO(
-            items=paginated_items,
-            total=total,
-            page=page,
-            page_size=page_size,
+            items=all_user_dtos,
+            total=manage_resp.total or len(all_user_dtos),
+            page=manage_resp.page,
+            page_size=manage_resp.page_size,
         )

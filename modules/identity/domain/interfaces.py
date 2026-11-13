@@ -11,8 +11,16 @@ class IAuthClient(Protocol):
 
     async def login(self, email: str, password: str) -> Any: ...
     async def get_me(self, token: str) -> Any: ...
-    async def list_users(
-        self, token: str, page: int = 1, page_size: int = 100
+
+
+class IUserDirectory(Protocol):
+    """Application boundary for reading users from the external directory."""
+
+    async def list(
+        self,
+        page: int = 1,
+        page_size: int = 20,
+        search: str | None = None,
     ) -> Any: ...
 
 
@@ -21,14 +29,14 @@ class IUserLoginRepository(ABC):
 
     @abstractmethod
     async def upsert_last_login(
-        self, user_id: int | str, last_login_at: datetime
+        self, user_id: int, last_login_at: datetime
     ) -> UserLoginMetadataEntity:
         """Atomically insert or update the last login timestamp for a user."""
 
     @abstractmethod
-    async def get_by_user_id(self, user_id: int | str) -> UserLoginMetadataEntity | None:
+    async def get_by_user_id(self, user_id: int) -> UserLoginMetadataEntity | None:
         """Get last login metadata for a specific user ID."""
 
     @abstractmethod
-    async def get_by_user_ids(self, user_ids: Sequence[str]) -> dict[str, datetime]:
+    async def get_by_user_ids(self, user_ids: Sequence[int]) -> dict[int, datetime]:
         """Batch fetch last login timestamps mapped by user ID."""

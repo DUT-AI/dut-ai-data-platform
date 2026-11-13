@@ -5,6 +5,7 @@ import {
   createAnnotation,
   createRevision,
   getAnnotationDetail,
+  getBatchAssetStatus,
   getRevisionDetail,
   listAnnotationRevisions,
   listAssetAnnotations,
@@ -19,7 +20,18 @@ export const annotationKeys = {
   revisions: (id: string) => [...annotationKeys.all, "revisions", id] as const,
   revisionDetail: (id: string) =>
     [...annotationKeys.all, "revision", id] as const,
+  batchStatus: (assetIds: string[]) =>
+    [...annotationKeys.all, "batch-status", assetIds.slice().sort().join(",")] as const,
 };
+
+export function useBatchAssetStatusQuery(assetIds: string[]) {
+  return useQuery({
+    queryKey: annotationKeys.batchStatus(assetIds),
+    queryFn: () => getBatchAssetStatus(assetIds),
+    enabled: assetIds.length > 0,
+    staleTime: 5000,
+  });
+}
 
 export function useAssetAnnotationsQuery(assetId: string) {
   return useQuery({

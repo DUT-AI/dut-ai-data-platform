@@ -9,7 +9,7 @@ from apps.api.deps.auth import get_current_user
 from apps.api.main import app
 from modules.identity.client.manage_client import ManageClient
 from modules.identity.domain.entities import AuthUser
-from modules.identity.domain.interfaces import IUserLoginRepository
+from modules.identity.domain.interfaces import IUserDirectory, IUserLoginRepository
 from modules.identity.dtos.manage_dtos import ManageUserDTO, ManageUsersResponseDTO
 from modules.identity.use_cases.list_users import ListUsersUseCase
 
@@ -17,11 +17,11 @@ from modules.identity.use_cases.list_users import ListUsersUseCase
 @pytest.mark.asyncio
 async def test_list_users_use_case_merge_last_login():
     """Test 1: Merge external Manage users with local last_login_at timestamps and sort DESC."""
-    manage_client = AsyncMock(spec=ManageClient)
-    manage_client.list_users.return_value = ManageUsersResponseDTO(
+    user_directory = AsyncMock(spec=IUserDirectory)
+    user_directory.list.return_value = ManageUsersResponseDTO(
         items=[
             ManageUserDTO(
-                id="101",
+                id=101,
                 name="Alice",
                 email="alice@dutai.io.vn",
                 status="ACTIVE",
@@ -29,7 +29,7 @@ async def test_list_users_use_case_merge_last_login():
                 role_names=["ADMIN"],
             ),
             ManageUserDTO(
-                id="102",
+                id=102,
                 name="Bob",
                 email="bob@dutai.io.vn",
                 status="INACTIVE",
@@ -37,7 +37,7 @@ async def test_list_users_use_case_merge_last_login():
                 role_names=["ANNOTATOR"],
             ),
             ManageUserDTO(
-                id="103",
+                id=103,
                 name="Charlie",
                 email="charlie@dutai.io.vn",
                 status="ACTIVE",
@@ -53,9 +53,9 @@ async def test_list_users_use_case_merge_last_login():
     t_earlier = datetime(2026, 8, 20, 10, 0, 0, tzinfo=UTC)
     t_latest = datetime(2026, 8, 20, 18, 0, 0, tzinfo=UTC)
     repo = AsyncMock(spec=IUserLoginRepository)
-    repo.get_by_user_ids.return_value = {"101": t_earlier, "103": t_latest}
+    repo.get_by_user_ids.return_value = {101: t_earlier, 103: t_latest}
 
-    use_case = ListUsersUseCase(manage_client=manage_client, login_repo=repo)
+    use_case = ListUsersUseCase(user_directory=user_directory, login_repo=repo)
     result = await use_case.execute(page=1, page_size=20)
 
     assert result.total == 3
@@ -65,26 +65,26 @@ async def test_list_users_use_case_merge_last_login():
     # 1. Charlie (t_latest)
     # 2. Alice (t_earlier)
     # 3. Bob (None - never logged in)
-    assert result.items[0].id == "103"
+    assert result.items[0].id == 103
     assert result.items[0].name == "Charlie"
     assert result.items[0].last_login_at == t_latest
 
-    assert result.items[1].id == "101"
+    assert result.items[1].id == 101
     assert result.items[1].name == "Alice"
     assert result.items[1].last_login_at == t_earlier
 
-    assert result.items[2].id == "102"
+    assert result.items[2].id == 102
     assert result.items[2].name == "Bob"
     assert result.items[2].last_login_at is None
 
-    repo.get_by_user_ids.assert_awaited_once_with(["101", "102", "103"])
+    repo.get_by_user_ids.assert_awaited_once_with([101, 102, 103])
 
 
 @pytest.mark.asyncio
 async def test_list_users_use_case_empty_users():
     """Test 2: Empty list returned by Manage Service does not trigger DB query."""
-    manage_client = AsyncMock(spec=ManageClient)
-    manage_client.list_users.return_value = ManageUsersResponseDTO(
+    user_directory = AsyncMock(spec=IUserDirectory)
+    user_directory.list.return_value = ManageUsersResponseDTO(
         items=[],
         total=0,
         page=1,
@@ -92,7 +92,7 @@ async def test_list_users_use_case_empty_users():
     )
 
     repo = AsyncMock(spec=IUserLoginRepository)
-    use_case = ListUsersUseCase(manage_client=manage_client, login_repo=repo)
+    use_case = ListUsersUseCase(user_directory=user_directory, login_repo=repo)
     result = await use_case.execute()
 
     assert result.total == 0
@@ -103,13 +103,13 @@ async def test_list_users_use_case_empty_users():
 @pytest.mark.asyncio
 async def test_list_users_use_case_manage_failure():
     """Test 3: Manage Service failure propagates error without returning fake local users."""
-    manage_client = AsyncMock(spec=ManageClient)
-    manage_client.list_users.side_effect = HTTPException(
+    user_directory = AsyncMock(spec=IUserDirectory)
+    user_directory.list.side_effect = HTTPException(
         status_code=502, detail="Manage Service unavailable"
     )
 
     repo = AsyncMock(spec=IUserLoginRepository)
-    use_case = ListUsersUseCase(manage_client=manage_client, login_repo=repo)
+    use_case = ListUsersUseCase(user_directory=user_directory, login_repo=repo)
 
     with pytest.raises(HTTPException) as exc_info:
         await use_case.execute()
@@ -122,8 +122,8 @@ async def test_list_users_use_case_manage_failure():
 @pytest.mark.asyncio
 async def test_list_users_use_case_pagination_and_search_forwarding():
     """Test 4: Pagination and search params are correctly forwarded to ManageClient."""
-    manage_client = AsyncMock(spec=ManageClient)
-    manage_client.list_users.return_value = ManageUsersResponseDTO(
+    user_directory = AsyncMock(spec=IUserDirectory)
+    user_directory.list.return_value = ManageUsersResponseDTO(
         items=[],
         total=0,
         page=2,
@@ -131,7 +131,7 @@ async def test_list_users_use_case_pagination_and_search_forwarding():
     )
 
     repo = AsyncMock(spec=IUserLoginRepository)
-    use_case = ListUsersUseCase(manage_client=manage_client, login_repo=repo)
+    use_case = ListUsersUseCase(user_directory=user_directory, login_repo=repo)
 
     await use_case.execute(
         page=2,
@@ -139,11 +139,41 @@ async def test_list_users_use_case_pagination_and_search_forwarding():
         search="alice",
     )
 
-    manage_client.list_users.assert_awaited_once_with(
+    user_directory.list.assert_awaited_once_with(
         page=2,
         page_size=10,
         search="alice",
     )
+
+
+@pytest.mark.asyncio
+async def test_list_users_use_case_keeps_external_page_items():
+    """A page returned by Manage must not be sliced a second time locally."""
+    user_directory = AsyncMock(spec=IUserDirectory)
+    user_directory.list.return_value = ManageUsersResponseDTO(
+        items=[
+            ManageUserDTO(
+                id=100 + index,
+                name=f"User {index}",
+                email=f"user{index}@dutai.io.vn",
+            )
+            for index in range(1, 11)
+        ],
+        total=20,
+        page=2,
+        page_size=10,
+    )
+
+    repo = AsyncMock(spec=IUserLoginRepository)
+    repo.get_by_user_ids.return_value = {}
+    use_case = ListUsersUseCase(user_directory=user_directory, login_repo=repo)
+
+    result = await use_case.execute(page=2, page_size=10)
+
+    assert result.page == 2
+    assert result.page_size == 10
+    assert result.total == 20
+    assert [user.id for user in result.items] == list(range(101, 111))
 
 
 @pytest.mark.asyncio
@@ -175,7 +205,7 @@ async def test_api_get_users_authenticated_success(monkeypatch):
         return ManageUsersResponseDTO(
             items=[
                 ManageUserDTO(
-                    id="101",
+                    id=101,
                     name="Test Operator",
                     email="operator@dutai.io.vn",
                     status="ACTIVE",
@@ -183,7 +213,7 @@ async def test_api_get_users_authenticated_success(monkeypatch):
                     role_names=["ADMIN"],
                 ),
                 ManageUserDTO(
-                    id="102",
+                    id=102,
                     name="New User",
                     email="new@dutai.io.vn",
                     status="ACTIVE",
@@ -214,9 +244,9 @@ async def test_api_get_users_authenticated_success(monkeypatch):
             assert data["page"] == 1
             assert data["page_size"] == 20
             assert len(data["items"]) == 2
-            assert data["items"][0]["id"] == "101"
+            assert data["items"][0]["id"] == 101
             assert data["items"][0]["name"] == "Test Operator"
-            assert data["items"][1]["id"] == "102"
+            assert data["items"][1]["id"] == 102
             assert "last_login_at" in data["items"][0]
     finally:
         app.dependency_overrides.clear()

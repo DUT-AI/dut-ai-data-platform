@@ -3,9 +3,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from apps.ai_worker.be_grpc_client import BEWorkerCallbackClient
-from apps.api.grpc_server import WorkerCallbackServicer, start_be_grpc_server
+from apps.api.grpc_server import WorkerCallbackServicer
 from modules.inference.domain.services.converter import PredictionConverter
-from modules.inference.infrastructure.storage.prediction_storage import S3PredictionStorage
+from modules.inference.infrastructure.storage.prediction_storage import (
+    S3PredictionStorage,
+)
 
 
 def test_prediction_converter_internal_schema():
@@ -25,19 +27,20 @@ def test_prediction_converter_internal_schema():
     assert payload["latency_ms"] == 123.4
 
 
-def test_s3_prediction_storage_upload_bytes():
-    mock_adapter = MagicMock()
-    storage = S3PredictionStorage(storage_adapter=mock_adapter)
+@pytest.mark.asyncio
+async def test_s3_prediction_storage_upload_bytes():
+    mock_provider = AsyncMock()
+    storage = S3PredictionStorage(storage_provider=mock_provider)
 
     payload = {"prediction": "data"}
-    s3_uri = storage.upload_prediction_artifact(
+    s3_uri = await storage.upload_prediction_artifact(
         job_id="job_002",
         annotation_payload=payload,
         bucket_name="data-platform",
     )
 
     assert s3_uri == "s3://data-platform/predictions/job_002.json"
-    mock_adapter.client.put_object.assert_called_once()
+    mock_provider.upload.assert_called_once()
 
 
 @pytest.mark.asyncio

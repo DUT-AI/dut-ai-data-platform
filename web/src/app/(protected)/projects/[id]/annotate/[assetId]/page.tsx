@@ -6,6 +6,7 @@ interface PageProps {
   searchParams: Promise<{
     ontologyVersionId?: string;
     datasetVersionId?: string;
+    workItemId?: string;
   }>;
 }
 
@@ -19,6 +20,7 @@ export default function AnnotateAssetPage({ params, searchParams }: PageProps) {
       assetId={resolvedParams.assetId}
       ontologyVersionId={resolvedSearchParams.ontologyVersionId}
       datasetVersionId={resolvedSearchParams.datasetVersionId}
+      workItemId={resolvedSearchParams.workItemId}
     />
   );
 }

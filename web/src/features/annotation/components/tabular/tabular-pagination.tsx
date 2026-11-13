@@ -29,8 +29,7 @@ export function TabularPagination({
   const totalPages = Math.max(1, Math.ceil(totalFilteredRows / pageSize));
   const currentPage = Math.min(pageIndex + 1, totalPages);
 
-  const startRecord =
-    totalFilteredRows === 0 ? 0 : pageIndex * pageSize + 1;
+  const startRecord = totalFilteredRows === 0 ? 0 : pageIndex * pageSize + 1;
   const endRecord = Math.min((pageIndex + 1) * pageSize, totalFilteredRows);
 
   // Generate compact page numbers list (max 5 visible buttons with ellipsis)
@@ -72,7 +71,8 @@ export function TabularPagination({
           bản ghi
           {totalFilteredRows !== totalTotalRows && (
             <span className="text-[11px] text-slate-500">
-              {" "}(lọc từ {totalTotalRows.toLocaleString()})
+              {" "}
+              (lọc từ {totalTotalRows.toLocaleString()})
             </span>
           )}
         </span>
@@ -86,7 +86,7 @@ export function TabularPagination({
           <select
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="h-7 rounded border border-slate-800 bg-slate-900 px-2 font-mono text-xs text-slate-300 focus:border-blue-500 focus:outline-hidden"
+            className="focus:outline-hidden h-7 rounded border border-slate-800 bg-slate-900 px-2 font-mono text-xs text-slate-300 focus:border-blue-500"
           >
             <option value={25}>25</option>
             <option value={50}>50</option>
@@ -127,7 +127,7 @@ export function TabularPagination({
                 return (
                   <span
                     key={`ellipsis-${idx}`}
-                    className="px-1 font-mono text-[11px] text-slate-600 select-none"
+                    className="select-none px-1 font-mono text-[11px] text-slate-600"
                   >
                     …
                   </span>

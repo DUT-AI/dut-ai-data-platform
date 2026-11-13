@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Literal
 
+from core.constants import SYSTEM_USER_ID
 from core.utils.id_generator import generate_ulid
 
 SelectorType = Literal[
@@ -30,9 +31,16 @@ class AnnotationRevisionEntity:
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
-    def __post_init__(self):
-        if isinstance(self.created_by, str) and self.created_by.isdigit():
-            self.created_by = int(self.created_by)
+    def __post_init__(self) -> None:
+        if isinstance(self.created_by, str):
+            self.created_by = (
+                int(self.created_by) if self.created_by.isdigit() else SYSTEM_USER_ID
+            )
+        elif not isinstance(self.created_by, int):
+            try:
+                self.created_by = int(self.created_by)
+            except (ValueError, TypeError):
+                self.created_by = SYSTEM_USER_ID
 
 
 @dataclass
@@ -55,9 +63,16 @@ class AnnotationEntity:
     updated_at: datetime | None = None
     revisions: list[AnnotationRevisionEntity] = field(default_factory=list)
 
-    def __post_init__(self):
-        if isinstance(self.created_by, str) and self.created_by.isdigit():
-            self.created_by = int(self.created_by)
+    def __post_init__(self) -> None:
+        if isinstance(self.created_by, str):
+            self.created_by = (
+                int(self.created_by) if self.created_by.isdigit() else SYSTEM_USER_ID
+            )
+        elif not isinstance(self.created_by, int):
+            try:
+                self.created_by = int(self.created_by)
+            except (ValueError, TypeError):
+                self.created_by = SYSTEM_USER_ID
 
     @property
     def target(self) -> AnnotationTarget:
@@ -83,7 +98,7 @@ class AnnotationEntity:
         next_revision_number = (
             max((r.revision_number for r in self.revisions), default=0) + 1
         )
-        author_id = int(created_by) if str(created_by).isdigit() else created_by
+        author_id = int(created_by) if str(created_by).isdigit() else SYSTEM_USER_ID
         revision = AnnotationRevisionEntity(
             annotation_id=self.id,
             revision_number=next_revision_number,

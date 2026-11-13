@@ -28,10 +28,6 @@ class AssetEntity:
     updated_at: datetime | None = None
     retired_at: datetime | None = None
 
-    def __post_init__(self):
-        if isinstance(self.created_by, str) and self.created_by.isdigit():
-            self.created_by = int(self.created_by)
-
 
 @dataclass
 class DatasetVersionAssetEntity:
@@ -62,10 +58,6 @@ class DatasetVersionEntity:
     published_at: datetime | None = None
     assets: list[AssetEntity] = field(default_factory=list)
 
-    def __post_init__(self):
-        if isinstance(self.created_by, str) and self.created_by.isdigit():
-            self.created_by = int(self.created_by)
-
     def assert_mutable(self) -> None:
         """Domain Invariant: Published dataset versions are immutable."""
         if self.status == "published":
@@ -87,7 +79,3 @@ class DatasetEntity:
     created_at: datetime | None = None
     updated_at: datetime | None = None
     versions: list[DatasetVersionEntity] = field(default_factory=list)
-
-    def __post_init__(self):
-        if isinstance(self.created_by, str) and self.created_by.isdigit():
-            self.created_by = int(self.created_by)

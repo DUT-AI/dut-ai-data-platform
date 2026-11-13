@@ -1,10 +1,7 @@
 import type { AnnotationResult } from "../types";
 import type { ExportedOntologySchema } from "@/features/ontology/types";
 
-export type AudioLabelMode =
-  | "asr_segments"
-  | "intent_classification"
-  | "asr";
+export type AudioLabelMode = "asr_segments" | "intent_classification" | "asr";
 
 export type OntologyOutputContract = ExportedOntologySchema["outputs"][number];
 
@@ -165,8 +162,12 @@ export function validateAudioAnnotation({
     .filter(isAudioSegmentResult)
     .map((result) => ({ result, range: getResultTimeRange(result) }))
     .filter(
-      (item): item is { result: AnnotationResult; range: { start: number; end: number } } =>
-        item.range !== null
+      (
+        item
+      ): item is {
+        result: AnnotationResult;
+        range: { start: number; end: number };
+      } => item.range !== null
     )
     .sort((a, b) => a.range.start - b.range.start);
 
@@ -176,9 +177,12 @@ export function validateAudioAnnotation({
 
   segments.forEach(({ result, range }, index) => {
     const label = `Segment ${index + 1}`;
-    if (range.start < 0) errors.push(`${label}: thời gian bắt đầu phải từ 0 trở lên.`);
+    if (range.start < 0)
+      errors.push(`${label}: thời gian bắt đầu phải từ 0 trở lên.`);
     if (range.end <= range.start) {
-      errors.push(`${label}: thời gian kết thúc phải lớn hơn thời gian bắt đầu.`);
+      errors.push(
+        `${label}: thời gian kết thúc phải lớn hơn thời gian bắt đầu.`
+      );
     }
     if (duration > 0 && range.end > duration + 0.01) {
       errors.push(`${label}: thời gian kết thúc vượt quá thời lượng audio.`);
@@ -213,6 +217,8 @@ export function validateAudioAnnotation({
   return errors;
 }
 
-export function serializeAnnotationResults(results: AnnotationResult[]): string {
+export function serializeAnnotationResults(
+  results: AnnotationResult[]
+): string {
   return JSON.stringify(results);
 }

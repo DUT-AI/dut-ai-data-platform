@@ -3,6 +3,8 @@ from modules.annotation.domain.interfaces import IAnnotationRepository
 from modules.annotation.dtos.annotation_dtos import (
     AnnotationResponseDTO,
     AnnotationRevisionResponseDTO,
+    BatchAssetStatusItemDTO,
+    BatchAssetStatusResponseDTO,
 )
 
 
@@ -42,3 +44,56 @@ class ListAssetAnnotationsUseCase:
                 )
             res.append(dto)
         return res
+
+
+class GetBatchAssetStatusUseCase:
+    def __init__(self, anno_repo: IAnnotationRepository) -> None:
+        self.anno_repo = anno_repo
+
+    async def execute(self, asset_ids: list[str]) -> BatchAssetStatusResponseDTO:
+        statuses: dict[str, BatchAssetStatusItemDTO] = {
+            aid: BatchAssetStatusItemDTO(
+                asset_id=aid,
+                is_annotated=False,
+                objects_count=0,
+                last_updated_at=None,
+            )
+            for aid in asset_ids
+        }
+        if not asset_ids:
+            return BatchAssetStatusResponseDTO(statuses=statuses)
+
+        annotations = await self.anno_repo.list_annotations_by_asset_ids(asset_ids)
+        for a in annotations:
+            aid = a.asset_id
+            if aid not in statuses:
+                statuses[aid] = BatchAssetStatusItemDTO(
+                    asset_id=aid,
+                    is_annotated=False,
+                    objects_count=0,
+                    last_updated_at=None,
+                )
+            if a.revisions:
+                latest_rev = a.revisions[-1]
+                results = latest_rev.results or []
+                rev_updated = latest_rev.created_at or a.updated_at
+                if len(results) > 0:
+                    current = statuses[aid]
+                    if not current.is_annotated:
+                        statuses[aid] = BatchAssetStatusItemDTO(
+                            asset_id=aid,
+                            is_annotated=True,
+                            objects_count=len(results),
+                            last_updated_at=rev_updated,
+                        )
+                    else:
+                        statuses[aid] = BatchAssetStatusItemDTO(
+                            asset_id=aid,
+                            is_annotated=True,
+                            objects_count=current.objects_count + len(results),
+                            last_updated_at=max(
+                                filter(None, [current.last_updated_at, rev_updated]),
+                                default=rev_updated,
+                            ),
+                        )
+        return BatchAssetStatusResponseDTO(statuses=statuses)

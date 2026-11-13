@@ -40,7 +40,7 @@ class SqlAnnotationRepository(IAnnotationRepository):
             target_type=annotation.target_type,
             target_selector=annotation.target_selector,
             ontology_version_id=annotation.ontology_version_id,
-            created_by=str(annotation.created_by),
+            created_by=annotation.created_by,
         )
         self.session.add(model)
         await self.session.flush()
@@ -92,15 +92,42 @@ class SqlAnnotationRepository(IAnnotationRepository):
         models = res.scalars().all()
         return [m.to_entity() for m in models]
 
+    async def list_annotations_by_asset_ids(
+        self, asset_ids: Sequence[str]
+    ) -> Sequence[AnnotationEntity]:
+        if not asset_ids:
+            return []
+        query = (
+            select(AnnotationModel)
+            .options(selectinload(AnnotationModel.revisions))
+            .where(AnnotationModel.asset_id.in_(asset_ids))
+            .order_by(AnnotationModel.created_at.desc())
+        )
+        res = await self.session.execute(query)
+        models = res.scalars().all()
+        return [m.to_entity() for m in models]
+
     async def create_revision(
         self, revision: AnnotationRevisionEntity
     ) -> AnnotationRevisionEntity:
+        count_stmt = select(AnnotationRevisionModel.revision_number).where(
+            AnnotationRevisionModel.annotation_id == revision.annotation_id
+        )
+        res = await self.session.execute(count_stmt)
+        existing_rev_nums = res.scalars().all()
+        if existing_rev_nums:
+            actual_revision_number = max(
+                revision.revision_number or 1, max(existing_rev_nums) + 1
+            )
+        else:
+            actual_revision_number = revision.revision_number or 1
+
         rev_model = AnnotationRevisionModel(
             id=revision.id or generate_ulid(),
             annotation_id=revision.annotation_id,
-            revision_number=revision.revision_number or 1,
+            revision_number=actual_revision_number,
             ontology_version_id=revision.ontology_version_id,
-            created_by=str(revision.created_by),
+            created_by=revision.created_by,
             source=revision.source,
             results=revision.results,
             category_ids=revision.category_ids,

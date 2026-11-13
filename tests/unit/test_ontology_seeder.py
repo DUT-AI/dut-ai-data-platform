@@ -1,10 +1,13 @@
 """Unit tests for OntologyTemplateSeederService and CreateOntologyUseCase (User Story 2)."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
+from core.exceptions import OntologySeedingError
 from modules.ontology.domain.entities import OntologyEntity, OntologyVersionEntity
-from modules.ontology.use_cases.ontologies import CreateOntologyUseCase
 from modules.ontology.dtos import OntologyCreateDTO
+from modules.ontology.use_cases.ontologies import CreateOntologyUseCase
 
 
 @pytest.mark.asyncio
@@ -20,8 +23,13 @@ async def test_create_ontology_use_case_has_low_arity():
         seeder=seeder,
     )
 
-    created_ontology = OntologyEntity(project_id="prj_1", name="Test Ontology", id="onto_1")
-    draft_version = OntologyVersionEntity(ontology_id="onto_1", version_no=1, name="Draft v1", id="ver_1")
+    created_ontology = OntologyEntity(
+        project_id="prj_1", name="Test Ontology", id="onto_1"
+    )
+    draft_version = OntologyVersionEntity(
+        ontology_id="onto_1", version_no=1, name="Draft v1", id="ver_1"
+    )
+    repo.get_by_project.return_value = None
     repo.add.return_value = created_ontology
     versions.add.return_value = draft_version
 
@@ -31,16 +39,22 @@ async def test_create_ontology_use_case_has_low_arity():
     assert result.id == "onto_1"
     repo.add.assert_awaited_once()
     versions.add.assert_awaited_once()
-    seeder.seed_from_project_template.assert_awaited_once_with("prj_1", created_ontology, draft_version)
+    seeder.seed_from_project_template.assert_awaited_once_with(
+        project_id="prj_1", ontology=created_ontology, draft_version=draft_version
+    )
 
 
 @pytest.mark.asyncio
 async def test_ontology_seeder_rolls_back_on_error():
-    """Verify OntologyTemplateSeederService rolls back session when seeding encounters an exception."""
+    """Verify OntologyTemplateSeederService raises OntologySeedingError and does not unilaterally call session.rollback()."""
     from modules.ontology.services.seeder import OntologyTemplateSeederService
 
     session = AsyncMock()
-    session.begin_nested = MagicMock()
+    nested_cm = MagicMock()
+    nested_cm.__aenter__ = AsyncMock(return_value=None)
+    nested_cm.__aexit__ = AsyncMock(return_value=None)
+    session.begin_nested = MagicMock(return_value=nested_cm)
+
     project_repo = AsyncMock()
     project_repo.get_by_id.side_effect = RuntimeError("Database connection lost")
 
@@ -57,9 +71,11 @@ async def test_ontology_seeder_rolls_back_on_error():
     )
 
     onto = OntologyEntity(project_id="prj_1", name="Test", id="onto_1")
-    ver = OntologyVersionEntity(ontology_id="onto_1", version_no=1, name="v1", id="ver_1")
+    ver = OntologyVersionEntity(
+        ontology_id="onto_1", version_no=1, name="v1", id="ver_1"
+    )
 
-    # The seeder handles errors gracefully by rolling back without raising or leaving corrupt state
-    await seeder.seed_from_project_template("prj_1", onto, ver)
-    session.rollback.assert_awaited_once()
+    with pytest.raises(OntologySeedingError):
+        await seeder.seed_from_project_template("prj_1", onto, ver)
 
+    assert session.rollback.call_count == 0

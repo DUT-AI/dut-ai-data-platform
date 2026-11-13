@@ -10,6 +10,7 @@ from modules.identity.di import IdentityProvider
 from modules.inference.infrastructure.di import InferenceProvider
 from modules.ontology.di import OntologyProvider
 from modules.project.di import ProjectProvider
+from modules.workflow.infrastructure.di.provider import WorkflowProvider
 
 
 def create_container() -> AsyncContainer:
@@ -23,6 +24,7 @@ def create_container() -> AsyncContainer:
         OntologyProvider(),
         AnnotationProvider(),
         InferenceProvider(),
+        WorkflowProvider(),
     )
 
 

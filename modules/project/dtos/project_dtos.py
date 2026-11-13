@@ -46,8 +46,8 @@ class ProjectResponseDTO(BaseModel):
     template_id: str | None = None
     task_definition_version_id: str | None = None
     project_template_version_id: str | None = None
-    created_by: str
-    owner_id: str
+    created_by: int
+    owner_id: int
     project_type: str
     status: str
     created_at: datetime | None = None
@@ -55,9 +55,8 @@ class ProjectResponseDTO(BaseModel):
     archived_at: datetime | None = None
 
 
-
 class ProjectMemberAddDTO(BaseModel):
-    user_id: str
+    user_id: int
     role: Literal["admin", "annotator", "reviewer"]
 
 
@@ -78,7 +77,7 @@ class ProjectMemberResponseDTO(BaseModel):
 
     id: str
     project_id: str
-    user_id: str
+    user_id: int
     user_name: str | None = None
     user_email: str | None = None
     user_avatar_url: str | None = None
@@ -123,5 +122,3 @@ class ProjectTemplateResponseDTO(BaseModel):
     tools: list[dict[str, Any]] = Field(default_factory=list)
     labels: list[dict[str, Any]] = Field(default_factory=list)
     default_project_configuration: dict[str, Any] = Field(default_factory=dict)
-
-

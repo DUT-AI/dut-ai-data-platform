@@ -29,14 +29,8 @@ class FinalizeAssetImportUseCase:
         self,
         version_id: str,
         payload: FinalizeAssetImportRequestDTO,
-        created_by: int | str | None = None,
+        created_by: int | None = None,
     ) -> FinalizeAssetImportResponseDTO:
-        parsed_created_by = (
-            int(created_by)
-            if isinstance(created_by, int)
-            or (isinstance(created_by, str) and str(created_by).isdigit())
-            else None
-        )
 
         version = await self.repo.get_version_by_id(version_id)
         if not version:
@@ -84,7 +78,7 @@ class FinalizeAssetImportUseCase:
                     data_format=item.data_format,
                     status="READY",
                     provenance=item.provenance,
-                    created_by=parsed_created_by,
+                    created_by=created_by,
                 )
                 saved_asset = await self.repo.save_asset(new_asset)
                 new_count += 1

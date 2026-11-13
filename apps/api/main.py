@@ -14,6 +14,7 @@ from apps.api.routers import (
     project_catalog_router,
     project_router,
     users_router,
+    workflow_router,
 )
 from core.config import settings
 from core.exceptions import setup_exception_handlers
@@ -51,6 +52,7 @@ class AppCORSMiddleware(CORSMiddleware):
 app.add_middleware(
     AppCORSMiddleware,
     allow_origins=settings.cors_origin_list,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -64,6 +66,7 @@ app.include_router(project_catalog_router)
 app.include_router(ontology_router)
 app.include_router(dataset_router)
 app.include_router(annotation_router)
+app.include_router(workflow_router)
 
 
 # 6. Health & Readiness Probes

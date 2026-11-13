@@ -181,7 +181,8 @@ export const DEFAULT_ANNOTATION_COMMANDS: Record<string, CommandDefinition> = {
   "playback.mark_out": {
     id: "playback.mark_out",
     name: "Kết thúc phân đoạn (Mark Out)",
-    description: "Đánh dấu thời điểm/frame kết thúc và tự động gán nhãn phân đoạn",
+    description:
+      "Đánh dấu thời điểm/frame kết thúc và tự động gán nhãn phân đoạn",
     category: "Playback",
     scope: "timeline",
     defaultBinding: "O",

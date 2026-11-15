@@ -1,127 +1,50 @@
-export type DatasetStatus = "active" | "archived";
-export type VersionStatus = "draft" | "published";
+import type { Schema } from "@/types/api";
 
-export interface Asset {
-  id: string;
-  project_id: string;
-  filename: string;
-  uri: string;
-  mime_type: string;
-  file_size: number;
-  sha256: string;
-  download_url?: string;
-  metadata: {
-    width?: number;
-    height?: number;
-    format?: string;
-    page_count?: number;
-    [key: string]: unknown;
-  } | null;
-  created_at: string | null;
-  updated_at: string | null;
+// ---- API contract: generated from backend DTOs ----
+type AssetDTO = Schema<"AssetResponseDTO">;
+
+/**
+ * `metadata` is free-form JSON in the backend (`dict[str, Any]`). These are the
+ * keys the importer writes when it knows them; anything else stays `unknown`.
+ */
+export interface AssetMetadata {
+  width?: number;
+  height?: number;
+  format?: string;
+  page_count?: number;
+  [key: string]: unknown;
 }
 
-export interface DatasetVersion {
-  id: string;
-  dataset_id: string;
-  version: string;
-  status: VersionStatus;
-  asset_count: number;
-  created_at: string | null;
-  updated_at: string | null;
-  published_at: string | null;
-  assets?: Asset[];
-}
+export type Asset = Omit<AssetDTO, "metadata"> & {
+  metadata: AssetMetadata | null;
+};
+export type AssetStatus = AssetDTO["status"];
 
-export interface Dataset {
-  id: string;
-  project_id: string;
-  name: string;
-  description: string | null;
-  status: DatasetStatus;
-  created_at: string | null;
-  updated_at: string | null;
-  versions?: DatasetVersion[];
-}
+export type DatasetVersion = Schema<"DatasetVersionResponseDTO">;
+export type VersionStatus = DatasetVersion["status"];
+export type Dataset = Schema<"DatasetResponseDTO">;
+export type DatasetStatus = Dataset["status"];
 
-export interface DatasetCreatePayload {
-  name: string;
-  description?: string;
-}
+export type DatasetCreatePayload = Schema<"DatasetCreateDTO">;
+export type DatasetUpdatePayload = Schema<"DatasetUpdateDTO">;
+export type DatasetVersionCreatePayload = Schema<"DatasetVersionCreateDTO">;
 
-export interface DatasetUpdatePayload {
-  name?: string;
-  description?: string;
-}
+export type BatchUploadResult = Schema<"BatchUploadResultDTO">;
+export type AssetDownloadUrlResponse = Schema<"AssetDownloadUrlResponseDTO">;
+export type CursorPageAssetResponse = Schema<"CursorPageAssetResponseDTO">;
 
-export interface DatasetVersionCreatePayload {
-  version: string;
-}
+export type InheritDatasetVersionRequest =
+  Schema<"InheritDatasetVersionRequestDTO">;
+export type InheritDatasetVersionResponse =
+  Schema<"InheritDatasetVersionResponseDTO">;
 
-export interface BatchUploadResult {
-  uploaded_assets: Asset[];
-  reused_assets_count: number;
-  new_assets_count: number;
-}
+export type PrepareUploadItem = Schema<"PrepareUploadItemDTO">;
+export type PrepareUploadPayload = Schema<"PrepareUploadRequestDTO">;
+export type PresignedUploadUrlItem = Schema<"PresignedUploadUrlItemDTO">;
+export type PrepareUploadResponse = Schema<"PrepareUploadResponseDTO">;
 
-export interface AssetDownloadUrlResponse {
-  asset_id: string;
-  filename: string;
-  download_url: string;
-  expires_in_seconds: number;
-}
-
-export interface InheritDatasetVersionRequest {
-  source_version_id: string;
-}
-
-export interface InheritDatasetVersionResponse {
-  target_version_id: string;
-  source_version_id: string;
-  added_assets_count: number;
-  reused_assets_count: number;
-  total_assets_count: number;
-}
-
-export interface PrepareUploadItem {
-  filename: string;
-  content_type?: string;
-}
-
-export interface PrepareUploadPayload {
-  files: PrepareUploadItem[];
-}
-
-export interface PresignedUploadUrlItem {
-  filename: string;
-  asset_id: string;
-  storage_key: string;
-  upload_url: string;
-  expires_in_seconds: number;
-}
-
-export interface PrepareUploadResponse {
-  items: PresignedUploadUrlItem[];
-}
-
-export interface FinalizeAssetImportItem {
-  asset_id: string;
-  filename: string;
-  storage_key: string;
-  sha256: string;
-  file_size: number;
-  mime_type: string;
-  metadata?: Record<string, unknown>;
-  data_format?: string;
-  provenance?: Record<string, unknown>;
-}
-
-export interface FinalizeAssetImportPayload {
-  items: FinalizeAssetImportItem[];
-}
-
-export interface FinalizeAssetImportResponse {
-  imported_assets: Asset[];
-  reused_assets_count: number;
-  new_assets_count: number;
-}
+export type FinalizeAssetImportItem = Schema<"FinalizeAssetImportItemDTO">;
+export type FinalizeAssetImportPayload =
+  Schema<"FinalizeAssetImportRequestDTO">;
+export type FinalizeAssetImportResponse =
+  Schema<"FinalizeAssetImportResponseDTO">;

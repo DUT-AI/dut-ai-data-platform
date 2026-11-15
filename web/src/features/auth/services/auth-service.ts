@@ -1,5 +1,10 @@
 import { api } from "@/lib/api";
-import type { LoginPayload, TokenResponse, User } from "../types";
+import type {
+  LoginPayload,
+  LogoutResponse,
+  TokenResponse,
+  User,
+} from "../types";
 
 export const authService = {
   async login(payload: LoginPayload): Promise<TokenResponse> {
@@ -13,6 +18,6 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    await api.post("/auth/logout");
+    await api.post<LogoutResponse>("/auth/logout");
   },
 };

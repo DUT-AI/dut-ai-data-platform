@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from apps.api.di import setup_di
 from apps.api.health import check_database, check_minio, check_rabbitmq, check_redis
+from apps.api.openapi import install_contract_openapi
 from apps.api.routers import (
     annotation_router,
     dataset_router,
@@ -67,6 +68,9 @@ app.include_router(ontology_router)
 app.include_router(dataset_router)
 app.include_router(annotation_router)
 app.include_router(workflow_router)
+
+# 5b. OpenAPI document = frontend API contract (see apps/api/openapi.py)
+install_contract_openapi(app)
 
 
 # 6. Health & Readiness Probes

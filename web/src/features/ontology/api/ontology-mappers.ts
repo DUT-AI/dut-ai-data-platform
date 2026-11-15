@@ -4,6 +4,7 @@ import type {
   CategoryUpdatePayload,
   InputDefinition,
   InputNodeForm,
+  InputSchemaType,
   JsonFieldType,
   JsonObject,
   OntologyInputPayload,
@@ -64,6 +65,27 @@ export function jsonObjectToSchemaFields(
 /*  Form → Request DTO mappers                                        */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Input schema types the backend accepts. Typed as a Record so tsc fails if the
+ * backend adds or removes a type and this list is not updated.
+ */
+const INPUT_SCHEMA_TYPES: Record<InputSchemaType, true> = {
+  image: true,
+  audio: true,
+  video: true,
+  document: true,
+  tabular: true,
+  object: true,
+  link: true,
+};
+
+function toInputSchemaType(code: string): InputSchemaType {
+  if (!Object.hasOwn(INPUT_SCHEMA_TYPES, code)) {
+    throw new Error(`Loại Input "${code}" chưa được hỗ trợ.`);
+  }
+  return code as InputSchemaType;
+}
+
 /** Map `InputNodeForm` + selected definition → backend payload. */
 export function toInputNodeRequest(
   form: InputNodeForm,
@@ -75,7 +97,7 @@ export function toInputNodeRequest(
     description: form.description?.trim() || undefined,
     scope: form.scope,
     input_schema: {
-      type: definition.code,
+      type: toInputSchemaType(definition.code),
       allowed_extensions: form.allowed_extensions,
       item:
         form.scope === "ONE_ITEM"

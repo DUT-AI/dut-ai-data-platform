@@ -5,6 +5,8 @@ import {
   BatchAssetStatusResponse,
   CreateAnnotationRequest,
   CreateRevisionRequest,
+  OpenInLabelStudioRequest,
+  OpenInLabelStudioResponse,
 } from "../types";
 
 export async function listAssetAnnotations(
@@ -59,18 +61,7 @@ export async function createRevision(
   return data;
 }
 
-export interface OpenInLabelStudioRequest {
-  project_id: string;
-  ontology_version_id: string;
-  presigned_url: string;
-  dataset_version_id?: string;
-}
-
-export interface OpenInLabelStudioResponse {
-  task_url: string;
-  ls_project_id: number;
-  ls_task_id: number;
-}
+export type { OpenInLabelStudioRequest, OpenInLabelStudioResponse };
 
 export async function openAssetInLabelStudio(
   assetId: string,

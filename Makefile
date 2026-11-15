@@ -1,5 +1,5 @@
 FRONTEND_DIR=web
-.PHONY: help dev-api dev-web dev-worker dev-ai-worker docker-up docker-down migrate create-migration test install-hooks lint ruff check
+.PHONY: help dev-api dev-web dev-worker dev-ai-worker docker-up docker-down migrate create-migration test install-hooks lint ruff check api-types
 
 help:
 	@echo "Available commands:"
@@ -14,6 +14,7 @@ help:
 	@echo "  make test           - Run backend test suite"
 	@echo "  make ruff           - Format and fix python code with ruff"
 	@echo "  make check          - Run static type checking (mypy)"
+	@echo "  make api-types      - Regenerate web API types from backend DTOs (no server needed)"
 	@echo "  make install-hooks  - Install git pre-commit hooks"
 	@echo "  make lint           - Run all formatting, linting, and tests"
 
@@ -54,6 +55,9 @@ ruff:
 
 check:
 	uv run mypy core modules apps
+
+api-types:
+	cd ./$(FRONTEND_DIR) && pnpm sync:api
 
 install-hooks:
 	mkdir -p .git/hooks

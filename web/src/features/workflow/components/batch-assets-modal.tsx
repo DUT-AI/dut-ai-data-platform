@@ -76,11 +76,12 @@ function AssetPreviewCard({
     asset.mime_type?.startsWith("image/") ||
     /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(asset.filename);
 
+  // Asset responses carry no URL: fetch a presigned one for images
   const { data: downloadData } = useAssetDownloadUrlQuery(
-    isImage && !asset.download_url ? asset.id : ""
+    isImage ? asset.id : ""
   );
 
-  const imageUrl = asset.download_url || downloadData?.download_url;
+  const imageUrl = downloadData?.download_url;
   const isAnnotated = Boolean(status?.is_annotated);
   const isNeedsRevision = review?.status === "NEEDS_REVISION";
   const isApproved = review?.status === "APPROVED";

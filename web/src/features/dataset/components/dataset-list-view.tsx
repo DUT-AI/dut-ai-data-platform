@@ -122,7 +122,7 @@ export function DatasetListView({ projectId }: DatasetListViewProps) {
       if (labels.length > 0) return labels;
     }
     if (template?.labels && template.labels.length > 0) {
-      return template.labels.map((l: { name: string; color?: string }) => ({
+      return template.labels.map((l) => ({
         name: l.name,
         color: l.color || "#2563eb",
       }));

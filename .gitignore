@@ -30,6 +30,9 @@ htmlcov/
 .vscode/
 /.ask/
 
+# Intermediate OpenAPI dump (make api-types); the generated .d.ts is committed
+/web/openapi.json
+
 # System & OS
 .DS_Store
 *.log

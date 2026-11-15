@@ -10,7 +10,9 @@ import type {
   OntologyCreatePayload,
   OntologyInput,
   OntologyOutput,
+  OntologyUpdatePayload,
   OntologyVersion,
+  OntologyVersionCreatePayload,
   OutputDefinition,
   OutputNodeForm,
   ValidationResult,
@@ -70,7 +72,7 @@ export async function createOntologyFromForm(
 export async function updateOntologyFromForm(
   projectId: string,
   ontologyId: string,
-  payload: Partial<OntologyCreatePayload>
+  payload: OntologyUpdatePayload
 ): Promise<Ontology> {
   return (await api.patch<Ontology>(root(projectId, ontologyId), payload)).data;
 }
@@ -272,7 +274,7 @@ export async function loadVersionWorkspace(
 export async function createDraftVersion(
   projectId: string,
   ontologyId: string,
-  payload: { name?: string; based_on_version_id?: string | null }
+  payload: OntologyVersionCreatePayload
 ): Promise<OntologyVersion> {
   return (
     await api.post<OntologyVersion>(

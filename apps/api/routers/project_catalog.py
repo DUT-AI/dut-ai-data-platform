@@ -1,6 +1,7 @@
 from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter
 
+from modules.project.dtos.project_dtos import ProjectTemplateResponseDTO
 from modules.project.use_cases import (
     GetProjectTemplateUseCase,
     ListProjectTemplatesUseCase,
@@ -18,7 +19,7 @@ async def list_template_groups(
     return await use_case.execute()
 
 
-@router.get("/project-templates")
+@router.get("/project-templates", response_model=list[ProjectTemplateResponseDTO])
 @inject
 async def list_project_templates(
     use_case: FromDishka[ListProjectTemplatesUseCase],
@@ -29,11 +30,11 @@ async def list_project_templates(
     return await use_case.execute(group=group, modality=modality, search=search)
 
 
-@router.get("/project-templates/{template_id}")
+@router.get(
+    "/project-templates/{template_id}", response_model=ProjectTemplateResponseDTO
+)
 @inject
 async def get_project_template(
     template_id: str, use_case: FromDishka[GetProjectTemplateUseCase]
 ):
     return await use_case.execute(template_id)
-
-

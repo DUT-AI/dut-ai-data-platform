@@ -63,7 +63,7 @@ export function useApplyOntologyPresetMutation(
             key: category.key,
             name: category.name,
             color: category.color ?? "#2563EB",
-            description: category.description,
+            description: category.description ?? undefined,
           })
         )
       );

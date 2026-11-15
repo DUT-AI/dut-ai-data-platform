@@ -1,213 +1,51 @@
 import { z } from "zod";
+import type { Schema } from "@/types/api";
 
 export type JsonObject = Record<string, unknown>;
-export type VersionStatus = "draft" | "published";
-export type InputScope = "ONE_ITEM" | "MANY_ITEMS";
 export type JsonFieldType = "string" | "number" | "integer" | "boolean";
 
-export interface InputDefinition {
-  id: string;
-  code:
-    "image" | "tabular" | "video" | "audio" | "document" | "object" | "link";
-  name: string;
-  description: string | null;
-  allowed_formats: string[];
-}
+// ---- API contract: generated from backend DTOs ----
+/** `code` is open-ended: the catalog is seeded but new definitions may be added. */
+export type InputDefinition = Schema<"InputDefinitionResponseDTO">;
+export type OutputDefinition = Schema<"OutputDefinitionResponseDTO">;
 
-export interface OutputDefinition {
-  id: string;
-  code:
-    | "classification"
-    | "bounding_box"
-    | "polygon"
-    | "text"
-    | "named_entity"
-    | "relation"
-    | "number"
-    | "custom_object";
-  name: string;
-  description: string | null;
-  supports_categories: boolean;
-  default_schema: JsonObject;
-}
+/** Stored schema as served (seeded inputs may carry only `type`). */
+export type InputSchema = Schema<"InputSchemaResponseDTO">;
+/** The types the backend accepts when an input is created or updated. */
+export type InputSchemaType = Schema<"InputSchemaDTO">["type"];
+export type OntologyInput = Schema<"OntologyInputResponseDTO">;
+export type InputScope = OntologyInput["scope"];
+export type OntologyOutput = Schema<"OntologyOutputResponseDTO">;
+export type Category = Schema<"CategoryResponseDTO">;
 
-export interface InputSchema {
-  type: InputDefinition["code"];
-  allowed_extensions: string[];
-  item: JsonObject | null;
-}
+export type OntologyVersionInput = Schema<"OntologyVersionInputResponseDTO">;
+export type OntologyVersionOutputCategory =
+  Schema<"OntologyVersionOutputCategoryResponseDTO">;
+export type OntologyVersionOutput = Schema<"OntologyVersionOutputResponseDTO">;
+export type OntologyVersion = Schema<"OntologyVersionResponseDTO">;
+export type VersionStatus = OntologyVersion["status"];
+export type Ontology = Schema<"OntologyResponseDTO">;
 
-export interface OntologyInput {
-  id: string;
-  ontology_id: string;
-  definition_id: string;
-  name: string;
-  description: string | null;
-  scope: InputScope;
-  input_schema: InputSchema;
-  definition: InputDefinition | null;
-  locked: boolean;
-  created_at: string | null;
-  updated_at: string | null;
-}
+export type ValidationIssue = Schema<"ValidationIssueDTO">;
+export type ValidationResult = Schema<"OntologyValidationResponseDTO">;
+export type ExportedOntologySchema = Schema<"OntologyVersionSchemaResponseDTO">;
 
-export interface OntologyOutput {
-  id: string;
-  ontology_id: string;
-  definition_id: string;
-  name: string;
-  description: string | null;
-  multiple: boolean;
-  required: boolean;
-  value_schema: JsonObject | null;
-  definition: OutputDefinition | null;
-  locked: boolean;
-  created_at: string | null;
-  updated_at: string | null;
-}
+export type OntologyUpdatePayload = Schema<"OntologyUpdateDTO">;
+export type OntologyInputPayload = Schema<"OntologyInputCreateDTO">;
+export type OntologyInputUpdatePayload = Schema<"OntologyInputUpdateDTO">;
+export type OntologyOutputPayload = Schema<"OntologyOutputCreateDTO">;
+export type OntologyOutputUpdatePayload = Schema<"OntologyOutputUpdateDTO">;
+export type CategoryPayload = Schema<"CategoryCreateDTO">;
+export type CategoryUpdatePayload = Schema<"CategoryUpdateDTO">;
+export type OntologyVersionCreatePayload = Schema<"OntologyVersionCreateDTO">;
+export type OntologyCompositionPayload = Schema<"OntologyCompositionUpdateDTO">;
 
-export interface Category {
-  id: string;
-  ontology_id: string;
-  key: string;
-  name: string;
-  color: string | null;
-  description: string | null;
-  locked: boolean;
-  created_at: string | null;
-  updated_at: string | null;
-}
-
-export interface OntologyVersionInput {
-  ontology_version_id: string;
-  ontology_input_id: string;
-  sort_order: number;
-  input: OntologyInput | null;
-}
-
-export interface OntologyVersionOutputCategory {
-  category_id: string;
-  sort_order: number;
-  category: Category | null;
-}
-
-export interface OntologyVersionOutput {
-  ontology_version_id: string;
-  ontology_output_id: string;
-  ontology_input_id: string;
-  sort_order: number;
-  output: OntologyOutput | null;
-  input: OntologyInput | null;
-  categories: OntologyVersionOutputCategory[];
-}
-
-export interface OntologyVersion {
-  id: string;
-  ontology_id: string;
-  version_no: number;
-  name: string;
-  status: VersionStatus;
-  based_on_version_id: string | null;
-  schema_hash: string | null;
-  published_at: string | null;
-  inputs: OntologyVersionInput[];
-  outputs: OntologyVersionOutput[];
-}
-
-export interface Ontology {
-  id: string;
-  project_id: string;
-  name: string;
-  description: string | null;
-  current_version_id: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  versions: OntologyVersion[];
-}
-
-export interface ValidationIssue {
-  path: string;
-  code: string;
-  message: string;
-}
-
-export interface ValidationResult {
-  valid: boolean;
-  issues: ValidationIssue[];
-}
-
-export interface ExportedOntologySchema {
-  ontology_id: string;
-  ontology_version_id: string;
-  version_no: number;
-  version_name: string;
-  status: VersionStatus;
-  schema_hash: string | null;
-  inputs: Array<{
-    id: string;
-    name: string;
-    scope: InputScope;
-    schema: InputSchema;
-  }>;
-  outputs: Array<{
-    id: string;
-    name: string;
-    type: OutputDefinition["code"];
-    input_id: string;
-    multiple: boolean;
-    required: boolean;
-    value_schema: JsonObject;
-    categories: Array<
-      Pick<Category, "id" | "key" | "name" | "color" | "description">
-    >;
-  }>;
-}
-
+// ---- FE-only: the schema-field builder rows used by the node dialogs ----
 export interface SchemaField {
   id: string;
   name: string;
   type: JsonFieldType;
   required: boolean;
-}
-
-export interface OntologyInputPayload {
-  definition_id: string;
-  name: string;
-  description?: string;
-  scope: InputScope;
-  input_schema: InputSchema;
-}
-
-export type OntologyInputUpdatePayload = Partial<OntologyInputPayload>;
-
-export interface OntologyOutputPayload {
-  definition_id: string;
-  name: string;
-  description?: string;
-  multiple: boolean;
-  required: boolean;
-  value_schema?: JsonObject | null;
-}
-
-export type OntologyOutputUpdatePayload = Partial<OntologyOutputPayload>;
-
-export interface CategoryPayload {
-  key: string;
-  name: string;
-  color?: string;
-  description?: string;
-}
-
-export type CategoryUpdatePayload = Partial<CategoryPayload>;
-
-export interface OntologyCompositionPayload {
-  inputs: Array<{ input_id: string; sort_order: number }>;
-  outputs: Array<{
-    output_id: string;
-    input_id: string;
-    category_ids: string[];
-    sort_order: number;
-  }>;
 }
 
 export const keySchema = z

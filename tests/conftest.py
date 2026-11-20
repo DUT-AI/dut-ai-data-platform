@@ -103,24 +103,19 @@ class InMemoryStorageProvider(IStorageProvider):
         return f"/{bucket}/{key.lstrip('/')}"
 
     async def get_presigned_url(
-        self, bucket: str, key: str, expires: int = 3600
+        self, bucket: str, key: str, *, expires: int = 3600
     ) -> str:
         return f"https://storage.test/{bucket}/{key.lstrip('/')}?expires={expires}"
 
     async def get_presigned_upload_url(
-        self, bucket: str, key: str, content_type: str | None = None, expires: int = 3600
+        self,
+        bucket: str,
+        key: str,
+        *,
+        content_type: str | None = None,
+        expires: int = 3600,
     ) -> str:
         return f"https://storage.test/upload/{bucket}/{key.lstrip('/')}?expires={expires}"
-
-    async def generate_presigned_download_url(
-        self, bucket: str, key: str, expires: int = 3600
-    ) -> str:
-        return await self.get_presigned_url(bucket, key, expires)
-
-    async def generate_presigned_upload_url(
-        self, bucket: str, key: str, content_type: str | None = None, expires: int = 3600
-    ) -> str:
-        return await self.get_presigned_upload_url(bucket, key, content_type, expires)
 
     async def delete(self, bucket: str, key: str) -> None:
         self.objects.pop((bucket, key), None)

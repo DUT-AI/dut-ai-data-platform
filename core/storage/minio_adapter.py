@@ -56,7 +56,7 @@ class MinIOStorageAdapter(IStorageProvider):
         return f"/{bucket}/{clean_key}"
 
     async def get_presigned_url(
-        self, bucket: str, key: str, expires: int = 3600
+        self, bucket: str, key: str, *, expires: int = 3600
     ) -> str:
         clean_key = key.lstrip("/")
         loop = asyncio.get_running_loop()
@@ -71,7 +71,12 @@ class MinIOStorageAdapter(IStorageProvider):
         return str(url)
 
     async def get_presigned_upload_url(
-        self, bucket: str, key: str, content_type: str | None = None, expires: int = 3600
+        self,
+        bucket: str,
+        key: str,
+        *,
+        content_type: str | None = None,
+        expires: int = 3600,
     ) -> str:
         clean_key = key.lstrip("/")
         params: dict[str, Any] = {"Bucket": bucket, "Key": clean_key}

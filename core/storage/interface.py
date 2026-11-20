@@ -3,7 +3,11 @@ from typing import BinaryIO
 
 
 class IStorageProvider(ABC):
-    """Abstract interface for S3 / Object Storage Operations."""
+    """Abstract interface for S3 / Object Storage Operations.
+
+    Exactly one method per operation; optional arguments are keyword-only so
+    adapters and callers cannot silently swap ``content_type`` and ``expires``.
+    """
 
     @abstractmethod
     async def upload(
@@ -17,13 +21,18 @@ class IStorageProvider(ABC):
 
     @abstractmethod
     async def get_presigned_url(
-        self, bucket: str, key: str, expires: int = 3600
+        self, bucket: str, key: str, *, expires: int = 3600
     ) -> str:
         """Generate a presigned GET URL for temporary downloading."""
 
     @abstractmethod
     async def get_presigned_upload_url(
-        self, bucket: str, key: str, content_type: str | None = None, expires: int = 3600
+        self,
+        bucket: str,
+        key: str,
+        *,
+        content_type: str | None = None,
+        expires: int = 3600,
     ) -> str:
         """Generate a presigned PUT URL for temporary uploading."""
 
@@ -33,17 +42,4 @@ class IStorageProvider(ABC):
 
     @abstractmethod
     def build_public_url(self, uri_or_path: str, bucket: str | None = None) -> str:
-        """Build a full public direct GET URL from a relative object path."""
-
-    async def generate_presigned_download_url(
-        self, bucket: str, key: str, expires_in: int = 3600
-    ) -> str:
-        """Generate a presigned GET URL for temporary downloading."""
-        return await self.get_presigned_url(bucket, key, expires=expires_in)
-
-    async def generate_presigned_upload_url(
-        self, bucket: str, key: str, expires_in: int = 3600
-    ) -> str:
-        """Generate a presigned PUT URL for temporary uploading."""
-        return await self.get_presigned_upload_url(bucket, key, expires=expires_in)
         """Build a full public direct GET URL from a relative object path."""

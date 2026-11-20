@@ -174,7 +174,7 @@ async def upload_version_assets(
         filename = f.filename or "unnamed_file"
         file_tuples.append((filename, content, f.content_type))
 
-    return await use_case.execute(version_id, file_tuples)
+    return await use_case.execute(version_id, file_tuples, created_by=current_user.id)
 
 
 @router.delete(

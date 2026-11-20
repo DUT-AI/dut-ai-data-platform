@@ -1,9 +1,11 @@
 from collections.abc import Sequence
 
 from sqlalchemy import delete, func, inspect, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from core.exceptions import ConflictException
 from core.utils.id_generator import generate_ulid
 from modules.dataset.domain.entities import (
     AssetEntity,
@@ -283,7 +285,13 @@ class SqlDatasetRepository(IDatasetRepository):
             retired_at=asset.retired_at,
         )
         self.session.add(model)
-        await self.session.flush()
+        try:
+            await self.session.flush()
+        except IntegrityError as exc:
+            # e.g. uq_project_sha256: a concurrent request stored the same file.
+            raise ConflictException(
+                f"Asset '{asset.filename}' conflicts with an existing asset of this project."
+            ) from exc
         await self.session.refresh(model)
         return _map_asset_to_entity(model)
 

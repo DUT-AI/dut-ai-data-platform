@@ -22,6 +22,14 @@ class DatasetVersionPolicy:
             )
 
     @staticmethod
+    def ensure_accepts_asset_uploads(version: DatasetVersionEntity) -> None:
+        """Only draft versions accept newly uploaded assets."""
+        if version.status != "draft":
+            raise BusinessRuleViolationError(
+                f"Cannot upload assets to version '{version.id}' with status '{version.status}'. Only draft versions allow asset uploads."
+            )
+
+    @staticmethod
     def ensure_can_publish(
         dataset: DatasetEntity, version: DatasetVersionEntity
     ) -> None:

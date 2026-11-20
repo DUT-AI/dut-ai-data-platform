@@ -59,30 +59,6 @@ export async function createRevision(
   return data;
 }
 
-export interface OpenInLabelStudioRequest {
-  project_id: string;
-  ontology_version_id: string;
-  presigned_url: string;
-  dataset_version_id?: string;
-}
-
-export interface OpenInLabelStudioResponse {
-  task_url: string;
-  ls_project_id: number;
-  ls_task_id: number;
-}
-
-export async function openAssetInLabelStudio(
-  assetId: string,
-  request: OpenInLabelStudioRequest
-): Promise<OpenInLabelStudioResponse> {
-  const { data } = await api.post<OpenInLabelStudioResponse>(
-    `/assets/${assetId}/open-in-label-studio`,
-    request
-  );
-  return data;
-}
-
 export async function getBatchAssetStatus(
   assetIds: string[]
 ): Promise<BatchAssetStatusResponse> {
@@ -92,6 +68,3 @@ export async function getBatchAssetStatus(
   );
   return data;
 }
-
-/** Re-export as apiClient for backward compat usage in modal */
-export const apiClient = { post: openAssetInLabelStudio };

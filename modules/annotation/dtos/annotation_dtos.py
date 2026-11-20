@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 SelectorType = Literal[
     "FULL_ASSET", "RECORD", "TEXT_SPAN", "TIME_RANGE", "FRAME_RANGE", "DOCUMENT_PAGE"
 ]
+RevisionSource = Literal["human", "machine"]
 
 
 class AnnotationTargetDTO(BaseModel):
@@ -22,7 +23,7 @@ class AnnotationRevisionResponseDTO(BaseModel):
     revision_number: int
     ontology_version_id: str
     created_by: int
-    source: str
+    source: RevisionSource
     created_at: datetime | None = None
     results: list[dict[str, Any]] = Field(default_factory=list)
     category_ids: list[str] = Field(default_factory=list)
@@ -34,13 +35,13 @@ class AnnotationCreateDTO(BaseModel):
     ontology_version_id: str
     target_type: SelectorType = "FULL_ASSET"
     target_selector: dict[str, Any] = Field(default_factory=dict)
-    source: Literal["human", "machine"] = "human"
+    source: RevisionSource = "human"
     results: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class RevisionCreateDTO(BaseModel):
     ontology_version_id: str | None = None
-    source: Literal["human", "machine"] = "human"
+    source: RevisionSource = "human"
     results: list[dict[str, Any]] = Field(default_factory=list)
 
 
@@ -50,7 +51,7 @@ class AnnotationResponseDTO(BaseModel):
     id: str
     asset_id: str
     project_id: str
-    target_type: str = "FULL_ASSET"
+    target_type: SelectorType = "FULL_ASSET"
     target_selector: dict[str, Any] = Field(default_factory=dict)
     ontology_version_id: str | None = None
     created_by: int

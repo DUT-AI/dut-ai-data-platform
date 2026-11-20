@@ -5,6 +5,11 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from core.config import s3_settings
 from core.storage.url_builder import build_storage_public_url
+from modules.dataset.domain.entities import (
+    AssetStatus,
+    DatasetStatus,
+    DatasetVersionStatus,
+)
 
 
 class DatasetCreateDTO(BaseModel):
@@ -31,7 +36,7 @@ class AssetResponseDTO(BaseModel):
     sha256: str
     metadata: dict[str, Any] | None = None
     data_format: str | None = None
-    status: str = "READY"
+    status: AssetStatus = "READY"
     provenance: dict[str, Any] | None = None
     created_by: int | None = None
     created_at: datetime | None = None
@@ -55,7 +60,7 @@ class DatasetVersionResponseDTO(BaseModel):
     version_number: int | None = None
     version_label: str | None = None
     parent_version_id: str | None = None
-    status: str
+    status: DatasetVersionStatus
     version_config: dict[str, Any] | None = None
     manifest_hash: str | None = None
     asset_count: int
@@ -74,7 +79,7 @@ class DatasetResponseDTO(BaseModel):
     name: str
     description: str | None = None
     tags: list[str] = Field(default_factory=list)
-    status: str
+    status: DatasetStatus
     latest_published_version_number: int | None = None
     created_by: int | None = None
     created_at: datetime | None = None
@@ -142,7 +147,6 @@ class FinalizeAssetImportResponseDTO(BaseModel):
     new_assets_count: int = 0
 
 
-
 class CursorPageAssetResponseDTO(BaseModel):
     items: list[AssetResponseDTO]
     next_cursor: str | None = None
@@ -158,4 +162,3 @@ class InheritDatasetVersionResponseDTO(BaseModel):
     added_assets_count: int
     reused_assets_count: int
     total_assets_count: int
-

@@ -6,6 +6,9 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 KEY_PATTERN = r"^[a-z][a-z0-9_]*$"
 COLOR_PATTERN = r"^#[0-9A-Fa-f]{6}$"
 InputScope = Literal["ONE_ITEM", "MANY_ITEMS"]
+InputSchemaType = Literal[
+    "image", "audio", "video", "document", "tabular", "object", "link"
+]
 
 
 class StrictDTO(BaseModel):
@@ -72,7 +75,7 @@ class OutputDefinitionUpdateDTO(StrictDTO):
 
 
 class InputSchemaDTO(StrictDTO):
-    type: Literal["image", "audio", "video", "document", "tabular", "object", "link"]
+    type: InputSchemaType
     allowed_extensions: list[str] = Field(min_length=1, max_length=50)
     item: dict[str, Any] | None = None
 
@@ -202,6 +205,19 @@ class OutputDefinitionResponseDTO(ResponseDTO):
     default_schema: dict[str, Any]
 
 
+class InputSchemaResponseDTO(ResponseDTO):
+    """Stored input schema.
+
+    Inputs written through the API are validated by InputSchemaDTO, but inputs
+    created by the template seeder only store ``{"type": <definition code>}``
+    (services/seeder.py), so ``type`` stays open and the list defaults to empty.
+    """
+
+    type: str
+    allowed_extensions: list[str] = Field(default_factory=list)
+    item: dict[str, Any] | None = None
+
+
 class OntologyInputResponseDTO(ResponseDTO):
     id: str
     ontology_id: str
@@ -209,7 +225,7 @@ class OntologyInputResponseDTO(ResponseDTO):
     name: str
     description: str | None
     scope: InputScope
-    input_schema: dict[str, Any]
+    input_schema: InputSchemaResponseDTO
     definition: InputDefinitionResponseDTO | None = None
     locked: bool = False
     created_at: datetime | None = None
@@ -305,12 +321,43 @@ class OntologyValidationResponseDTO(ResponseDTO):
     issues: list[ValidationIssueDTO]
 
 
+class ExportedInputDTO(StrictDTO):
+    id: str
+    name: str
+    scope: InputScope
+    # "schema" would shadow a BaseModel attribute, so the field is aliased.
+    input_schema: InputSchemaResponseDTO = Field(
+        alias="schema", serialization_alias="schema"
+    )
+
+
+class ExportedCategoryDTO(StrictDTO):
+    id: str
+    key: str
+    name: str
+    color: str | None
+    description: str | None
+
+
+class ExportedOutputDTO(StrictDTO):
+    id: str
+    name: str
+    type: str
+    input_id: str
+    multiple: bool
+    required: bool
+    value_schema: dict[str, Any]
+    categories: list[ExportedCategoryDTO]
+
+
 class OntologyVersionSchemaResponseDTO(StrictDTO):
+    """The machine-readable contract of a version (see domain export_schema)."""
+
     ontology_id: str
     ontology_version_id: str
     version_no: int
     version_name: str
-    status: str
+    status: Literal["draft", "published"]
     schema_hash: str | None
-    inputs: list[dict[str, Any]]
-    outputs: list[dict[str, Any]]
+    inputs: list[ExportedInputDTO]
+    outputs: list[ExportedOutputDTO]

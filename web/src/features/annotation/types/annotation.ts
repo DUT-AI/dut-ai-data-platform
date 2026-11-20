@@ -1,10 +1,13 @@
-export type SelectorType =
-  | "FULL_ASSET"
-  | "RECORD"
-  | "TEXT_SPAN"
-  | "TIME_RANGE"
-  | "FRAME_RANGE"
-  | "DOCUMENT_PAGE";
+import type { Schema } from "@/types/api";
+
+// ---- API contract: generated from backend DTOs ----
+type AnnotationDTO = Schema<"AnnotationResponseDTO">;
+type AnnotationRevisionDTO = Schema<"AnnotationRevisionResponseDTO">;
+type AnnotationCreateDTO = Schema<"AnnotationCreateDTO">;
+type RevisionCreateDTO = Schema<"RevisionCreateDTO">;
+
+export type SelectorType = AnnotationDTO["target_type"];
+export type RevisionSource = AnnotationRevisionDTO["source"];
 
 export type ResultType =
   | "bbox"
@@ -18,8 +21,11 @@ export type ResultType =
    */
   | "ner";
 
-export type RevisionSource = "human" | "machine";
-
+/**
+ * One annotation result. The backend stores results as free-form JSON
+ * (`list[dict[str, Any]]`) and validates them against the Ontology Version, so
+ * this editor-side view of a result is the only hand-written shape here.
+ */
 export interface AnnotationResult {
   id?: string;
   output_id?: string;
@@ -40,55 +46,27 @@ export interface AnnotationResult {
   created_at?: string;
 }
 
-export interface AnnotationRevision {
-  id: string;
-  annotation_id: string;
-  revision_number: number;
-  ontology_version_id: string;
-  created_by: string;
-  source: RevisionSource;
-  created_at?: string;
+type WithResults<T> = Omit<T, "results"> & { results: AnnotationResult[] };
+
+export type AnnotationRevision = WithResults<AnnotationRevisionDTO>;
+
+export type Annotation = Omit<
+  AnnotationDTO,
+  "latest_revision" | "revisions"
+> & {
+  latest_revision: AnnotationRevision | null;
+  revisions: AnnotationRevision[];
+};
+
+export type CreateAnnotationRequest = Omit<AnnotationCreateDTO, "results"> & {
   results: AnnotationResult[];
-  category_ids?: string[];
-}
-
-export interface Annotation {
-  id: string;
-  asset_id: string;
-  project_id: string;
-  target_type: SelectorType;
-  target_selector: Record<string, unknown>;
-  ontology_version_id?: string;
-  created_by: string;
-  created_at?: string;
-  updated_at?: string;
-  latest_revision?: AnnotationRevision;
-  revisions?: AnnotationRevision[];
-}
-
-export interface CreateAnnotationRequest {
-  asset_id: string;
-  project_id: string;
-  ontology_version_id: string;
-  target_type?: SelectorType;
-  target_selector?: Record<string, unknown>;
-  source?: RevisionSource;
+};
+export type CreateRevisionRequest = Omit<RevisionCreateDTO, "results"> & {
   results: AnnotationResult[];
-}
+};
 
-export interface CreateRevisionRequest {
-  ontology_version_id: string;
-  source?: RevisionSource;
-  results: AnnotationResult[];
-}
+export type BatchAssetStatusItem = Schema<"BatchAssetStatusItemDTO">;
+export type BatchAssetStatusResponse = Schema<"BatchAssetStatusResponseDTO">;
 
-export interface BatchAssetStatusItem {
-  asset_id: string;
-  is_annotated: boolean;
-  objects_count: number;
-  last_updated_at?: string | null;
-}
-
-export interface BatchAssetStatusResponse {
-  statuses: Record<string, BatchAssetStatusItem>;
-}
+export type OpenInLabelStudioRequest = Schema<"OpenInLabelStudioRequestDTO">;
+export type OpenInLabelStudioResponse = Schema<"OpenInLabelStudioResponseDTO">;

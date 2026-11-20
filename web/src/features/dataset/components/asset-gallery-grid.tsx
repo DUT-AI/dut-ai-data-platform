@@ -49,11 +49,11 @@ function AssetGalleryCard({
   const category = getAssetCategory(asset.filename, asset.mime_type);
   const isImage = category === "image";
 
-  // Lấy presigned URL nếu là hình ảnh và chưa có download_url sẵn
+  // Asset responses carry no URL: fetch a presigned one for images
   const { data: downloadData, isLoading: isUrlLoading } =
-    useAssetDownloadUrlQuery(isImage && !asset.download_url ? asset.id : "");
+    useAssetDownloadUrlQuery(isImage ? asset.id : "");
 
-  const imageUrl = asset.download_url || downloadData?.download_url;
+  const imageUrl = downloadData?.download_url;
 
   const iconMap = {
     image: FileImage,

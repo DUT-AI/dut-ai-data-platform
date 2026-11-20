@@ -40,7 +40,14 @@ run_web() {
         cd web
         echo "Running pnpm install..."
         pnpm install --ignore-scripts || return 1
-        
+
+        echo "Checking web API types match backend DTOs..."
+        pnpm run sync:api || return 1
+        if ! git diff --quiet -- src/types/api.generated.d.ts; then
+            echo "api.generated.d.ts is out of date: run 'make api-types' (or 'pnpm sync:api' in web/) and stage it."
+            return 1
+        fi
+
         echo "Running web lint..."
         pnpm run lint || return 1
         

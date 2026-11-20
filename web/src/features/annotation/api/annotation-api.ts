@@ -5,6 +5,8 @@ import {
   BatchAssetStatusResponse,
   CreateAnnotationRequest,
   CreateRevisionRequest,
+  OpenInLabelStudioRequest,
+  OpenInLabelStudioResponse,
 } from "../types";
 
 export async function listAssetAnnotations(

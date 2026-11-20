@@ -15,7 +15,10 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "sync:api": "uv run --directory .. python -m apps.api.openapi_export web/openapi.json && pnpm generate:api",
+    "generate:api": "openapi-typescript ./openapi.json -o src/types/api.generated.d.ts --default-non-nullable false",
+    "generate:api:live": "openapi-typescript http://127.0.0.1:8000/openapi.json -o src/types/api.generated.d.ts --default-non-nullable false"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",
@@ -44,6 +47,7 @@
     "agentation": "^3.0.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "openapi-typescript": "7.13.0",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.12",
     "tailwindcss": "^4",

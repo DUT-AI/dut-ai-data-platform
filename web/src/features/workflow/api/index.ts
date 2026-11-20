@@ -1,61 +1,59 @@
 import { api } from "@/lib/api";
 import type {
+  AddWorkItemCommentRequest,
   Assignment,
-  CreateBatchWorkItemsRequest,
   BulkAssignRequest,
+  CreateBatchWorkItemsRequest,
+  CreateWorkflowDefinitionRequest,
   RecordAssetReviewRequest,
   TransitionWorkItemRequest,
   WorkflowDefinition,
   WorkflowHistory,
   WorkItem,
-  WorkItemStatus,
+  WorkItemListQuery,
 } from "../types";
 
 export const workflowApi = {
-  createDefinition: async (data: {
-    project_id: string;
-    name: string;
-    description?: string;
-    config?: Record<string, unknown>;
-  }): Promise<WorkflowDefinition> => {
-    const res = await api.post("/workflows", data);
+  createDefinition: async (
+    data: CreateWorkflowDefinitionRequest
+  ): Promise<WorkflowDefinition> => {
+    const res = await api.post<WorkflowDefinition>("/workflows", data);
     return res.data;
   },
 
   getDefinition: async (id: string): Promise<WorkflowDefinition> => {
-    const res = await api.get(`/workflows/${id}`);
+    const res = await api.get<WorkflowDefinition>(`/workflows/${id}`);
     return res.data;
   },
 
-  getProjectWorkflow: async (projectId: string): Promise<WorkflowDefinition> => {
-    const res = await api.get(`/projects/${projectId}/workflow`);
+  getProjectWorkflow: async (
+    projectId: string
+  ): Promise<WorkflowDefinition> => {
+    const res = await api.get<WorkflowDefinition>(
+      `/projects/${projectId}/workflow`
+    );
     return res.data;
   },
 
-  listWorkItems: async (params: {
-    project_id: string;
-    workflow_id?: string;
-    status?: WorkItemStatus;
-    assignee_id?: number;
-    limit?: number;
-    offset?: number;
-  }): Promise<WorkItem[]> => {
-    const res = await api.get("/work-items", { params });
+  listWorkItems: async (params: WorkItemListQuery): Promise<WorkItem[]> => {
+    const res = await api.get<WorkItem[]>("/work-items", { params });
     return res.data;
   },
 
   getWorkItem: async (id: string): Promise<WorkItem> => {
-    const res = await api.get(`/work-items/${id}`);
+    const res = await api.get<WorkItem>(`/work-items/${id}`);
     return res.data;
   },
 
-  createBatches: async (data: CreateBatchWorkItemsRequest): Promise<WorkItem[]> => {
-    const res = await api.post("/work-items/batches", data);
+  createBatches: async (
+    data: CreateBatchWorkItemsRequest
+  ): Promise<WorkItem[]> => {
+    const res = await api.post<WorkItem[]>("/work-items/batches", data);
     return res.data;
   },
 
   bulkAssign: async (data: BulkAssignRequest): Promise<Assignment[]> => {
-    const res = await api.post("/work-items/bulk-assign", data);
+    const res = await api.post<Assignment[]>("/work-items/bulk-assign", data);
     return res.data;
   },
 
@@ -63,20 +61,28 @@ export const workflowApi = {
     workItemId: string,
     data: TransitionWorkItemRequest
   ): Promise<WorkItem> => {
-    const res = await api.post(`/work-items/${workItemId}/transition`, data);
+    const res = await api.post<WorkItem>(
+      `/work-items/${workItemId}/transition`,
+      data
+    );
     return res.data;
   },
 
   getHistory: async (workItemId: string): Promise<WorkflowHistory[]> => {
-    const res = await api.get(`/work-items/${workItemId}/history`);
+    const res = await api.get<WorkflowHistory[]>(
+      `/work-items/${workItemId}/history`
+    );
     return res.data;
   },
 
   addComment: async (
     workItemId: string,
-    data: { comment: string; metadata?: Record<string, unknown> }
+    data: AddWorkItemCommentRequest
   ): Promise<WorkflowHistory> => {
-    const res = await api.post(`/work-items/${workItemId}/comments`, data);
+    const res = await api.post<WorkflowHistory>(
+      `/work-items/${workItemId}/comments`,
+      data
+    );
     return res.data;
   },
 
@@ -84,8 +90,10 @@ export const workflowApi = {
     workItemId: string,
     data: RecordAssetReviewRequest
   ): Promise<WorkItem> => {
-    const res = await api.post(`/work-items/${workItemId}/asset-reviews`, data);
+    const res = await api.post<WorkItem>(
+      `/work-items/${workItemId}/asset-reviews`,
+      data
+    );
     return res.data;
   },
 };
-

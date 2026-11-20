@@ -71,7 +71,7 @@ export function RevisionHistoryPanel({
               </div>
 
               <div className="flex items-center justify-between text-[11px] text-slate-400">
-                <span>Tạo bởi: {rev.created_by.split("@")[0]}</span>
+                <span>Tạo bởi: User {rev.created_by}</span>
                 <span className="font-medium text-slate-300">
                   {rev.results.length} nhãn
                 </span>

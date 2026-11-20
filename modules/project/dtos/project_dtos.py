@@ -49,7 +49,7 @@ class ProjectResponseDTO(BaseModel):
     created_by: int
     owner_id: int
     project_type: str
-    status: str
+    status: Literal["active", "archived"]
     created_at: datetime | None = None
     updated_at: datetime | None = None
     archived_at: datetime | None = None
@@ -81,8 +81,8 @@ class ProjectMemberResponseDTO(BaseModel):
     user_name: str | None = None
     user_email: str | None = None
     user_avatar_url: str | None = None
-    role: str
-    status: str
+    role: Literal["owner", "admin", "annotator", "reviewer"]
+    status: Literal["active", "inactive"]
     joined_at: datetime | None = None
 
 
@@ -109,16 +109,30 @@ class UpdateConfigurationDTO(BaseModel):
     settings_schema_version: str = "1.0"
 
 
+class TemplateToolDTO(BaseModel):
+    name: str
+    desc: str | None = None
+    type: str
+
+
+class TemplateLabelDTO(BaseModel):
+    name: str
+    color: str | None = None
+
+
 class ProjectTemplateResponseDTO(BaseModel):
+    """One entry of the template catalog (modules/project/data/templates.json)."""
+
     model_config = ConfigDict(from_attributes=True)
+
     id: str
-    title: str | None = None
-    name: str | None = None
-    group: str | None = None
-    category: str | None = None
+    title: str
+    group: str
+    order: int | None = None
+    image: str | None = None
+    type: str | None = None
     modality: str
     description: str | None = None
-    image: str | None = None
-    tools: list[dict[str, Any]] = Field(default_factory=list)
-    labels: list[dict[str, Any]] = Field(default_factory=list)
+    tools: list[TemplateToolDTO] = Field(default_factory=list)
+    labels: list[TemplateLabelDTO] = Field(default_factory=list)
     default_project_configuration: dict[str, Any] = Field(default_factory=dict)

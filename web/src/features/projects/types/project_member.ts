@@ -1,27 +1,13 @@
 import { z } from "zod";
+import type { Schema } from "@/types/api";
 
-export const projectMemberRoleSchema = z.enum([
-  "owner",
-  "admin",
-  "annotator",
-  "reviewer",
-]);
-export type ProjectMemberRole = z.infer<typeof projectMemberRoleSchema>;
+// ---- API contract: generated from backend DTOs ----
+export type ProjectMember = Schema<"ProjectMemberResponseDTO">;
+export type ProjectMemberRole = ProjectMember["role"];
+export type ProjectMemberAddPayload = Schema<"ProjectMemberAddDTO">;
+export type ProjectMemberUpdateRolePayload = Schema<"UpdateMemberRoleDTO">;
 
-export const projectMemberSchema = z.object({
-  id: z.string(),
-  project_id: z.string(),
-  user_id: z.number(),
-  user_name: z.string().nullable().optional(),
-  user_email: z.string().nullable().optional(),
-  user_avatar_url: z.string().nullable().optional(),
-  role: projectMemberRoleSchema,
-  status: z.string(),
-  joined_at: z.string().nullable(),
-});
-
-export type ProjectMember = z.infer<typeof projectMemberSchema>;
-
+// ---- Form validation only: the form keeps user_id as a string from the picker ----
 export const inviteMemberSchema = z.object({
   user_id: z
     .string()
@@ -36,9 +22,3 @@ export const inviteMemberSchema = z.object({
   }),
 });
 export type InviteMemberFormValues = z.infer<typeof inviteMemberSchema>;
-export type ProjectMemberAddPayload = Omit<
-  InviteMemberFormValues,
-  "user_id"
-> & {
-  user_id: number;
-};

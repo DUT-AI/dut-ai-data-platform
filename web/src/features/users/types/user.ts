@@ -1,20 +1,10 @@
-export interface UserRead {
-  id: number;
-  name: string;
-  email: string;
-  status: string;
-  avatar_url: string | null;
-  role_names: string[];
-  last_login_at: string | null;
-}
+import type { Schema } from "@/types/api";
 
-export interface UsersListResponse {
-  items: UserRead[];
-  total: number;
-  page: number;
-  page_size: number;
-}
+// ---- API contract: generated from backend DTOs ----
+export type UserRead = Schema<"UserReadDTO">;
+export type UsersListResponse = Schema<"UsersListResponseDTO">;
 
+// ---- FE-only: arguments of userApi.getUsers (mapped to page/page_size/search) ----
 export interface UserQueryParams {
   page?: number;
   pageSize?: number;

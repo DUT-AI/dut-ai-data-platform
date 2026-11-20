@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { AppShell } from "@/components/layout/app-shell";
+import { redirectToSsoLogin } from "@/lib/auth-urls";
 
 export default function ProtectedLayout({
   children,
@@ -11,13 +11,12 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const { user, isLoading } = useAuth();
-  const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.replace("/login");
+      redirectToSsoLogin();
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading]);
 
   if (isLoading) {
     return (

@@ -100,7 +100,7 @@ async def test_manage_client_unauthorized(monkeypatch):
     with pytest.raises(HTTPException) as exc_info:
         await client.list_users()
 
-    assert exc_info.value.status_code == 401
+    assert exc_info.value.status_code == 502
 
 
 @pytest.mark.asyncio
@@ -143,3 +143,18 @@ async def test_manage_client_error_envelope(monkeypatch):
 
     assert exc_info.value.status_code == 400
     assert "Manage service internal failure" in exc_info.value.detail
+
+
+@pytest.mark.asyncio
+async def test_manage_client_forbidden_maps_to_502(monkeypatch):
+    class MockResponse:
+        status_code = 403
+
+    async def mock_get(self, url, headers=None, params=None, **kwargs):
+        return MockResponse()
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", mock_get)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await ManageClient().list_users()
+    assert exc_info.value.status_code == 502

@@ -14,5 +14,4 @@ export type LoginInput = z.infer<typeof loginSchema>;
 // ---- API contract: generated from backend DTOs ----
 export type LoginPayload = Schema<"LoginRequestDTO">;
 export type User = Schema<"AuthUserResponseDTO">;
-export type TokenResponse = Schema<"TokenResponseDTO">;
 export type LogoutResponse = Schema<"LogoutResponseDTO">;

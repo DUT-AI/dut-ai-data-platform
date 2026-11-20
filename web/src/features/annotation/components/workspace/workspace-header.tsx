@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Button, Badge } from "@/components/ui";
+import { withBasePath } from "@/lib/auth-urls";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -81,7 +82,7 @@ export function WorkspaceHeader({
     if (onNavigateBack) {
       onNavigateBack();
     } else if (projectId) {
-      window.location.href = `/projects/${projectId}`;
+      window.location.href = withBasePath(`/projects/${projectId}`);
     } else {
       window.history.back();
     }

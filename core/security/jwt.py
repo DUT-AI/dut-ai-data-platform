@@ -1,11 +1,9 @@
-"""DUT AI Data Platform JWT Token Infrastructure.
+"""DUT AI SSO token verification.
 
-Responsible for generating, signing, and verifying Data Platform's own access tokens.
-Manage Server is only used for initial credential validation and identity resolution.
-Once authenticated, Data Platform issues its own JWT signed with the platform secret.
+Tokens are issued by DUT AI Manage (HS256, shared secret). The Data Platform
+only verifies them and never mints tokens.
 """
 
-from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import jwt
@@ -14,33 +12,12 @@ from jwt.exceptions import InvalidTokenError
 from core.config.auth import auth_settings
 from core.exceptions import UnauthorizedException
 
-
-def create_access_token(
-    data: dict[str, Any], expires_delta: timedelta | None = None
-) -> str:
-    """Encode payload dictionary into signed DUT AI Data Platform JWT access token."""
-    to_encode = data.copy()
-    now = datetime.now(UTC)
-    if expires_delta:
-        expire = now + expires_delta
-    else:
-        expire = now + timedelta(minutes=auth_settings.jwt_expire_minutes)
-
-    to_encode.update(
-        {
-            "iat": int(now.timestamp()),
-            "exp": int(expire.timestamp()),
-            "iss": "dut-ai-data-platform",
-        }
-    )
-    encoded_jwt = jwt.encode(
-        to_encode, auth_settings.jwt_secret_key, algorithm=auth_settings.jwt_algorithm
-    )
-    return encoded_jwt
+ACCESS_TOKEN_TYPE = "access"
+REFRESH_TOKEN_TYPE = "refresh"
 
 
-def decode_access_token(token: str) -> dict[str, Any]:
-    """Decode and verify DUT AI Data Platform JWT access token."""
+def decode_sso_token(token: str, expected_type: str) -> dict[str, Any]:
+    """Verify signature, `exp`, `sub` and the Manage `type` claim."""
     try:
         payload = jwt.decode(
             token,
@@ -48,8 +25,16 @@ def decode_access_token(token: str) -> dict[str, Any]:
             algorithms=[auth_settings.jwt_algorithm],
             options={"require": ["exp", "sub"]},
         )
-        return payload
     except InvalidTokenError as e:
         raise UnauthorizedException(
             f"Invalid or expired authentication token: {e}"
         ) from e
+
+    if payload.get("type") != expected_type:
+        raise UnauthorizedException(f"Token is not an SSO {expected_type} token")
+    return payload
+
+
+def decode_access_token(token: str) -> dict[str, Any]:
+    """Verify a DUT AI SSO access token."""
+    return decode_sso_token(token, ACCESS_TOKEN_TYPE)

@@ -2,52 +2,43 @@ from datetime import UTC, datetime
 
 from loguru import logger
 
-from core.security.jwt import create_access_token
-from modules.identity.domain.interfaces import IAuthClient
-from modules.identity.domain.interfaces import IUserLoginRepository
-from modules.identity.dtos.auth_dtos import LoginRequestDTO, TokenResponseDTO
+from core.exceptions import UnauthorizedException
+from core.security.jwt import REFRESH_TOKEN_TYPE, decode_access_token, decode_sso_token
+from modules.identity.domain.interfaces import IAuthClient, IUserLoginRepository
+from modules.identity.dtos.auth_dtos import LoginRequestDTO, SsoSessionDTO
+from modules.identity.services.sso_claims import auth_user_from_claims
 
 
 class LoginUseCase:
-    """Authenticate user with external Manage Server, resolve identity, and issue Data Platform's own JWT."""
+    """Local development login: proxy credentials to DUT AI Manage, keep Manage's own tokens."""
 
     def __init__(
-        self,
-        auth_client: IAuthClient,
-        login_repo: IUserLoginRepository,
+        self, auth_client: IAuthClient, login_repo: IUserLoginRepository
     ) -> None:
         self.auth_client = auth_client
         self.login_repo = login_repo
 
-    async def execute(self, data: LoginRequestDTO) -> TokenResponseDTO:
-        # 1. Authenticate against External Manage Server to verify credentials
-        manage_login_res = await self.auth_client.login(
-            email=data.email, password=data.password
-        )
-        manage_access_token = manage_login_res.access_token
-
-        auth_user = await self.auth_client.get_me(manage_access_token)
-
+    async def execute(self, data: LoginRequestDTO) -> SsoSessionDTO:
+        tokens = await self.auth_client.login(email=data.email, password=data.password)
         try:
-            user_id = int(auth_user.id)
-            now = datetime.now(UTC)
-            await self.login_repo.upsert_last_login(user_id=user_id, last_login_at=now)
-            logger.info(f"Updated last_login_at for user_id={user_id}")
-        except Exception as e:
-            logger.warning(
-                f"Failed to record last_login_at for user after successful authentication: {e}"
+            access_claims = decode_access_token(tokens.access_token)
+            refresh_claims = decode_sso_token(tokens.refresh_token, REFRESH_TOKEN_TYPE)
+        except UnauthorizedException:
+            logger.error(
+                "DUT AI Manage accepted the credentials but its tokens failed local "
+                "verification: JWT_SECRET_KEY / JWT_ALGORITHM do not match the Manage "
+                "instance at AUTH_SERVER_URL."
             )
+            raise
 
-        # 5. Issue DUT AI Data Platform's own JWT token
-        platform_jwt_claims = {
-            "sub": str(auth_user.id),
-            "email": auth_user.email,
-            "name": auth_user.name,
-            "role_names": auth_user.role_names,
-        }
-        platform_access_token = create_access_token(platform_jwt_claims)
-
-        return TokenResponseDTO(
-            access_token=platform_access_token,
-            token_type="bearer",
+        user = auth_user_from_claims(access_claims)
+        await self.login_repo.upsert_last_login(
+            user_id=user.id, last_login_at=datetime.now(UTC)
+        )
+        return SsoSessionDTO(
+            user=user,
+            access_token=tokens.access_token,
+            refresh_token=tokens.refresh_token,
+            access_expires_at=int(access_claims["exp"]),
+            refresh_expires_at=int(refresh_claims["exp"]),
         )

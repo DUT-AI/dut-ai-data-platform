@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { withBasePath } from "@/lib/auth-urls";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -417,7 +418,7 @@ export function CreateProjectView() {
                             <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                               {tpl.image ? (
                                 <img
-                                  src={tpl.image}
+                                  src={withBasePath(tpl.image)}
                                   alt={tpl.title}
                                   className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                                   onError={(e) => {

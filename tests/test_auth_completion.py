@@ -2,224 +2,241 @@ from datetime import timedelta
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from auth_tokens import mint_manage_token
 from fastapi import HTTPException
 from httpx import ASGITransport, AsyncClient
 
 from apps.api.main import app
 from core.config.auth import auth_settings
-from core.security.jwt import create_access_token, decode_access_token
 from modules.identity.client.auth_client import AuthClient
-from modules.identity.domain.entities import AuthUser, TokenResponse
+from modules.identity.dtos.auth_dtos import TokenResponse
+
+
+def _client() -> AsyncClient:
+    return AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
+
+
+def _manage_tokens(**access_kwargs) -> TokenResponse:
+    return TokenResponse(
+        access_token=mint_manage_token(**access_kwargs),
+        refresh_token=mint_manage_token(
+            token_type="refresh", expires_in=timedelta(days=7)
+        ),
+    )
+
+
+@pytest.fixture
+def local_login(monkeypatch):
+    monkeypatch.setattr(auth_settings, "auth_local_login_enabled", True)
+
+
+@pytest.fixture
+def shared_domain(monkeypatch):
+    monkeypatch.setattr(auth_settings, "auth_cookie_domain", ".dutai.io.vn")
+    monkeypatch.setattr(auth_settings, "auth_cookie_secure", True)
+
+
+# --- GET /auth/me: verify Manage access tokens locally -------------------------
 
 
 @pytest.mark.asyncio
-async def test_login_issues_platform_jwt_and_sets_httponly_cookie():
-    """POST /api/v1/auth/login validates credentials via Manage, issues Data Platform's own JWT, and sets cookie."""
-    mock_manage_token = TokenResponse(
-        access_token="manage-temporary-token-123",
-        refresh_token="manage-ref-token",
-        token_type="bearer",
+async def test_me_accepts_manage_access_cookie():
+    token = mint_manage_token(
+        202,
+        name="Bob",
+        email="bob@example.com",
+        roles=["Leader"],
+        avatar="https://a/b.png",
     )
-    mock_manage_user = AuthUser(
-        id=101,
-        name="Alice",
-        email="alice@example.com",
-        status="ACTIVE",
-        role_names=["ADMIN"],
-    )
+    async with _client() as client:
+        resp = await client.get(
+            "/api/v1/auth/me", cookies={auth_settings.auth_cookie_name: token}
+        )
 
-    with (
-        patch.object(AuthClient, "login", new_callable=AsyncMock) as mock_login,
-        patch.object(AuthClient, "get_me", new_callable=AsyncMock) as mock_get_me,
-    ):
-        mock_login.return_value = mock_manage_token
-        mock_get_me.return_value = mock_manage_user
-
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
-            resp = await client.post(
-                "/api/v1/auth/login",
-                json={"email": "alice@example.com", "password": "password123"},
-            )
-
-        assert resp.status_code == 200
-        data = resp.json()
-        platform_token = data["access_token"]
-
-        # Crucial check: Platform token is NOT the Manage token
-        assert platform_token != "manage-temporary-token-123"
-
-        # Verify Platform JWT claims
-        claims = decode_access_token(platform_token)
-        assert claims["sub"] == "101"
-        assert claims["email"] == "alice@example.com"
-        assert claims["name"] == "Alice"
-        assert claims["role_names"] == ["ADMIN"]
-        assert claims["iss"] == "dut-ai-data-platform"
-
-        # Verify HttpOnly Cookie
-        set_cookie_header = resp.headers.get("set-cookie", "")
-        assert auth_settings.auth_cookie_name in set_cookie_header
-        assert "httponly" in set_cookie_header.lower()
-        assert platform_token in set_cookie_header
+    assert resp.status_code == 200
+    assert resp.json() == {
+        "id": 202,
+        "name": "Bob",
+        "email": "bob@example.com",
+        "status": "ACTIVE",
+        "avatar_url": "https://a/b.png",
+        "role_names": ["Leader"],
+    }
 
 
 @pytest.mark.asyncio
-async def test_login_fails_when_manage_login_fails():
-    """Failed Manage login results in 401, no cookie, and no token issued."""
+async def test_me_accepts_bearer_header():
+    token = mint_manage_token(203)
+    async with _client() as client:
+        resp = await client.get(
+            "/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}
+        )
+    assert resp.status_code == 200
+    assert resp.json()["id"] == 203
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "token",
+    [
+        mint_manage_token(token_type="refresh"),
+        mint_manage_token(expires_in=timedelta(minutes=-1)),
+        mint_manage_token(secret="another-secret"),
+        mint_manage_token("abc"),
+        mint_manage_token(0),
+    ],
+    ids=["refresh-as-access", "expired", "wrong-secret", "non-int-sub", "zero-sub"],
+)
+async def test_me_rejects_invalid_tokens(token):
+    async with _client() as client:
+        resp = await client.get(
+            "/api/v1/auth/me", cookies={auth_settings.auth_cookie_name: token}
+        )
+    assert resp.status_code == 401
+    assert resp.headers["www-authenticate"] == "Bearer"
+
+
+@pytest.mark.asyncio
+async def test_me_without_token_returns_401():
+    async with _client() as client:
+        resp = await client.get("/api/v1/auth/me")
+    assert resp.status_code == 401
+
+
+# --- POST /auth/login: local development only ----------------------------------
+
+
+@pytest.mark.asyncio
+async def test_login_disabled_returns_404(monkeypatch):
+    # Explicit: the developer's .env may enable local login.
+    monkeypatch.setattr(auth_settings, "auth_local_login_enabled", False)
     with patch.object(AuthClient, "login", new_callable=AsyncMock) as mock_login:
-        mock_login.side_effect = HTTPException(
-            status_code=401, detail="Email hoặc mật khẩu sai."
-        )
-
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with _client() as client:
             resp = await client.post(
-                "/api/v1/auth/login",
-                json={"email": "wrong@example.com", "password": "bad"},
+                "/api/v1/auth/login", json={"email": "a@example.com", "password": "x"}
             )
-
-        assert resp.status_code == 401
-        assert "set-cookie" not in resp.headers
+    assert resp.status_code == 404
+    mock_login.assert_not_called()
+    assert "set-cookie" not in resp.headers
 
 
 @pytest.mark.asyncio
-async def test_login_fails_when_manage_get_me_fails():
-    """If Manage /me verification fails, login stops and no Platform token is issued."""
-    mock_manage_token = TokenResponse(
-        access_token="manage-temporary-token-123",
-        refresh_token="manage-ref-token",
-        token_type="bearer",
-    )
+async def test_local_login_keeps_manage_tokens_in_host_only_cookies(local_login):
+    tokens = _manage_tokens(user_id=101)
+    with patch.object(AuthClient, "login", new_callable=AsyncMock, return_value=tokens):
+        async with _client() as client:
+            resp = await client.post(
+                "/api/v1/auth/login",
+                json={"email": "alice@example.com", "password": "pw"},
+            )
 
-    with (
-        patch.object(AuthClient, "login", new_callable=AsyncMock) as mock_login,
-        patch.object(AuthClient, "get_me", new_callable=AsyncMock) as mock_get_me,
+    assert resp.status_code == 200
+    assert resp.json()["id"] == 101
+    assert tokens.access_token not in resp.text
+
+    cookies = resp.headers.get_list("set-cookie")
+    assert len(cookies) == 2
+    access = next(
+        c for c in cookies if c.startswith(f"{auth_settings.auth_cookie_name}=")
+    )
+    refresh = next(
+        c for c in cookies if c.startswith(f"{auth_settings.auth_refresh_cookie_name}=")
+    )
+    assert tokens.access_token in access
+    assert tokens.refresh_token in refresh
+    for cookie in cookies:
+        lowered = cookie.lower()
+        assert "httponly" in lowered
+        assert "domain=" not in lowered
+        assert "max-age=" in lowered
+
+
+@pytest.mark.asyncio
+async def test_local_login_rejects_tokens_signed_with_other_secret(local_login):
+    tokens = TokenResponse(
+        access_token=mint_manage_token(secret="another-secret"),
+        refresh_token=mint_manage_token(token_type="refresh", secret="another-secret"),
+    )
+    with patch.object(AuthClient, "login", new_callable=AsyncMock, return_value=tokens):
+        async with _client() as client:
+            resp = await client.post(
+                "/api/v1/auth/login", json={"email": "a@example.com", "password": "x"}
+            )
+    assert resp.status_code == 401
+    assert "set-cookie" not in resp.headers
+
+
+@pytest.mark.asyncio
+async def test_local_login_bad_credentials_returns_401(local_login):
+    with patch.object(
+        AuthClient,
+        "login",
+        new_callable=AsyncMock,
+        side_effect=HTTPException(
+            status_code=401, detail="Email hoặc mật khẩu không chính xác."
+        ),
     ):
-        mock_login.return_value = mock_manage_token
-        mock_get_me.side_effect = HTTPException(
-            status_code=401, detail="Manage session expired."
-        )
-
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with _client() as client:
             resp = await client.post(
-                "/api/v1/auth/login",
-                json={"email": "alice@example.com", "password": "password123"},
+                "/api/v1/auth/login", json={"email": "a@example.com", "password": "bad"}
             )
-
-        assert resp.status_code == 401
-        assert "set-cookie" not in resp.headers
-
-
-@pytest.mark.asyncio
-async def test_get_me_verifies_platform_jwt_locally_without_calling_manage():
-    """CurrentUser verifies Platform JWT locally via Cookie; AuthClient.get_me is NOT called."""
-    platform_token = create_access_token(
-        {
-            "sub": "101",
-            "email": "alice@example.com",
-            "name": "Alice",
-            "role_names": ["ADMIN"],
-        }
-    )
-
-    with patch.object(AuthClient, "get_me", new_callable=AsyncMock) as mock_get_me:
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://test",
-            cookies={auth_settings.auth_cookie_name: platform_token},
-        ) as client:
-            resp = await client.get("/api/v1/auth/me")
-
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["id"] == 101
-        assert data["name"] == "Alice"
-        assert data["email"] == "alice@example.com"
-        assert data["role_names"] == ["ADMIN"]
-
-        # ZERO network calls to Manage Server on protected requests!
-        mock_get_me.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_get_me_backward_compatibility_with_bearer_header():
-    """CurrentUser verifies Platform JWT via Authorization Bearer header locally."""
-    platform_token = create_access_token(
-        {
-            "sub": "102",
-            "email": "bob@example.com",
-            "name": "Bob",
-            "role_names": ["ANNOTATOR"],
-        }
-    )
-
-    with patch.object(AuthClient, "get_me", new_callable=AsyncMock) as mock_get_me:
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
-            resp = await client.get(
-                "/api/v1/auth/me",
-                headers={"Authorization": f"Bearer {platform_token}"},
-            )
-
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["id"] == 102
-        assert data["email"] == "bob@example.com"
-        mock_get_me.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_get_me_expired_platform_token_returns_401():
-    """Expired Platform JWT returns 401."""
-    expired_token = create_access_token(
-        {"sub": "101", "email": "alice@example.com"},
-        expires_delta=timedelta(minutes=-10),
-    )
-
-    async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test",
-        cookies={auth_settings.auth_cookie_name: expired_token},
-    ) as client:
-        resp = await client.get("/api/v1/auth/me")
-
     assert resp.status_code == 401
+    assert "set-cookie" not in resp.headers
+
+
+# --- POST /auth/logout ----------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_get_me_unauthenticated_returns_401():
-    """GET /api/v1/auth/me without cookie or Bearer token returns 401."""
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
-        resp = await client.get("/api/v1/auth/me")
-
-    assert resp.status_code == 401
-
-
-@pytest.mark.asyncio
-async def test_logout_endpoint_clears_cookie():
-    """POST /api/v1/auth/logout succeeds and clears the HttpOnly auth cookie."""
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
+async def test_logout_clears_shared_cookies_on_parent_domain(shared_domain):
+    async with _client() as client:
         resp = await client.post("/api/v1/auth/logout")
 
     assert resp.status_code == 200
-    data = resp.json()
-    assert data["is_success"] is True
-    assert "message" in data
+    assert resp.json()["is_success"] is True
+    cookies = [c.lower() for c in resp.headers.get_list("set-cookie")]
+    assert len(cookies) == 2
+    for name in (
+        auth_settings.auth_cookie_name,
+        auth_settings.auth_refresh_cookie_name,
+    ):
+        cookie = next(c for c in cookies if c.startswith(f"{name}="))
+        assert "domain=.dutai.io.vn" in cookie
+        assert "max-age=0" in cookie
+        assert "secure" in cookie
 
-    set_cookie_header = resp.headers.get("set-cookie", "")
-    assert auth_settings.auth_cookie_name in set_cookie_header
-    assert (
-        "max-age=0" in set_cookie_header.lower()
-        or "expires=" in set_cookie_header.lower()
-        or '""' in set_cookie_header
-    )
+
+# --- Authorization from the Manage `roles` claim -------------------------------
+
+
+@pytest.mark.asyncio
+async def test_system_role_comes_from_manage_roles_claim():
+    from fastapi import Depends, FastAPI
+
+    from apps.api.deps.roles import require_system_role
+
+    probe = FastAPI()
+
+    @probe.get("/probe")
+    async def _probe(role: str = Depends(require_system_role("admin"))) -> dict:
+        return {"role": role}
+
+    async with AsyncClient(
+        transport=ASGITransport(app=probe), base_url="http://test"
+    ) as client:
+        ok = await client.get(
+            "/probe",
+            cookies={
+                auth_settings.auth_cookie_name: mint_manage_token(roles=["Admin"])
+            },
+        )
+        denied = await client.get(
+            "/probe",
+            cookies={
+                auth_settings.auth_cookie_name: mint_manage_token(roles=["Teammate"])
+            },
+        )
+
+    assert ok.status_code == 200
+    assert ok.json() == {"role": "admin"}
+    assert denied.status_code == 403

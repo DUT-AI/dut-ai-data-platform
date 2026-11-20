@@ -1,14 +1,9 @@
 import { api } from "@/lib/api";
-import type {
-  LoginPayload,
-  LogoutResponse,
-  TokenResponse,
-  User,
-} from "../types";
+import type { LoginPayload, LogoutResponse, User } from "../types";
 
 export const authService = {
-  async login(payload: LoginPayload): Promise<TokenResponse> {
-    const { data } = await api.post<TokenResponse>("/auth/login", payload);
+  async login(payload: LoginPayload): Promise<User> {
+    const { data } = await api.post<User>("/auth/login", payload);
     return data;
   },
 

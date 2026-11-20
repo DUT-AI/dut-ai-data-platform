@@ -41,6 +41,8 @@ COPY --from=builder /app/.venv /app/.venv
 COPY core ./core
 COPY modules ./modules
 COPY apps ./apps
+COPY migrations ./migrations
+COPY alembic.ini ./
 
 EXPOSE 8000
 

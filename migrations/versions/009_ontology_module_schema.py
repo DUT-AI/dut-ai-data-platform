@@ -227,7 +227,7 @@ def upgrade() -> None:
     )
 
     op.execute(
-        'INSERT INTO ontology_inputs (id, ontology_id, definition_id, name, scope, input_schema, created_at, updated_at) SELECT left(md5(\'input:\' || id), 26), ontology_id, \'01ONTINPUTIMAGE00000000000\', \'Image input\', \'ONE_ITEM\', \'{"type":"image","allowed_extensions":["png","jpg","jpeg"],"item":null}\', created_at, updated_at FROM ontology_versions'
+        'INSERT INTO ontology_inputs (id, ontology_id, definition_id, name, scope, input_schema, created_at, updated_at) SELECT left(md5(\'input:\' || id), 26), ontology_id, \'01ONTINPUTIMAGE00000000000\', \'Image input\', \'ONE_ITEM\', \'{"type":"image","allowed_extensions":["png","jpg","jpeg"],"item": null}\', created_at, updated_at FROM ontology_versions'
     )
     op.execute(
         "INSERT INTO ontology_outputs (id, ontology_id, definition_id, name, multiple, required, created_at, updated_at) SELECT left(md5('output:' || id), 26), ontology_id, '01ONTOUTBBOX00000000000000', 'Annotation output', true, true, created_at, updated_at FROM ontology_versions"

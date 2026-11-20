@@ -2,7 +2,7 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import pool
+from sqlalchemy import pool, text
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -49,6 +49,20 @@ def do_run_migrations(connection: Connection) -> None:
     )
 
     with context.begin_transaction():
+        # Revision ids here exceed Alembic's default VARCHAR(32) version column,
+        # which breaks every fresh database. Idempotent on databases already widened.
+        connection.execute(
+            text(
+                "CREATE TABLE IF NOT EXISTS alembic_version ("
+                "version_num VARCHAR(64) NOT NULL, "
+                "CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num))"
+            )
+        )
+        connection.execute(
+            text(
+                "ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(64)"
+            )
+        )
         context.run_migrations()
 
 

@@ -22,8 +22,10 @@ import modules.ontology.models
 import modules.project.models  # noqa: F401
 from apps.api.main import app
 from core.database.base import Base
+from core.database.unit_of_work import SqlAlchemyUnitOfWork
 from core.events.outbox import IOutboxRepository, SqlOutboxRepository
 from core.storage.interface import IStorageProvider
+from core.uow import IUnitOfWork
 from modules.annotation.di import AnnotationProvider
 from modules.dataset.di import DatasetProvider
 from modules.identity.di import IdentityProvider
@@ -72,6 +74,10 @@ class TestDatabaseProvider(Provider):
             except Exception:
                 await session.rollback()
                 raise
+
+    @provide(scope=Scope.REQUEST)
+    def get_unit_of_work(self, session: AsyncSession) -> IUnitOfWork:
+        return SqlAlchemyUnitOfWork(session)
 
     @provide(scope=Scope.REQUEST)
     def get_outbox_repository(self, session: AsyncSession) -> IOutboxRepository | None:

@@ -6,6 +6,7 @@ from core.database.session import DatabaseProvider
 from core.storage.di import StorageProvider
 from modules.annotation.di import AnnotationProvider
 from modules.dataset.di import DatasetProvider
+from modules.export.di import ExportProvider
 from modules.identity.di import IdentityProvider
 from modules.inference.infrastructure.di import InferenceProvider
 from modules.ontology.di import OntologyProvider
@@ -27,6 +28,7 @@ def create_container() -> AsyncContainer:
         InferenceProvider(),
         SnapshotProvider(),
         WorkflowProvider(),
+        ExportProvider(),
     )
 
 

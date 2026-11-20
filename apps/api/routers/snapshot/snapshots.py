@@ -1,3 +1,5 @@
+from typing import Any
+
 from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -238,6 +240,7 @@ async def cancel_snapshot(
 
 @router.delete(
     "/projects/{project_id}/snapshots/{snapshot_id}",
+    response_model=dict[str, Any],
     summary="Archive snapshot (soft delete) or purge permanently (owner only)",
 )
 @inject

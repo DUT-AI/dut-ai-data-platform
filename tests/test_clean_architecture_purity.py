@@ -16,9 +16,10 @@ def test_domain_layer_purity_zero_framework_imports():
     from modules.project.domain import entities as prj_ent
     from modules.dataset.domain import entities as ds_ent
     from modules.ontology.domain import entities as ont_ent
+    from modules.export.domain import entities as exp_ent
 
     forbidden = ["pydantic", "fastapi", "sqlalchemy"]
-    checked_modules = [id_ent, ann_ent, prj_ent, ds_ent, ont_ent]
+    checked_modules = [id_ent, ann_ent, prj_ent, ds_ent, ont_ent, exp_ent]
 
     for mod in checked_modules:
         mod_dict = mod.__dict__
@@ -55,4 +56,15 @@ def test_user_id_standardization_is_int():
     )
     assert isinstance(rev.created_by, int)
     assert rev.revision_number == 1
+
+    from modules.export.domain.entities import ExportPackageEntity
+    from modules.export.domain.value_objects import ExportFormatType
+
+    exp_pkg = ExportPackageEntity(
+        project_id="prj_1",
+        snapshot_id="snp_1",
+        format=ExportFormatType.YOLO,
+        created_by=1,
+    )
+    assert isinstance(exp_pkg.created_by, int)
 

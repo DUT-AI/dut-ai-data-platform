@@ -11,6 +11,9 @@ from modules.workflow.domain.entities.workflow import (
     WorkItemEntity,
     WorkItemStatus,
 )
+from modules.workflow.domain.exceptions.workflow_exceptions import (
+    WorkflowDefinitionNotFoundError,
+)
 from modules.workflow.domain.interfaces.repositories import (
     IWorkflowDefinitionRepository,
     IWorkItemRepository,
@@ -28,8 +31,13 @@ class CreateBatchWorkItemsUseCase:
 
     async def execute(self, request: CreateBatchWorkItemsRequest) -> list[WorkItemResponse]:
         # Validate that workflow exists (or fallback to project's workflow definition)
-        workflow = await self._workflow_repo.get_by_id(request.workflow_id)
-        if not workflow:
+        if request.workflow_id:
+            workflow = await self._workflow_repo.get_by_id(request.workflow_id)
+            if not workflow:
+                raise WorkflowDefinitionNotFoundError(
+                    f"Workflow definition '{request.workflow_id}' not found."
+                )
+        else:
             workflow = await self._workflow_repo.get_by_project_id(request.project_id)
             if not workflow:
                 now = datetime.now(UTC)

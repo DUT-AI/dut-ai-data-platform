@@ -14,6 +14,7 @@ from modules.project.repository import (
     InMemoryProjectCatalogRepository,
     SqlProjectRepository,
 )
+from modules.project.repository.catalog_repository import TemplateCatalogLoader
 from modules.project.services import ProjectAuthorizer
 from modules.project.use_cases import (
     AddProjectMemberUseCase,
@@ -43,9 +44,10 @@ class ProjectProvider(Provider):
     def get_repository(self, session: AsyncSession) -> IProjectRepository:
         return SqlProjectRepository(session)
 
-    @provide
+    @provide(scope=Scope.APP)
     def get_catalog_repository(self) -> IProjectCatalogRepository:
-        return InMemoryProjectCatalogRepository()
+        # Loaded once per container (process); fails fast on a missing/bad file.
+        return InMemoryProjectCatalogRepository(TemplateCatalogLoader.load())
 
     @provide
     def get_access_checker(self, session: AsyncSession) -> IProjectAccessChecker:

@@ -130,6 +130,20 @@ Thay `web/.env` bằng các biến `NEXT_PUBLIC_*` và `API_PROXY_ORIGIN` của 
 
 ### 4.4 Build, migrate, chạy
 
+> **Lưu ý (2026-11-20).** Chuỗi migration hiện tại **không chạy được trên DB trống**. Migration `9ff22f25ac12_remove_template` được sinh tự động từ một DB dev đã lệch schema, nên khi chạy nó xoá các index và constraint mà DB mới không có. Hai lỗi khác đã được sửa:
+> - `009` hiểu nhầm `:null` là tham số;
+> - cột `alembic_version` chỉ dài 32 ký tự.
+>
+> Vì vậy lần đầu `data_platform_prod` được khởi tạo bằng cách khác: chép **cấu trúc** schema `public` của `data_platform_dev`, kèm dữ liệu 3 bảng `alembic_version`, `input_definitions` và `output_definitions`. Không chép dữ liệu dev. Các lần deploy sau DB đã ở head, nên `alembic upgrade head` chạy bình thường.
+>
+> ```bash
+> docker exec data-platform-db sh -c 'pg_dump -U "$POSTGRES_USER" -d data_platform_dev --schema-only --schema=public --no-owner --no-privileges' \
+>   | sed -E '/^CREATE SCHEMA public;$/d; /^COMMENT ON SCHEMA public /d' > /tmp/dp_schema.sql
+> docker exec data-platform-db sh -c 'pg_dump -U "$POSTGRES_USER" -d data_platform_dev --data-only --no-owner -t public.alembic_version -t public.input_definitions -t public.output_definitions' > /tmp/dp_seed.sql
+> cat /tmp/dp_schema.sql /tmp/dp_seed.sql | docker exec -i data-platform-db sh -c 'psql -U "$POSTGRES_USER" -d data_platform_prod -q -v ON_ERROR_STOP=1 --single-transaction'
+> rm -f /tmp/dp_schema.sql /tmp/dp_seed.sql
+> ```
+
 ```bash
 docker compose build api web
 docker compose run --rm --no-deps api alembic heads       # kỳ vọng: đúng 1 head

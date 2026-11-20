@@ -1,6 +1,8 @@
 # DUT AI Data Platform
 
-A scalable, multi-module modular AI data platform backend and web interface for project management, ontology schema design, dataset asset ingestion, and annotation workflows (including Label Studio integration).
+A scalable, multi-module modular AI data platform backend and web interface for project management, ontology schema design, dataset asset ingestion, and native annotation workflows.
+
+Annotation runs in the platform's own workspace without a Label Studio service, SDK, or webhook. Label Studio references in editor source comments acknowledge design inspiration or adapted techniques. Historical migrations and legacy database metadata are retained for compatibility; removing the runtime integration does not delete existing annotation data.
 
 ## Architecture
 

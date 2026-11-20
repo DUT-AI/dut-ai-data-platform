@@ -61,19 +61,6 @@ export async function createRevision(
   return data;
 }
 
-export type { OpenInLabelStudioRequest, OpenInLabelStudioResponse };
-
-export async function openAssetInLabelStudio(
-  assetId: string,
-  request: OpenInLabelStudioRequest
-): Promise<OpenInLabelStudioResponse> {
-  const { data } = await api.post<OpenInLabelStudioResponse>(
-    `/assets/${assetId}/open-in-label-studio`,
-    request
-  );
-  return data;
-}
-
 export async function getBatchAssetStatus(
   assetIds: string[]
 ): Promise<BatchAssetStatusResponse> {
@@ -83,6 +70,3 @@ export async function getBatchAssetStatus(
   );
   return data;
 }
-
-/** Re-export as apiClient for backward compat usage in modal */
-export const apiClient = { post: openAssetInLabelStudio };

@@ -1,7 +1,7 @@
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from modules.project.domain.access import IProjectAccessChecker
+from modules.project.domain.access import IProjectAccessChecker, IProjectScopeResolver
 from modules.project.domain.catalog_interfaces import IProjectCatalogRepository
 from modules.project.domain.events import (
     InMemoryProjectEventPublisher,
@@ -9,7 +9,13 @@ from modules.project.domain.events import (
 )
 from modules.project.domain.interfaces import IProjectRepository
 from modules.project.integrations.access_checker import LegacyProjectAccessChecker
-from modules.project.repository import InMemoryProjectCatalogRepository, SqlProjectRepository
+from modules.project.integrations.scope_resolver import SqlProjectScopeResolver
+from modules.project.repository import (
+    InMemoryProjectCatalogRepository,
+    SqlProjectRepository,
+)
+from modules.project.repository.catalog_repository import TemplateCatalogLoader
+from modules.project.services import ProjectAuthorizer
 from modules.project.use_cases import (
     AddProjectMemberUseCase,
     ArchiveProjectUseCase,
@@ -38,13 +44,20 @@ class ProjectProvider(Provider):
     def get_repository(self, session: AsyncSession) -> IProjectRepository:
         return SqlProjectRepository(session)
 
-    @provide
+    @provide(scope=Scope.APP)
     def get_catalog_repository(self) -> IProjectCatalogRepository:
-        return InMemoryProjectCatalogRepository()
+        # Loaded once per container (process); fails fast on a missing/bad file.
+        return InMemoryProjectCatalogRepository(TemplateCatalogLoader.load())
 
     @provide
     def get_access_checker(self, session: AsyncSession) -> IProjectAccessChecker:
         return LegacyProjectAccessChecker(session)
+
+    @provide
+    def get_scope_resolver(self, session: AsyncSession) -> IProjectScopeResolver:
+        return SqlProjectScopeResolver(session)
+
+    project_authorizer = provide(ProjectAuthorizer)
 
     @provide(scope=Scope.APP)
     def get_event_publisher(self) -> IProjectEventPublisher:

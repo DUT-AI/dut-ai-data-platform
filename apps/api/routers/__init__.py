@@ -4,6 +4,7 @@ from apps.api.routers.identity import router as identity_router
 from apps.api.routers.ontology import router as ontology_router
 from apps.api.routers.project import router as project_router
 from apps.api.routers.project_catalog import router as project_catalog_router
+from apps.api.routers.snapshot import router as snapshot_router
 from apps.api.routers.users import router as users_router
 from modules.workflow.presentation.api.routes import router as workflow_router
 
@@ -14,6 +15,7 @@ __all__ = [
     "ontology_router",
     "project_catalog_router",
     "project_router",
+    "snapshot_router",
     "users_router",
     "workflow_router",
 ]

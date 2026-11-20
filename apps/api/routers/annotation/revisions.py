@@ -1,9 +1,12 @@
-from typing import Any
-
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import APIRouter, Body, status
+from fastapi import APIRouter, Depends, status
 
 from apps.api.deps.auth import CurrentUser
+from apps.api.deps.roles import (
+    PROJECT_LABEL_ROLES,
+    PROJECT_READ_ROLES,
+    require_resource_role,
+)
 from core.constants import SYSTEM_USER_ID
 from modules.annotation.dtos.annotation_dtos import (
     AnnotationRevisionResponseDTO,
@@ -12,7 +15,6 @@ from modules.annotation.dtos.annotation_dtos import (
 from modules.annotation.use_cases import (
     CreateRevisionUseCase,
     GetRevisionDetailUseCase,
-    SyncLabelStudioWebhookUseCase,
 )
 
 router = APIRouter(tags=["Annotation Revisions"])
@@ -20,6 +22,7 @@ router = APIRouter(tags=["Annotation Revisions"])
 
 @router.post(
     "/annotations/{annotation_id}/revisions",
+    dependencies=[Depends(require_resource_role("annotation", *PROJECT_LABEL_ROLES))],
     response_model=AnnotationRevisionResponseDTO,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new revision for an existing annotation",
@@ -44,6 +47,7 @@ async def create_revision(
 
 @router.get(
     "/annotation-revisions/{revision_id}",
+    dependencies=[Depends(require_resource_role("revision", *PROJECT_READ_ROLES))],
     response_model=AnnotationRevisionResponseDTO,
     summary="Get specific revision details",
 )
@@ -54,18 +58,3 @@ async def get_revision_detail(
     use_case: FromDishka[GetRevisionDetailUseCase],
 ):
     return await use_case.execute(revision_id)
-
-
-@router.post(
-    "/annotations/sync",
-    response_model=AnnotationRevisionResponseDTO | None,
-    status_code=status.HTTP_200_OK,
-    summary="Webhook endpoint for Label Studio sync (Legacy)",
-    deprecated=True,
-)
-@inject
-async def sync_label_studio_webhook(
-    payload: dict[str, Any] = Body(...),
-    use_case: FromDishka[SyncLabelStudioWebhookUseCase] = None,  # type: ignore
-):
-    return await use_case.execute(payload)

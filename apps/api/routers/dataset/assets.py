@@ -1,7 +1,12 @@
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
 from apps.api.deps.auth import CurrentUser
+from apps.api.deps.roles import (
+    PROJECT_READ_ROLES,
+    PROJECT_WRITE_ROLES,
+    require_resource_role,
+)
 from modules.dataset.dtos.dataset_dtos import (
     AssetDownloadUrlResponseDTO,
     AssetResponseDTO,
@@ -17,6 +22,7 @@ router = APIRouter(prefix="/assets", tags=["Dataset Assets"])
 
 @router.get(
     "/{asset_id}",
+    dependencies=[Depends(require_resource_role("asset", *PROJECT_READ_ROLES))],
     response_model=AssetResponseDTO,
     summary="Get single asset metadata",
 )
@@ -31,6 +37,7 @@ async def get_asset_detail(
 
 @router.get(
     "/{asset_id}/download",
+    dependencies=[Depends(require_resource_role("asset", *PROJECT_READ_ROLES))],
     response_model=AssetDownloadUrlResponseDTO,
     summary="Get presigned download URL for an asset",
 )
@@ -46,6 +53,7 @@ async def get_asset_download_url(
 
 @router.put(
     "/{asset_id}/retire",
+    dependencies=[Depends(require_resource_role("asset", *PROJECT_WRITE_ROLES))],
     response_model=AssetResponseDTO,
     summary="Retire an asset (if no protected references exist)",
 )

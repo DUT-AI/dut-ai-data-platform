@@ -6,7 +6,7 @@
 
 ## Summary
 
-Every write of annotation results (create annotation, create revision, Label Studio webhook) is checked against the referenced **published** Ontology Version of the same project before anything is persisted.
+Every write of annotation results (create annotation and create revision) is checked against the referenced **published** Ontology Version of the same project before anything is persisted.
 
 A pure Annotation-domain function collects all violations (output resolution, categories per output, value schema, geometry per output type, `multiple`, `required`). The API returns them under `error.details.issues`, and the workspace shows them and blocks saves against draft versions.
 
@@ -30,9 +30,9 @@ A pure Annotation-domain function collects all violations (output resolution, ca
 |---|---|---|
 | The domain layer stays pure (no FastAPI/Pydantic/SQLAlchemy) | PASS | `result_validation.py` imports only the stdlib, `jsonschema` and ontology domain entities; `test_clean_architecture_purity` passes |
 | Use cases depend on Protocol interfaces | PASS | the helper takes `IOntologyRepository`; no concrete repository is used |
-| Business rules are not in repositories | PASS | the rules live in `modules/annotation/domain/result_validation.py`; revision numbering stays where `dev` has it (entity in-app, repository for the webhook) |
+| Business rules are not in repositories | PASS | the rules live in `modules/annotation/domain/result_validation.py`; revision numbering stays in the existing repository/use-case flow |
 | Cross-module coupling does not grow | PASS (justified) | annotation already depended on `IOntologyRepository` and ontology entities; no new foreign repository. A dedicated contract port is deferred to spec 001 FR-004 |
-| Errors are not swallowed silently | PASS | the API returns every issue; the webhook logs the issues before skipping |
+| Errors are not swallowed silently | PASS | the API returns every validation issue |
 | Frontend rulebook: Purpose Gate, color contract, no `alert`, no `transition-all`, scoped prettier/eslint/tsc/build | PASS | see `quickstart.md` §4; error banner uses rose + `role="alert"` |
 | Frontend rulebook: 390/1440 px visual pass | NOT RUN | banner layout unchanged (same absolute container); to verify in a browser at review |
 
@@ -63,7 +63,7 @@ modules/annotation/
 │   ├── result_validation.py     # NEW pure rules + AnnotationIssue/Report
 │   └── exceptions.py            # NEW AnnotationValidationError
 ├── services/annotation_validator.py   # wrapper + load_annotatable_version
-├── use_cases/{create_annotation,create_revision,label_studio}.py
+├── use_cases/{create_annotation,create_revision}.py
 web/src/features/annotation/
 ├── utils/api-error.ts           # NEW issue → message
 └── components/annotation-workspace-view.tsx   # draft guard + error banner

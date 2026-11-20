@@ -22,6 +22,14 @@ class DatasetVersionPolicy:
             )
 
     @staticmethod
+    def ensure_accepts_asset_uploads(version: DatasetVersionEntity) -> None:
+        """Only draft versions accept newly uploaded assets."""
+        if version.status != "draft":
+            raise BusinessRuleViolationError(
+                f"Cannot upload assets to version '{version.id}' with status '{version.status}'. Only draft versions allow asset uploads."
+            )
+
+    @staticmethod
     def ensure_can_publish(
         dataset: DatasetEntity, version: DatasetVersionEntity
     ) -> None:
@@ -70,10 +78,14 @@ class AssetDeletionPolicy:
     """Domain Policy enforcing rules on Asset lifecycle and deletion safety."""
 
     @staticmethod
-    def ensure_can_retire(asset: AssetEntity, version_link_count: int) -> None:
+    def ensure_can_retire(
+        asset: AssetEntity,
+        version_link_count: int,
+        active_snapshot_count: int = 0,
+    ) -> None:
         """Validate if an asset can transition to RETIRED state.
 
-        An asset cannot be retired if it still has protected references in dataset versions.
+        An asset cannot be retired if it still has protected references in dataset versions or snapshots.
         """
         if asset.status == "DELETED":
             raise BusinessRuleViolationError(
@@ -83,4 +95,9 @@ class AssetDeletionPolicy:
         if version_link_count > 0:
             raise BusinessRuleViolationError(
                 f"Cannot retire asset '{asset.id}'. It is still linked to {version_link_count} dataset version(s)."
+            )
+
+        if active_snapshot_count > 0:
+            raise BusinessRuleViolationError(
+                f"Cannot retire asset '{asset.id}'. It is pinned by {active_snapshot_count} active or published snapshot(s)."
             )

@@ -1,9 +1,11 @@
 from collections.abc import Sequence
 
 from sqlalchemy import delete, func, inspect, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from core.exceptions import ConflictException
 from core.utils.id_generator import generate_ulid
 from modules.dataset.domain.entities import (
     AssetEntity,
@@ -283,7 +285,13 @@ class SqlDatasetRepository(IDatasetRepository):
             retired_at=asset.retired_at,
         )
         self.session.add(model)
-        await self.session.flush()
+        try:
+            await self.session.flush()
+        except IntegrityError as exc:
+            # e.g. uq_project_sha256: a concurrent request stored the same file.
+            raise ConflictException(
+                f"Asset '{asset.filename}' conflicts with an existing asset of this project."
+            ) from exc
         await self.session.refresh(model)
         return _map_asset_to_entity(model)
 
@@ -426,3 +434,19 @@ class SqlDatasetRepository(IDatasetRepository):
         )
         res = await self.session.execute(stmt)
         return int(res.scalar() or 0)
+
+    async def find_existing_asset_ids(self, asset_ids: Sequence[str]) -> set[str]:
+        if not asset_ids:
+            return set()
+        result = await self.session.execute(
+            select(AssetModel.id).where(AssetModel.id.in_(list(asset_ids)))
+        )
+        return set(result.scalars().all())
+
+    async def find_existing_asset_uris(self, uris: Sequence[str]) -> set[str]:
+        if not uris:
+            return set()
+        result = await self.session.execute(
+            select(AssetModel.uri).where(AssetModel.uri.in_(list(uris)))
+        )
+        return set(result.scalars().all())

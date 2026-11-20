@@ -1,12 +1,28 @@
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 
 from apps.api.deps.auth import get_current_user
+from core.exceptions import ForbiddenError
 from modules.identity.domain.entities import AuthUser
-from modules.project.domain.interfaces import IProjectRepository
+from modules.project.domain.access import ProjectResourceKind
+from modules.project.services import ProjectAuthorizer
+
+# Role groups for project-scoped resources (dataset, version, asset, annotation).
+PROJECT_READ_ROLES: tuple[str, ...] = ("owner", "admin", "annotator", "reviewer")
+PROJECT_WRITE_ROLES: tuple[str, ...] = ("owner", "admin")
+PROJECT_LABEL_ROLES: tuple[str, ...] = ("owner", "admin", "annotator", "reviewer")
+
+# Path parameter that carries the id of each resource kind.
+RESOURCE_PATH_PARAMS: dict[ProjectResourceKind, str] = {
+    "dataset": "dataset_id",
+    "version": "version_id",
+    "asset": "asset_id",
+    "annotation": "annotation_id",
+    "revision": "revision_id",
+}
 
 
 def require_system_role(*allowed_roles: str) -> Callable[..., Any]:
@@ -29,28 +45,61 @@ def require_system_role(*allowed_roles: str) -> Callable[..., Any]:
     return dependency
 
 
+async def authorize(check: Awaitable[str | None]) -> str | None:
+    """Run a ``ProjectAuthorizer`` check, mapping 403s to the legacy HTTP shape.
+
+    ``ForbiddenError`` keeps the ``{"detail": ...}`` body the frontend already
+    handles for project role errors; ``NotFoundException`` propagates to the
+    domain exception handler like any other 404.
+    """
+    try:
+        return await check
+    except ForbiddenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=exc.message
+        ) from exc
+
+
 def require_project_role(*allowed_roles: str) -> Callable[..., Any]:
-    """Dependency factory that checks if current user has the required project role."""
+    """Dependency factory for routes addressed by ``{project_id}``."""
 
     @inject
     async def dependency(
         project_id: str,
         current_user: AuthUser = Depends(get_current_user),
-        repo: FromDishka[IProjectRepository] = None,  # type: ignore
+        authorizer: FromDishka[ProjectAuthorizer] = None,  # type: ignore
     ) -> str:
-        member = await repo.get_member(project_id, current_user.id)
-        if not member or member.status != "active":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Bạn không phải là thành viên hoạt động trong dự án này.",
+        return await authorize(
+            authorizer.require_role(project_id, current_user.id, allowed_roles)
+        )
+
+    dependency.__name__ = "require_project_role"
+    return dependency
+
+
+def require_resource_role(
+    kind: ProjectResourceKind, *allowed_roles: str
+) -> Callable[..., Any]:
+    """Dependency factory for routes addressed by a resource id.
+
+    Resolves the project that owns the resource named by the path parameter
+    of ``kind`` (see ``RESOURCE_PATH_PARAMS``), then applies the same member
+    and role check as ``require_project_role``.
+    """
+    param = RESOURCE_PATH_PARAMS[kind]
+
+    @inject
+    async def dependency(
+        request: Request,
+        current_user: AuthUser = Depends(get_current_user),
+        authorizer: FromDishka[ProjectAuthorizer] = None,  # type: ignore
+    ) -> str:
+        resource_id = request.path_params[param]
+        return await authorize(
+            authorizer.require_resource_role(
+                kind, resource_id, current_user.id, allowed_roles
             )
+        )
 
-        if member.role not in allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Yêu cầu quyền một trong các vai trò: {', '.join(allowed_roles)}.",
-            )
-
-        return member.role
-
+    dependency.__name__ = f"require_{kind}_role"
     return dependency

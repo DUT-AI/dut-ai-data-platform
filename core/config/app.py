@@ -26,14 +26,6 @@ class AppSettings(BaseSettings):
     # Telemetry
     otel_exporter_otlp_endpoint: str | None = None
 
-    # Label Studio
-    label_studio_url: str = "http://localhost:8080"
-    label_studio_internal_url: str = "http://localhost:8080"
-    label_studio_api_key: str = ""
-    platform_webhook_url: str = (
-        "http://host.docker.internal:8000/api/v1/annotations/sync"
-    )
-
     @property
     def cors_origin_list(self) -> list[str]:
         return [

@@ -14,6 +14,7 @@ from apps.api.routers import (
     ontology_router,
     project_catalog_router,
     project_router,
+    snapshot_router,
     users_router,
     workflow_router,
 )
@@ -67,6 +68,7 @@ app.include_router(project_catalog_router)
 app.include_router(ontology_router)
 app.include_router(dataset_router)
 app.include_router(annotation_router)
+app.include_router(snapshot_router)
 app.include_router(workflow_router)
 
 # 5b. OpenAPI document = frontend API contract (see apps/api/openapi.py)

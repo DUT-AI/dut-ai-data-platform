@@ -9,7 +9,9 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from core.config import db_settings
+from core.database.unit_of_work import SqlAlchemyUnitOfWork
 from core.events.outbox import IOutboxRepository, SqlOutboxRepository
+from core.uow import IUnitOfWork
 
 
 def create_engine(url: str, echo: bool = False) -> AsyncEngine:
@@ -51,6 +53,10 @@ class DatabaseProvider(Provider):
         self,
     ) -> async_sessionmaker[AsyncSession]:
         return AsyncSessionLocal
+
+    @provide(scope=Scope.REQUEST)
+    def get_unit_of_work(self, session: AsyncSession) -> IUnitOfWork:
+        return SqlAlchemyUnitOfWork(session)
 
     @provide(scope=Scope.REQUEST)
     def get_outbox_repository(self, session: AsyncSession) -> IOutboxRepository | None:

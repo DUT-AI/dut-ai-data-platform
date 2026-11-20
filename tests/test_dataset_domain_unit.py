@@ -716,8 +716,18 @@ async def test_upload_version_assets_corrupted_image_fails():
     repo.get_version_by_id = AsyncMock(return_value=mock_version)
     repo.get_dataset_by_id = AsyncMock(return_value=mock_dataset)
 
+    from modules.dataset.services.asset_ingestion import (
+        AssetFilePreparer,
+        AssetObjectStore,
+    )
+
     storage = AsyncMock()
-    use_case = UploadVersionAssetsUseCase(repo=repo, storage_provider=storage)
+    use_case = UploadVersionAssetsUseCase(
+        repo=repo,
+        uow=AsyncMock(),
+        preparer=AssetFilePreparer(),
+        object_store=AssetObjectStore(storage, bucket="test-bucket"),
+    )
 
     corrupted_files = [("corrupted.jpg", b"Invalid image content data", "image/jpeg")]
 
@@ -725,6 +735,7 @@ async def test_upload_version_assets_corrupted_image_fails():
         await use_case.execute("ver_100", corrupted_files)
 
     assert "bị hỏng hoặc không đúng định dạng" in str(exc_info.value)
+    storage.upload.assert_not_called()
 
 
 @pytest.mark.asyncio

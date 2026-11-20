@@ -1,4 +1,5 @@
-from collections.abc import AsyncIterable
+from collections.abc import AsyncIterable, AsyncIterator
+from datetime import UTC, datetime
 from typing import BinaryIO
 
 import pytest
@@ -22,8 +23,10 @@ import modules.ontology.models
 import modules.project.models  # noqa: F401
 from apps.api.main import app
 from core.database.base import Base
+from core.database.unit_of_work import SqlAlchemyUnitOfWork
 from core.events.outbox import IOutboxRepository, SqlOutboxRepository
-from core.storage.interface import IStorageProvider
+from core.storage.interface import IStorageProvider, StoredObjectInfo
+from core.uow import IUnitOfWork
 from modules.annotation.di import AnnotationProvider
 from modules.dataset.di import DatasetProvider
 from modules.identity.di import IdentityProvider
@@ -74,6 +77,10 @@ class TestDatabaseProvider(Provider):
                 raise
 
     @provide(scope=Scope.REQUEST)
+    def get_unit_of_work(self, session: AsyncSession) -> IUnitOfWork:
+        return SqlAlchemyUnitOfWork(session)
+
+    @provide(scope=Scope.REQUEST)
     def get_outbox_repository(self, session: AsyncSession) -> IOutboxRepository | None:
         return SqlOutboxRepository(session)
 
@@ -85,6 +92,7 @@ class TestDatabaseProvider(Provider):
 class InMemoryStorageProvider(IStorageProvider):
     def __init__(self) -> None:
         self.objects: dict[tuple[str, str], bytes] = {}
+        self.modified: dict[tuple[str, str], datetime] = {}
 
     async def upload(
         self,
@@ -94,30 +102,38 @@ class InMemoryStorageProvider(IStorageProvider):
         content_type: str | None = None,
     ) -> str:
         self.objects[(bucket, key)] = data.read()
+        self.modified[(bucket, key)] = datetime.now(UTC)
         return f"/{bucket}/{key.lstrip('/')}"
 
     async def get_presigned_url(
-        self, bucket: str, key: str, expires: int = 3600
+        self, bucket: str, key: str, *, expires: int = 3600
     ) -> str:
         return f"https://storage.test/{bucket}/{key.lstrip('/')}?expires={expires}"
 
     async def get_presigned_upload_url(
-        self, bucket: str, key: str, content_type: str | None = None, expires: int = 3600
+        self,
+        bucket: str,
+        key: str,
+        *,
+        content_type: str | None = None,
+        expires: int = 3600,
     ) -> str:
         return f"https://storage.test/upload/{bucket}/{key.lstrip('/')}?expires={expires}"
 
-    async def generate_presigned_download_url(
-        self, bucket: str, key: str, expires: int = 3600
-    ) -> str:
-        return await self.get_presigned_url(bucket, key, expires)
-
-    async def generate_presigned_upload_url(
-        self, bucket: str, key: str, content_type: str | None = None, expires: int = 3600
-    ) -> str:
-        return await self.get_presigned_upload_url(bucket, key, content_type, expires)
-
     async def delete(self, bucket: str, key: str) -> None:
         self.objects.pop((bucket, key), None)
+        self.modified.pop((bucket, key), None)
+
+    async def list_objects(
+        self, bucket: str, *, prefix: str = ""
+    ) -> AsyncIterator[StoredObjectInfo]:
+        for (obj_bucket, key), data in list(self.objects.items()):
+            if obj_bucket == bucket and key.startswith(prefix):
+                yield StoredObjectInfo(
+                    key=key,
+                    size=len(data),
+                    last_modified=self.modified[(obj_bucket, key)],
+                )
 
     def build_public_url(self, uri_or_path: str, bucket: str | None = None) -> str:
         return f"https://storage.test/{uri_or_path.lstrip('/')}"

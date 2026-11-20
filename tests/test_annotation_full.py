@@ -187,7 +187,8 @@ async def test_annotation_full_lifecycle():
         ]
         assert (await client.get(f"/api/v1/assets/{asset_id}/annotations")).json() == []
 
-        # 5b. A version id of another (unknown) project is reported as not found.
+        # 5b. Filing the asset under another project is rejected by authorization
+        #     (the asset does not belong to that project) before any validation.
         foreign_res = await client.post(
             "/api/v1/annotations",
             json={
@@ -197,7 +198,7 @@ async def test_annotation_full_lifecycle():
                 "results": [],
             },
         )
-        assert foreign_res.status_code == 404, foreign_res.text
+        assert foreign_res.status_code == 403, foreign_res.text
 
         # 5c. Create Initial Annotation + Revision 1
         create_anno_res = await client.post(

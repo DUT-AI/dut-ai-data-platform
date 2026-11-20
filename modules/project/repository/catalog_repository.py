@@ -1,49 +1,75 @@
+import copy
 import json
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from modules.project.domain.catalog_entities import ProjectTemplateEntity
+from loguru import logger
+
 from modules.project.domain.catalog_interfaces import IProjectCatalogRepository
+
+TEMPLATES_PATH = Path(__file__).parent.parent / "data" / "templates.json"
+
+
+class TemplateCatalogLoadError(RuntimeError):
+    """The template catalog file is missing or malformed."""
+
+
+@dataclass(frozen=True)
+class TemplateCatalog:
+    """Parsed template catalog. Loaded once and shared by every request."""
+
+    groups: tuple[str, ...] = ()
+    templates: tuple[dict[str, Any], ...] = ()
+    by_id: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+
+class TemplateCatalogLoader:
+    """Reads ``templates.json`` from disk. The only place doing catalog I/O."""
+
+    @staticmethod
+    def load(path: Path = TEMPLATES_PATH) -> TemplateCatalog:
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+        except FileNotFoundError as exc:
+            raise TemplateCatalogLoadError(f"Template catalog not found: {path}") from exc
+        except json.JSONDecodeError as exc:
+            raise TemplateCatalogLoadError(
+                f"Template catalog is not valid JSON: {path}: {exc}"
+            ) from exc
+
+        templates: list[dict[str, Any]] = []
+        by_id: dict[str, dict[str, Any]] = {}
+        for tpl_data in data.get("templates", []):
+            template = {
+                **tpl_data,
+                "default_project_configuration": {
+                    "labels": tpl_data.get("labels", []),
+                    "tools": tpl_data.get("tools", []),
+                    "modality": tpl_data.get("modality", "image"),
+                },
+            }
+            by_id[template.get("id")] = template
+            templates.append(template)
+
+        logger.info("Loaded {} project templates from {}", len(templates), path)
+        return TemplateCatalog(
+            groups=tuple(data.get("groups", [])),
+            templates=tuple(templates),
+            by_id=by_id,
+        )
 
 
 class InMemoryProjectCatalogRepository(IProjectCatalogRepository):
-    """In-memory catalog repository for DUT-AI Native platform templates."""
+    """Read-only access to an already loaded ``TemplateCatalog``.
 
-    def __init__(self) -> None:
-        self._templates_by_id: dict[str, dict[str, Any]] = {}
-        self._catalog_templates: list[dict[str, Any]] = []
-        self._catalog_groups: list[str] = []
-        self._load_catalog_json()
+    The catalog is shared across requests, so every template handed out is a
+    deep copy: a caller mutating its result cannot corrupt other requests.
+    """
 
-    def _load_catalog_json(self) -> None:
-        json_path = Path(__file__).parent.parent / "data" / "templates.json"
-        if not json_path.exists():
-            return
-
-        try:
-            with open(json_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            self._catalog_groups = data.get("groups", [])
-            raw_templates = data.get("templates", [])
-
-            self._catalog_templates = []
-            for tpl_data in raw_templates:
-                tpl_id = tpl_data.get("id")
-                modality = tpl_data.get("modality", "image")
-
-                template_dict = {
-                    **tpl_data,
-                    "default_project_configuration": {
-                        "labels": tpl_data.get("labels", []),
-                        "tools": tpl_data.get("tools", []),
-                        "modality": modality,
-                    },
-                }
-                self._templates_by_id[tpl_id] = template_dict
-                self._catalog_templates.append(template_dict)
-        except Exception as exc:
-            print(f"Failed to load templates.json: {exc}")
+    def __init__(self, catalog: TemplateCatalog) -> None:
+        self._catalog = catalog
 
     async def list_templates(
         self,
@@ -52,7 +78,7 @@ class InMemoryProjectCatalogRepository(IProjectCatalogRepository):
         modality: str | None = None,
         search: str | None = None,
     ) -> list[dict[str, Any]]:
-        results = self._catalog_templates
+        results = list(self._catalog.templates)
         if group:
             results = [t for t in results if t.get("group") == group]
         if modality:
@@ -66,16 +92,14 @@ class InMemoryProjectCatalogRepository(IProjectCatalogRepository):
                 or q in t.get("id", "").lower()
                 or q in (t.get("description") or "").lower()
             ]
-        return results
+        return copy.deepcopy(results)
 
     async def list_template_groups(self) -> list[str]:
-        return self._catalog_groups
+        return list(self._catalog.groups)
 
     async def get_template(self, template_id: str) -> dict[str, Any] | None:
-        return self._templates_by_id.get(template_id)
+        template = self._catalog.by_id.get(template_id)
+        return copy.deepcopy(template) if template is not None else None
 
     async def get_template_by_key(self, key: str) -> dict[str, Any] | None:
-        return self._templates_by_id.get(key)
-
-
-
+        return await self.get_template(key)

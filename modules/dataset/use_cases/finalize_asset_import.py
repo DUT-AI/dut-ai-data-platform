@@ -1,7 +1,7 @@
 from core.config import s3_settings
 from core.events.domain_event import AssetReadyEvent
 from core.events.outbox import IOutboxRepository
-from core.exceptions import BadRequestException, NotFoundException
+from core.exceptions import BadRequestException, ForbiddenException, NotFoundException
 from core.storage.interface import IStorageProvider
 from modules.dataset.domain.entities import AssetEntity
 from modules.dataset.domain.interfaces import IDatasetRepository
@@ -53,6 +53,15 @@ class FinalizeAssetImportUseCase:
 
         for item in payload.items:
             clean_key = item.storage_key.lstrip("/")
+            # The key comes from the client: it must be the one issued by
+            # prepare-upload for this project and asset, otherwise a caller could
+            # register (and then download) an object owned by another project.
+            expected_prefix = f"project-{project_id}/assets/{item.asset_id}/"
+            if not clean_key.startswith(expected_prefix) or ".." in clean_key.split("/"):
+                raise ForbiddenException(
+                    f"Storage key '{item.storage_key}' does not belong to asset "
+                    f"'{item.asset_id}' of this project."
+                )
             uri = f"/{bucket}/{clean_key}"
 
             # SHA256 Deduplication Check (Project-scoped)

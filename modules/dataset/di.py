@@ -1,8 +1,11 @@
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import s3_settings
+from core.storage.interface import IStorageProvider
 from modules.dataset.domain.interfaces import IDatasetRepository
 from modules.dataset.repository.dataset_repository import SqlDatasetRepository
+from modules.dataset.services.asset_ingestion import AssetFilePreparer, AssetObjectStore
 from modules.dataset.use_cases import (
     ArchiveDatasetUseCase,
     CreateDatasetUseCase,
@@ -33,6 +36,14 @@ class DatasetProvider(Provider):
     @provide
     def get_repository(self, session: AsyncSession) -> IDatasetRepository:
         return SqlDatasetRepository(session)
+
+    @provide(scope=Scope.APP)
+    def get_asset_file_preparer(self) -> AssetFilePreparer:
+        return AssetFilePreparer()
+
+    @provide(scope=Scope.APP)
+    def get_asset_object_store(self, storage: IStorageProvider) -> AssetObjectStore:
+        return AssetObjectStore(storage, bucket=s3_settings.default_bucket)
 
     create_dataset_uc = provide(CreateDatasetUseCase)
     update_dataset_uc = provide(UpdateDatasetUseCase)

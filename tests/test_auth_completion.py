@@ -107,7 +107,9 @@ async def test_me_without_token_returns_401():
 
 
 @pytest.mark.asyncio
-async def test_login_disabled_returns_404():
+async def test_login_disabled_returns_404(monkeypatch):
+    # Explicit: the developer's .env may enable local login.
+    monkeypatch.setattr(auth_settings, "auth_local_login_enabled", False)
     with patch.object(AuthClient, "login", new_callable=AsyncMock) as mock_login:
         async with _client() as client:
             resp = await client.post(

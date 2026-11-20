@@ -67,6 +67,3 @@ export type CreateRevisionRequest = Omit<RevisionCreateDTO, "results"> & {
 
 export type BatchAssetStatusItem = Schema<"BatchAssetStatusItemDTO">;
 export type BatchAssetStatusResponse = Schema<"BatchAssetStatusResponseDTO">;
-
-export type OpenInLabelStudioRequest = Schema<"OpenInLabelStudioRequestDTO">;
-export type OpenInLabelStudioResponse = Schema<"OpenInLabelStudioResponseDTO">;

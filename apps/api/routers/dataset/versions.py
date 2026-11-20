@@ -1,7 +1,12 @@
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import APIRouter, File, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 
 from apps.api.deps.auth import CurrentUser
+from apps.api.deps.roles import (
+    PROJECT_READ_ROLES,
+    PROJECT_WRITE_ROLES,
+    require_resource_role,
+)
 from modules.dataset.dtos.dataset_dtos import (
     AssetResponseDTO,
     BatchUploadResultDTO,
@@ -33,6 +38,7 @@ router = APIRouter(tags=["Dataset Versions"])
 
 @router.post(
     "/datasets/{dataset_id}/versions",
+    dependencies=[Depends(require_resource_role("dataset", *PROJECT_WRITE_ROLES))],
     response_model=DatasetVersionResponseDTO,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new dataset version",
@@ -49,6 +55,7 @@ async def create_dataset_version(
 
 @router.get(
     "/dataset-versions/{version_id}",
+    dependencies=[Depends(require_resource_role("version", *PROJECT_READ_ROLES))],
     response_model=DatasetVersionResponseDTO,
     summary="Get dataset version details",
 )
@@ -63,6 +70,7 @@ async def get_dataset_version_detail(
 
 @router.post(
     "/dataset-versions/{version_id}/inherit",
+    dependencies=[Depends(require_resource_role("version", *PROJECT_WRITE_ROLES))],
     response_model=InheritDatasetVersionResponseDTO,
     status_code=status.HTTP_200_OK,
     summary="Inherit assets from another version in the same dataset",
@@ -79,6 +87,7 @@ async def inherit_dataset_version(
 
 @router.get(
     "/dataset-versions/{version_id}/assets",
+    dependencies=[Depends(require_resource_role("version", *PROJECT_READ_ROLES))],
     response_model=list[AssetResponseDTO],
     summary="List all assets belonging to a dataset version (Offset-based)",
 )
@@ -95,6 +104,7 @@ async def list_version_assets(
 
 @router.get(
     "/dataset-versions/{version_id}/assets/cursor",
+    dependencies=[Depends(require_resource_role("version", *PROJECT_READ_ROLES))],
     response_model=CursorPageAssetResponseDTO,
     summary="List assets belonging to a dataset version using Cursor Pagination (Spec v1)",
 )
@@ -111,6 +121,7 @@ async def list_version_assets_cursor(
 
 @router.post(
     "/dataset-versions/{version_id}/prepare-upload",
+    dependencies=[Depends(require_resource_role("version", *PROJECT_WRITE_ROLES))],
     response_model=PrepareUploadResponseDTO,
     status_code=status.HTTP_200_OK,
     summary="Get presigned S3 upload URLs for assets (Spec v1)",
@@ -127,6 +138,7 @@ async def prepare_asset_upload(
 
 @router.post(
     "/dataset-versions/{version_id}/finalize-import",
+    dependencies=[Depends(require_resource_role("version", *PROJECT_WRITE_ROLES))],
     response_model=FinalizeAssetImportResponseDTO,
     status_code=status.HTTP_201_CREATED,
     summary="Finalize asset import after S3 presigned upload (Spec v1)",
@@ -143,6 +155,7 @@ async def finalize_asset_import(
 
 @router.post(
     "/dataset-versions/{version_id}/assets",
+    dependencies=[Depends(require_resource_role("version", *PROJECT_WRITE_ROLES))],
     response_model=BatchUploadResultDTO,
     status_code=status.HTTP_201_CREATED,
     summary="Batch upload assets directly (Deprecated - Use prepare-upload & finalize-import)",
@@ -166,6 +179,7 @@ async def upload_version_assets(
 
 @router.delete(
     "/dataset-versions/{version_id}/assets/{asset_id}",
+    dependencies=[Depends(require_resource_role("version", *PROJECT_WRITE_ROLES))],
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Remove an asset link from a draft dataset version",
 )
@@ -181,6 +195,7 @@ async def remove_version_asset(
 
 @router.put(
     "/dataset-versions/{version_id}/publish",
+    dependencies=[Depends(require_resource_role("version", *PROJECT_WRITE_ROLES))],
     response_model=DatasetVersionResponseDTO,
     summary="Publish a draft dataset version (locking assets)",
 )

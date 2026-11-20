@@ -2,7 +2,12 @@ from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, Depends, status
 
 from apps.api.deps.auth import CurrentUser
-from apps.api.deps.roles import require_project_role
+from apps.api.deps.roles import (
+    PROJECT_READ_ROLES,
+    PROJECT_WRITE_ROLES,
+    require_project_role,
+    require_resource_role,
+)
 from modules.dataset.dtos.dataset_dtos import (
     DatasetCreateDTO,
     DatasetResponseDTO,
@@ -55,6 +60,7 @@ async def list_project_datasets(
 
 @router.get(
     "/datasets/{dataset_id}",
+    dependencies=[Depends(require_resource_role("dataset", *PROJECT_READ_ROLES))],
     response_model=DatasetResponseDTO,
     summary="Get dataset details",
 )
@@ -69,6 +75,7 @@ async def get_dataset_detail(
 
 @router.patch(
     "/datasets/{dataset_id}",
+    dependencies=[Depends(require_resource_role("dataset", *PROJECT_WRITE_ROLES))],
     response_model=DatasetResponseDTO,
     summary="Update dataset metadata (name, description, tags)",
 )
@@ -84,6 +91,7 @@ async def update_dataset(
 
 @router.put(
     "/datasets/{dataset_id}/archive",
+    dependencies=[Depends(require_resource_role("dataset", *PROJECT_WRITE_ROLES))],
     response_model=DatasetResponseDTO,
     summary="Archive a dataset (prevents creating new versions)",
 )

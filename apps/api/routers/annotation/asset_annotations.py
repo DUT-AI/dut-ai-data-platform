@@ -1,7 +1,8 @@
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Depends, Query, status
 
 from apps.api.deps.auth import CurrentUser
+from apps.api.deps.roles import PROJECT_READ_ROLES, require_resource_role
 from modules.annotation.dtos.annotation_dtos import (
     AnnotationResponseDTO,
     OpenInLabelStudioRequestDTO,
@@ -17,6 +18,7 @@ router = APIRouter(prefix="/assets", tags=["Asset Annotations"])
 
 @router.get(
     "/{asset_id}/annotations",
+    dependencies=[Depends(require_resource_role("asset", *PROJECT_READ_ROLES))],
     response_model=list[AnnotationResponseDTO],
     summary="List all annotations for an asset",
 )

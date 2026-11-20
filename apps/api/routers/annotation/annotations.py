@@ -1,7 +1,13 @@
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 
 from apps.api.deps.auth import CurrentUser
+from apps.api.deps.roles import (
+    PROJECT_LABEL_ROLES,
+    PROJECT_READ_ROLES,
+    authorize,
+    require_resource_role,
+)
 from core.constants import SYSTEM_USER_ID
 from modules.annotation.dtos.annotation_dtos import (
     AnnotationCreateDTO,
@@ -16,6 +22,7 @@ from modules.annotation.use_cases import (
     GetBatchAssetStatusUseCase,
     ListAnnotationRevisionsUseCase,
 )
+from modules.project.services import ProjectAuthorizer
 
 router = APIRouter(prefix="/annotations", tags=["Annotations"])
 
@@ -30,7 +37,17 @@ async def get_batch_asset_status(
     payload: BatchAssetStatusRequestDTO,
     current_user: CurrentUser,
     use_case: FromDishka[GetBatchAssetStatusUseCase],
+    authorizer: FromDishka[ProjectAuthorizer],
 ):
+    # Unknown ids carry no data, so only the existing assets are authorized.
+    await authorize(
+        authorizer.require_assets_role(
+            payload.asset_ids,
+            current_user.id,
+            PROJECT_READ_ROLES,
+            require_existing=False,
+        )
+    )
     return await use_case.execute(payload.asset_ids)
 
 
@@ -45,7 +62,17 @@ async def create_annotation(
     payload: AnnotationCreateDTO,
     current_user: CurrentUser,
     use_case: FromDishka[CreateAnnotationUseCase],
+    authorizer: FromDishka[ProjectAuthorizer],
 ):
+    # The asset must exist and belong to the project the annotation is filed under.
+    await authorize(
+        authorizer.require_assets_role(
+            [payload.asset_id],
+            current_user.id,
+            PROJECT_LABEL_ROLES,
+            project_id=payload.project_id,
+        )
+    )
     raw_user_id = getattr(current_user, "user_id", None) or getattr(
         current_user, "id", None
     )
@@ -59,6 +86,7 @@ async def create_annotation(
 
 @router.get(
     "/{annotation_id}",
+    dependencies=[Depends(require_resource_role("annotation", *PROJECT_READ_ROLES))],
     response_model=AnnotationResponseDTO,
     summary="Get annotation details with revisions",
 )
@@ -73,6 +101,7 @@ async def get_annotation_detail(
 
 @router.get(
     "/{annotation_id}/revisions",
+    dependencies=[Depends(require_resource_role("annotation", *PROJECT_READ_ROLES))],
     response_model=list[AnnotationRevisionResponseDTO],
     summary="List all revisions for an annotation",
 )

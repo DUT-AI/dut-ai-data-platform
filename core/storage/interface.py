@@ -1,5 +1,15 @@
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
+from dataclasses import dataclass
+from datetime import datetime
 from typing import BinaryIO
+
+
+@dataclass(frozen=True)
+class StoredObjectInfo:
+    key: str
+    size: int
+    last_modified: datetime
 
 
 class IStorageProvider(ABC):
@@ -39,6 +49,12 @@ class IStorageProvider(ABC):
     @abstractmethod
     async def delete(self, bucket: str, key: str) -> None:
         """Delete an object from bucket."""
+
+    @abstractmethod
+    def list_objects(
+        self, bucket: str, *, prefix: str = ""
+    ) -> AsyncIterator[StoredObjectInfo]:
+        """Iterate every object under ``prefix``, page by page."""
 
     @abstractmethod
     def build_public_url(self, uri_or_path: str, bucket: str | None = None) -> str:

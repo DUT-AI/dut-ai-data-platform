@@ -5,6 +5,17 @@ from core.storage.interface import IStorageProvider
 from core.storage.minio_adapter import MinIOStorageAdapter
 
 
+def create_storage_provider() -> IStorageProvider:
+    """Build the configured storage adapter (also used outside the DI container)."""
+    return MinIOStorageAdapter(
+        endpoint_url=s3_settings.minio_endpoint,
+        access_key=s3_settings.minio_access_key,
+        secret_key=s3_settings.minio_secret_key,
+        secure=s3_settings.is_secure,
+        public_endpoint_url=s3_settings.public_minio_endpoint,
+    )
+
+
 class StorageProvider(Provider):
     """Dishka provider for MinIO / S3 Object Storage adapter."""
 
@@ -12,10 +23,4 @@ class StorageProvider(Provider):
 
     @provide
     def get_storage_provider(self) -> IStorageProvider:
-        return MinIOStorageAdapter(
-            endpoint_url=s3_settings.minio_endpoint,
-            access_key=s3_settings.minio_access_key,
-            secret_key=s3_settings.minio_secret_key,
-            secure=s3_settings.is_secure,
-            public_endpoint_url=s3_settings.public_minio_endpoint,
-        )
+        return create_storage_provider()

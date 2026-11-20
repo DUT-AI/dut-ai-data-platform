@@ -1,11 +1,12 @@
 import asyncio
+from collections.abc import AsyncIterator
 from typing import Any, BinaryIO
 
 import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
 
-from core.storage.interface import IStorageProvider
+from core.storage.interface import IStorageProvider, StoredObjectInfo
 from core.storage.url_builder import build_storage_public_url
 
 
@@ -92,6 +93,25 @@ class MinIOStorageAdapter(IStorageProvider):
             ),
         )
         return str(url)
+
+    async def list_objects(
+        self, bucket: str, *, prefix: str = ""
+    ) -> AsyncIterator[StoredObjectInfo]:
+        loop = asyncio.get_running_loop()
+        params: dict[str, Any] = {"Bucket": bucket, "Prefix": prefix.lstrip("/")}
+        while True:
+            page = await loop.run_in_executor(
+                None, lambda p=dict(params): self.client.list_objects_v2(**p)
+            )
+            for item in page.get("Contents", []):
+                yield StoredObjectInfo(
+                    key=item["Key"],
+                    size=item.get("Size", 0),
+                    last_modified=item["LastModified"],
+                )
+            if not page.get("IsTruncated"):
+                return
+            params["ContinuationToken"] = page["NextContinuationToken"]
 
     async def delete(self, bucket: str, key: str) -> None:
         clean_key = key.lstrip("/")

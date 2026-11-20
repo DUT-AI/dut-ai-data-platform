@@ -1,11 +1,17 @@
 import asyncio
+from datetime import timedelta
 
 import aio_pika
 from loguru import logger
 
-from core.config import rabbitmq_settings, redis_settings
+from core.config import rabbitmq_settings, s3_settings
 from core.database.session import AsyncSessionLocal
 from core.events.processor import OutboxProcessor
+from core.storage.di import create_storage_provider
+from modules.dataset.repository.dataset_repository import SqlDatasetRepository
+from modules.dataset.use_cases.cleanup_orphaned_asset_objects import (
+    CleanupOrphanedAssetObjectsUseCase,
+)
 
 
 async def run_outbox_processor():
@@ -29,6 +35,40 @@ async def run_outbox_processor():
         except Exception as e:
             logger.error(f"Outbox Processor exception: {e}. Retrying in 5 seconds...")
             await asyncio.sleep(5)
+
+
+async def run_orphan_asset_cleanup():
+    """Periodically remove asset objects that no asset record references."""
+    if not s3_settings.orphan_cleanup_enabled:
+        logger.info("Orphan asset cleanup disabled (ORPHAN_CLEANUP_ENABLED=false).")
+        return
+
+    storage = create_storage_provider()
+    interval = s3_settings.orphan_cleanup_interval_seconds
+    logger.info(
+        "Starting orphan asset cleanup every {}s (dry_run={}, min_age={}h)...",
+        interval,
+        s3_settings.orphan_cleanup_dry_run,
+        s3_settings.orphan_cleanup_min_age_hours,
+    )
+    while True:
+        try:
+            async with AsyncSessionLocal() as session:
+                use_case = CleanupOrphanedAssetObjectsUseCase(
+                    repo=SqlDatasetRepository(session),
+                    storage=storage,
+                    bucket=s3_settings.default_bucket,
+                )
+                await use_case.execute(
+                    min_age=timedelta(hours=s3_settings.orphan_cleanup_min_age_hours),
+                    dry_run=s3_settings.orphan_cleanup_dry_run,
+                )
+        except asyncio.CancelledError:
+            logger.info("Orphan asset cleanup stopping...")
+            break
+        except Exception as e:
+            logger.error(f"Orphan asset cleanup failed: {e}. Retrying next cycle.")
+        await asyncio.sleep(interval)
 
 
 async def run_rabbitmq_consumer():
@@ -70,6 +110,7 @@ async def worker_loop():
     await asyncio.gather(
         run_outbox_processor(),
         run_rabbitmq_consumer(),
+        run_orphan_asset_cleanup(),
     )
 
 

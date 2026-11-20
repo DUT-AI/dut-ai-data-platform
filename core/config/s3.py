@@ -27,6 +27,13 @@ class S3Settings(BaseSettings):
     default_bucket: str = "ai-data-platform"
     minio_public_endpoint: str | None = None
 
+    # Periodic removal of asset objects with no asset record (worker job).
+    # Starts in dry-run: it only logs what it would delete until switched off.
+    orphan_cleanup_enabled: bool = True
+    orphan_cleanup_dry_run: bool = True
+    orphan_cleanup_interval_seconds: int = Field(6 * 3600, ge=60)
+    orphan_cleanup_min_age_hours: int = Field(24, ge=1)
+
     @property
     def public_minio_endpoint(self) -> str:
         return (self.minio_public_endpoint or self.minio_endpoint).rstrip("/")

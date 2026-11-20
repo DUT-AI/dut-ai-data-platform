@@ -1,4 +1,5 @@
-from collections.abc import AsyncIterable
+from collections.abc import AsyncIterable, AsyncIterator
+from datetime import UTC, datetime
 from typing import BinaryIO
 
 import pytest
@@ -24,7 +25,7 @@ from apps.api.main import app
 from core.database.base import Base
 from core.database.unit_of_work import SqlAlchemyUnitOfWork
 from core.events.outbox import IOutboxRepository, SqlOutboxRepository
-from core.storage.interface import IStorageProvider
+from core.storage.interface import IStorageProvider, StoredObjectInfo
 from core.uow import IUnitOfWork
 from modules.annotation.di import AnnotationProvider
 from modules.dataset.di import DatasetProvider
@@ -91,6 +92,7 @@ class TestDatabaseProvider(Provider):
 class InMemoryStorageProvider(IStorageProvider):
     def __init__(self) -> None:
         self.objects: dict[tuple[str, str], bytes] = {}
+        self.modified: dict[tuple[str, str], datetime] = {}
 
     async def upload(
         self,
@@ -100,6 +102,7 @@ class InMemoryStorageProvider(IStorageProvider):
         content_type: str | None = None,
     ) -> str:
         self.objects[(bucket, key)] = data.read()
+        self.modified[(bucket, key)] = datetime.now(UTC)
         return f"/{bucket}/{key.lstrip('/')}"
 
     async def get_presigned_url(
@@ -119,6 +122,18 @@ class InMemoryStorageProvider(IStorageProvider):
 
     async def delete(self, bucket: str, key: str) -> None:
         self.objects.pop((bucket, key), None)
+        self.modified.pop((bucket, key), None)
+
+    async def list_objects(
+        self, bucket: str, *, prefix: str = ""
+    ) -> AsyncIterator[StoredObjectInfo]:
+        for (obj_bucket, key), data in list(self.objects.items()):
+            if obj_bucket == bucket and key.startswith(prefix):
+                yield StoredObjectInfo(
+                    key=key,
+                    size=len(data),
+                    last_modified=self.modified[(obj_bucket, key)],
+                )
 
     def build_public_url(self, uri_or_path: str, bucket: str | None = None) -> str:
         return f"https://storage.test/{uri_or_path.lstrip('/')}"

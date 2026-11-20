@@ -434,3 +434,19 @@ class SqlDatasetRepository(IDatasetRepository):
         )
         res = await self.session.execute(stmt)
         return int(res.scalar() or 0)
+
+    async def find_existing_asset_ids(self, asset_ids: Sequence[str]) -> set[str]:
+        if not asset_ids:
+            return set()
+        result = await self.session.execute(
+            select(AssetModel.id).where(AssetModel.id.in_(list(asset_ids)))
+        )
+        return set(result.scalars().all())
+
+    async def find_existing_asset_uris(self, uris: Sequence[str]) -> set[str]:
+        if not uris:
+            return set()
+        result = await self.session.execute(
+            select(AssetModel.uri).where(AssetModel.uri.in_(list(uris)))
+        )
+        return set(result.scalars().all())

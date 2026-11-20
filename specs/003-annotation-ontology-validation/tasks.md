@@ -14,7 +14,7 @@ description: "Task list for annotation validation against Ontology Version"
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: The user story the task belongs to (US1–US4)
+- **[Story]**: The user story the task belongs to (US1–US3)
 
 ---
 
@@ -80,15 +80,6 @@ description: "Task list for annotation validation against Ontology Version"
 
 ---
 
-## Phase 6: User Story 4 - Same rules for every write channel (P3)
-
-**Goal**: The Label Studio webhook validates, maps labels, and numbers revisions sequentially.
-
-**Independent Test**: Steps 9–10 of `tests/test_annotation_full.py`
-
-- [X] T020 [US4] In `modules/annotation/use_cases/label_studio.py`: load the version through the guard, map labels key→name→id, validate before creating anything, and on a violation log and return `None` (numbering is left to the repository, see T028)
-- [X] T021 [US4] Cover the key mapping, the sequential revision number and a rejected label in `tests/test_annotation_full.py`
-
 ---
 
 ## Phase 7: Polish & Cross-Cutting
@@ -106,7 +97,7 @@ description: "Task list for annotation validation against Ontology Version"
 - [X] T025 Rebase the branch onto `origin/dev`. The branch had no commits of its own, so this was a fast-forward to `23bc357` with the feature changes re-applied on top
 - [X] T026 Drop T002–T006 and take the `dev` versions of the shared files. `dev` re-exports `AuthUser`/`TokenResponse` from `modules/identity/domain/entities.py`, binds `IAuthClient`, adds `details` to `DomainException` with MRO-based HTTP mapping in `core/exceptions/handlers.py`, and keeps user ids as `int` in the project/annotation DTOs (so T014 is dropped too)
 - [X] T027 Pass the issues through `DomainException(message, details=...)` in `modules/annotation/domain/exceptions.py`. `BadRequestException` is now an alias of `BusinessRuleViolationError` and still maps to HTTP 400
-- [X] T028 Resolve `modules/annotation/use_cases/label_studio.py`. Keep `dev`'s revision creation (`AnnotationRevisionEntity(revision_number=0)`; the repository assigns `max + 1`) and its `SYSTEM_USER_ID` author fallback. Add only what validation needs: the guarded version load, the label → category-id mapping (key, then name), and validation before anything is persisted
+- [X] T028 On merge with `feat/Delete-link-to-labelstudio`, keep `modules/annotation/use_cases/label_studio.py` deleted; apply ontology validation to the remaining create and revision use cases.
 - [X] T029 Resolve `web/src/features/annotation/components/annotation-workspace-view.tsx` on top of the `dev` version (workflow review flow untouched, no reformatting). Keep `feedbackMsg`, derive the error tone from the `Lỗi` prefix, add the draft guard, and show the backend issues through `getAnnotationSaveErrorMessage`
 - [X] T030 Rename the spec folder `002-annotation-ontology-validation` → `003-annotation-ontology-validation`, because `dev` already uses `002-*` twice
 - [X] T031 Validate. Backend: `import apps.api.main` works, `ruff check` is clean, the feature suites pass (37/37), and the full suite gives 157 passed, 1 failed. Web: prettier, eslint (0 errors), `tsc --noEmit` and `next build` all pass
@@ -136,17 +127,16 @@ description: "Task list for annotation validation against Ontology Version"
 ## Dependencies & Execution Order
 
 - Phase 2 blocks every story; T006 blocks T009. (Phase 2 was superseded by `dev`; see Phase 8.)
-- US1 (T007–T011) blocks US2 (it reuses the error type), US3 (the error contract) and US4 (the validator).
-- US3 and US4 are independent of each other once US1 and US2 are done.
+- US1 (T007–T011) blocks US2 (it reuses the error type) and US3 (the error contract).
+- US3 is independent of the other stories once US1 and US2 are done.
 
 ## Parallel Examples
 
 - T002–T005 touch different files: run them in parallel.
 - T007 (tests) can be written while T008 is designed; run T007 first (it should fail), then T008.
-- T016 can be done in parallel with T020.
 
 ## Implementation Strategy
 
 1. MVP = Phase 2 + US1 + US2. Every API write is now contract-safe.
-2. Add US3 (annotator feedback), then US4 (legacy channel).
-3. Commits after the rebase: (a) `feat(annotation):` T007–T021 + T027–T029 + T034; (b) `docs(specs):` spec 003. There is no separate `fix:` commit any more, because `dev` already contains it.
+2. Add US3 (annotator feedback).
+3. Commits after the rebase: (a) `feat(annotation):` T007–T019 + T027–T029 + T034; (b) `docs(specs):` spec 003. There is no separate `fix:` commit any more, because `dev` already contains it.

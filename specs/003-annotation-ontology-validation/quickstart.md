@@ -26,9 +26,7 @@ python -m pytest -q tests/unit/test_annotation_result_validation.py \
 Expected: all pass. `test_annotation_full.py` covers these cases end to end:
 
 - a polygon on a bbox-only version plus an unknown category → `400`, with `details.issues` codes `["unknown_output", "category_not_allowed"]`, and nothing persisted;
-- a version used from another project → `404`;
-- valid create, then revision, then Label Studio sync (revision 3, label key `car` stored as the category id);
-- a Label Studio label outside the ontology → `200 null`, no new revision.
+- a version used from another project → `404`.
 
 ## 3. Manual check in the workspace
 

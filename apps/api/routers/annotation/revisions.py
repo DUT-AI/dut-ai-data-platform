@@ -1,7 +1,5 @@
-from typing import Any
-
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import APIRouter, Body, Depends, status
+from fastapi import APIRouter, Depends, status
 
 from apps.api.deps.auth import CurrentUser
 from apps.api.deps.roles import (
@@ -17,7 +15,6 @@ from modules.annotation.dtos.annotation_dtos import (
 from modules.annotation.use_cases import (
     CreateRevisionUseCase,
     GetRevisionDetailUseCase,
-    SyncLabelStudioWebhookUseCase,
 )
 
 router = APIRouter(tags=["Annotation Revisions"])
@@ -61,18 +58,3 @@ async def get_revision_detail(
     use_case: FromDishka[GetRevisionDetailUseCase],
 ):
     return await use_case.execute(revision_id)
-
-
-@router.post(
-    "/annotations/sync",
-    response_model=AnnotationRevisionResponseDTO | None,
-    status_code=status.HTTP_200_OK,
-    summary="Webhook endpoint for Label Studio sync (Legacy)",
-    deprecated=True,
-)
-@inject
-async def sync_label_studio_webhook(
-    payload: dict[str, Any] = Body(...),
-    use_case: FromDishka[SyncLabelStudioWebhookUseCase] = None,  # type: ignore
-):
-    return await use_case.execute(payload)

@@ -351,12 +351,6 @@ def test_every_project_scoped_route_declares_authorization():
         ("POST", "/api/v1/annotations"),
         ("POST", "/api/v1/annotations/batch-status"),
     }
-    # Label Studio integration, out of scope: removed by PR #17.
-    # Delete these entries together with the routes.
-    label_studio_allowlist = {
-        ("POST", "/api/v1/assets/{asset_id}/open-in-label-studio"),
-        ("POST", "/api/v1/annotations/sync"),
-    }
 
     def dependency_names(dependant) -> set[str]:
         names = set()
@@ -371,7 +365,7 @@ def test_every_project_scoped_route_declares_authorization():
             continue
         for method in route.methods:
             key = (method, route.path)
-            if key in body_checked or key in label_studio_allowlist:
+            if key in body_checked:
                 continue
             names = dependency_names(route.dependant)
             if not any(n.startswith("require_") for n in names):

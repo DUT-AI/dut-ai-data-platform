@@ -19,8 +19,8 @@ from modules.ontology.domain.entities import (
     OntologyVersionOutputEntity,
 )
 
-# Result types emitted by the workspace editors / Label Studio adapter that
-# differ from the Output Definition codes of the catalog.
+# Result types emitted by the workspace editors that differ from the Output
+# Definition codes of the catalog.
 RESULT_TYPE_ALIASES: dict[str, str] = {
     "bbox": "bounding_box",
     "ner": "named_entity",

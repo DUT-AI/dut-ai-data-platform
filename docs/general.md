@@ -46,7 +46,6 @@ AI Data Platform chịu trách nhiệm:
 
 Nền tảng không nên tự mình viết lại toàn bộ chức năng chuyên sâu của các công cụ đã có sẵn, ví dụ:
 
-- Annotation editor hoàn chỉnh như Label Studio hoặc CVAT.
 - Storage engine như MinIO hoặc S3.
 - Experiment tracking engine như MLflow.
 - Search engine như OpenSearch.
@@ -55,7 +54,7 @@ Những thành phần này được tích hợp qua provider/adapter layer.
 
 VD:
 
-- **Annotation Provider**: dùng **Label Studio** cho workflow gán nhãn tổng quát vì nó có API, hỗ trợ import/export annotations, và có cơ chế predictions để nạp pre-annotation; dùng **CVAT** khi bạn cần task management, import annotations, export dataset theo nhiều format và webhook; dùng **doccano** cho các bài toán text như text classification, sequence labeling và sequence-to-sequence, đồng thời có REST APIs để tích hợp script/model.
+- **Annotation**: dùng trình gán nhãn nội bộ của AI Data Platform. Label Studio chỉ là nguồn tham khảo ý tưởng và kỹ thuật; hệ thống không kết nối runtime tới Label Studio hoặc đồng bộ annotation qua webhook của công cụ này.
 - **Storage Provider**: dùng **MinIO** cho object storage vì MinIO là S3-compatible object store, hỗ trợ lưu trữ object và versioning, nên khớp rất tốt với `Asset` và `Dataset Version`.
 - **Auth: Manager Service**
 - **Training Provider**: dùng **MLflow** cho experiment tracking, artifact storage và model registry; nếu bạn muốn chạy training pipeline trên Kubernetes thì **Kubeflow Pipelines** phù hợp vì nó là platform để xây ML workflows portable và scalable, còn **Kubeflow Trainer** phù hợp cho distributed training trên Kubernetes.
@@ -336,7 +335,6 @@ Provider Layer là lớp tích hợp với các công cụ bên ngoài.
 
 Ví dụ:
 
-- Annotation Provider: Label Studio, CVAT, Doccano, Prodigy
 - Storage Provider: MinIO, S3, GCS, Azure Blob
 - Training Provider: MLflow, Kubeflow, ClearML
 - Search Provider: OpenSearch, Elasticsearch, Meilisearch
@@ -363,7 +361,7 @@ Asset chỉ tồn tại một lần, Dataset chỉ tổ chức Asset theo mục 
 
 ### Annotation là dữ liệu chuẩn hóa
 
-Tất cả annotation tool bên ngoài phải được chuyển sang internal schema trước khi lưu.
+Trình gán nhãn nội bộ lưu annotation theo internal schema và quản lý lịch sử bằng Annotation Revision.
 
 ### Snapshot là source of truth cho downstream
 
@@ -371,7 +369,7 @@ Export, Training và Evaluation chỉ đọc Snapshot thay vì đọc dữ liệ
 
 ### Provider layer giúp thay thế tool
 
-Label Studio, CVAT, MLflow, MinIO, OpenSearch... đều là implementation có thể thay thế, không phải core business logic.
+MLflow, MinIO, OpenSearch... đều là implementation có thể thay thế, không phải core business logic. Annotation hiện được thực hiện bằng trình gán nhãn nội bộ.
 
 ### Immutable artifacts
 

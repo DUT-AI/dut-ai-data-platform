@@ -118,7 +118,7 @@ export function LoginForm() {
               <div>
                 <h2 className="text-xl font-bold text-slate-950">Đăng nhập</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Dùng tài khoản DUT để tiếp tục.
+                  Đăng nhập cục bộ khi phát triển, bằng tài khoản DUT AI Manage.
                 </p>
               </div>
               <span className="flex shrink-0 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800">

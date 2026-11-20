@@ -5,11 +5,12 @@ import httpx
 from fastapi import HTTPException, status
 
 from core.config.auth import auth_settings
-from modules.identity.dtos.auth_dtos import AuthUser, TokenResponse
+from modules.identity.client.http import build_manage_http_client
+from modules.identity.dtos.auth_dtos import TokenResponse
 
 
 class AuthClient:
-    """HTTP Client to interact with external Auth Server API."""
+    """HTTP client for the DUT AI Manage auth server (local development login)."""
 
     def __init__(
         self, client: httpx.AsyncClient | None = None, timeout: float = 10.0
@@ -39,59 +40,9 @@ class AuthClient:
             )
             or (self._client_loop is not None and self._client_loop.is_closed())
         ):
-            limits = httpx.Limits(
-                max_keepalive_connections=20,
-                max_connections=100,
-                keepalive_expiry=30.0,
-            )
-            self._client = httpx.AsyncClient(limits=limits, timeout=self.timeout)
+            self._client = build_manage_http_client(self.timeout)
             self._client_loop = current_loop
         return self._client
-
-    async def get_me(self, token: str) -> AuthUser:
-        """Fetch current user data from Auth Server GET /api/v1/auth/me."""
-        headers = {"Authorization": f"Bearer {token}"}
-
-        try:
-            response = await self.client.get(auth_settings.me_url, headers=headers)
-            if response.status_code == 401:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Phiên đăng nhập hết hạn hoặc không hợp lệ.",
-                )
-            response.raise_for_status()
-
-            payload: dict[str, Any] = response.json()
-            if not payload.get("is_success") or "data" not in payload:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=payload.get("message", "Lỗi lấy thông tin người dùng"),
-                )
-
-            data = payload["data"]
-            return AuthUser(
-                id=data["id"],
-                name=data["name"],
-                email=data["email"],
-                status=data.get("status", "ACTIVE"),
-                avatar_url=data.get("avatar_url"),
-                role_names=data.get("role_names", []),
-            )
-        except httpx.ConnectError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"Không thể kết nối tới Auth Server tại {auth_settings.me_url}. Vui lòng kiểm tra lại Auth Server.",
-            ) from exc
-        except httpx.TimeoutException as exc:
-            raise HTTPException(
-                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                detail=f"Yêu cầu tới Auth Server tại {auth_settings.me_url} bị quá thời gian (timeout).",
-            ) from exc
-        except httpx.HTTPStatusError as exc:
-            raise HTTPException(
-                status_code=exc.response.status_code,
-                detail=f"Lỗi Auth Server: {exc.response.text}",
-            ) from exc
 
     async def login(self, email: str, password: str) -> TokenResponse:
         """Perform login against Auth Server POST /api/v1/auth/login."""

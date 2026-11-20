@@ -7,64 +7,37 @@ from core.config.auth import auth_settings
 from core.exceptions import UnauthorizedException
 from core.security.jwt import decode_access_token
 from modules.identity.dtos.auth_dtos import AuthUserDTO as AuthUser
+from modules.identity.services.sso_claims import auth_user_from_claims
 
 bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def _unauthorized(detail: str) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=detail,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 async def get_current_user(
     request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> AuthUser:
-    """Verify user identity via DUT AI Data Platform's own JWT token verified locally.
+    """Verify the DUT AI SSO access token issued by Manage.
 
-    Precedence:
-    1. HttpOnly Cookie (`settings.auth_cookie_name`) - primary for browser clients.
-    2. Authorization Bearer header - fallback for API clients / external integrations / test suites.
+    Precedence: shared HttpOnly cookie, then `Authorization: Bearer` (API clients, tests).
     """
-    platform_access_token = request.cookies.get(auth_settings.auth_cookie_name)
-    if not platform_access_token and credentials and credentials.credentials:
-        platform_access_token = credentials.credentials
-
-    if not platform_access_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Thiếu token xác thực (Cookie hoặc Authorization header)",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = request.cookies.get(auth_settings.auth_cookie_name)
+    if not token and credentials and credentials.credentials:
+        token = credentials.credentials
+    if not token:
+        raise _unauthorized("Thiếu token xác thực (Cookie hoặc Authorization header)")
 
     try:
-        payload = decode_access_token(platform_access_token)
+        return auth_user_from_claims(decode_access_token(token))
     except UnauthorizedException as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Token không hợp lệ hoặc đã hết hạn: {exc}",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
-
-    user_id_raw = payload.get("sub")
-    if not user_id_raw:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token không chứa thông tin định danh người dùng (sub).",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    try:
-        user_id = int(user_id_raw)
-    except (ValueError, TypeError):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Mã định danh người dùng không hợp lệ (phải là số nguyên int): {user_id_raw}",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    return AuthUser(
-        id=user_id,
-        email=payload.get("email", ""),
-        name=payload.get("name", ""),
-        role_names=payload.get("role_names", []),
-        status="ACTIVE",
-    )
+        raise _unauthorized(f"Token không hợp lệ hoặc đã hết hạn: {exc}") from exc
 
 
 CurrentUser = Annotated[AuthUser, Depends(get_current_user)]

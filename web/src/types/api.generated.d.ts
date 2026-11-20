@@ -13,7 +13,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** User Login */
+        /** Local development login (disabled in production) */
         post: operations["login_api_v1_auth_login_post"];
         delete?: never;
         options?: never;
@@ -28,10 +28,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get current logged in user information
-         * @description Return current logged in user (validated exactly once via CurrentUser dependency).
-         */
+        /** Current DUT AI SSO user */
         get: operations["get_me_api_v1_auth_me_get"];
         put?: never;
         post?: never;
@@ -50,10 +47,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * User Logout
-         * @description Perform user session logout (clearing HttpOnly auth cookie).
-         */
+        /** Log out of every DUT AI app (clears the shared SSO cookies) */
         post: operations["logout_api_v1_auth_logout_post"];
         delete?: never;
         options?: never;
@@ -898,26 +892,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/assets/{asset_id}/open-in-label-studio": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Open asset in Label Studio (Legacy/External)
-         * @deprecated
-         */
-        post: operations["open_asset_in_label_studio_api_v1_assets__asset_id__open_in_label_studio_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/annotations/batch-status": {
         parameters: {
             query?: never;
@@ -1004,7 +978,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/annotations/sync": {
+    "/projects/{project_id}/snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all snapshots for a project */
+        get: operations["list_snapshots_projects__project_id__snapshots_get"];
+        put?: never;
+        /** Asynchronously initiate snapshot creation */
+        post: operations["create_snapshot_projects__project_id__snapshots_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/snapshots/{snapshot_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get snapshot details & status */
+        get: operations["get_snapshot_detail_projects__project_id__snapshots__snapshot_id__get"];
+        put?: never;
+        post?: never;
+        /** Archive snapshot (soft delete) or purge permanently (owner only) */
+        delete: operations["delete_or_archive_snapshot_projects__project_id__snapshots__snapshot_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/snapshots/{snapshot_id}/cancel": {
         parameters: {
             query?: never;
             header?: never;
@@ -1013,12 +1023,128 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Webhook endpoint for Label Studio sync (Legacy)
-         * @deprecated
-         */
-        post: operations["sync_label_studio_webhook_api_v1_annotations_sync_post"];
+        /** Cancel a CREATING snapshot job */
+        post: operations["cancel_snapshot_projects__project_id__snapshots__snapshot_id__cancel_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/snapshots/{snapshot_id}/manifest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get snapshot manifest metadata and S3 storage URI */
+        get: operations["get_snapshot_manifest_projects__project_id__snapshots__snapshot_id__manifest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/snapshots/{snapshot_id}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List snapshot items via Keyset/Cursor streaming pagination */
+        get: operations["list_snapshot_items_projects__project_id__snapshots__snapshot_id__items_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/snapshots/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Compare two snapshots and return high-level summary KPIs and label deltas */
+        get: operations["get_snapshot_diff_summary_projects__project_id__snapshots_diff_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/snapshots/diff/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List granular item-level deltas between two snapshots */
+        get: operations["list_snapshot_diff_items_projects__project_id__snapshots_diff_items_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/snapshots/{snapshot_id}/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Assign or reassign a release tag to a snapshot */
+        post: operations["assign_release_tag_projects__project_id__snapshots__snapshot_id__tags_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all release tags in project */
+        get: operations["list_release_tags_projects__project_id__tags_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/tags/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a release tag */
+        delete: operations["delete_release_tag_projects__project_id__tags__name__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2224,26 +2350,6 @@ export interface components {
             /** Name */
             name: string;
         };
-        /** OpenInLabelStudioRequestDTO */
-        OpenInLabelStudioRequestDTO: {
-            /** Ontology Version Id */
-            ontology_version_id: string;
-            /** Project Id */
-            project_id: string;
-            /** Presigned Url */
-            presigned_url: string;
-            /** Dataset Version Id */
-            dataset_version_id?: string | null;
-        };
-        /** OpenInLabelStudioResponseDTO */
-        OpenInLabelStudioResponseDTO: {
-            /** Task Url */
-            task_url: string;
-            /** Ls Project Id */
-            ls_project_id: number;
-            /** Ls Task Id */
-            ls_task_id: number;
-        };
         /** OutputDefinitionCreateDTO */
         OutputDefinitionCreateDTO: {
             /** Code */
@@ -2480,6 +2586,29 @@ export interface components {
             /** Asset Filename */
             asset_filename?: string | null;
         };
+        /** ReleaseTagCreateRequest */
+        ReleaseTagCreateRequest: {
+            /** Name */
+            name: string;
+        };
+        /** ReleaseTagResponse */
+        ReleaseTagResponse: {
+            /** Name */
+            name: string;
+            /** Snapshot Id */
+            snapshot_id: string;
+            /** Project Id */
+            project_id: string;
+            /** Created By */
+            created_by: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Updated At */
+            updated_at: string | null;
+        };
         /** RevisionCreateDTO */
         RevisionCreateDTO: {
             /** Ontology Version Id */
@@ -2495,6 +2624,210 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
+        /**
+         * SelectionPolicy
+         * @enum {string}
+         */
+        SelectionPolicy: "LATEST_APPROVED" | "LATEST_SUBMITTED";
+        /** SnapshotCancelResponse */
+        SnapshotCancelResponse: {
+            /** Message */
+            message: string;
+            snapshot: components["schemas"]["SnapshotResponse"];
+        };
+        /** SnapshotCreateRequest */
+        SnapshotCreateRequest: {
+            /** Dataset Version Id */
+            dataset_version_id: string;
+            /** Ontology Version Id */
+            ontology_version_id: string;
+            /** Version Name */
+            version_name?: string | null;
+            /** @default LATEST_APPROVED */
+            selection_policy?: components["schemas"]["SelectionPolicy"];
+            /**
+             * Include Unannotated
+             * @default false
+             */
+            include_unannotated?: boolean;
+            /** @default STRATIFIED */
+            split_strategy?: components["schemas"]["SplitStrategy"];
+            split_ratios?: components["schemas"]["SplitRatiosDTO"];
+            /**
+             * Split Seed
+             * @default 42
+             */
+            split_seed?: number | null;
+        };
+        /** SnapshotDiffItemDTO */
+        SnapshotDiffItemDTO: {
+            /** Asset Id */
+            asset_id: string;
+            /** Change Type */
+            change_type: string;
+            /** Base Revision Id */
+            base_revision_id: string | null;
+            /** Target Revision Id */
+            target_revision_id: string | null;
+            /** Base Split */
+            base_split: string | null;
+            /** Target Split */
+            target_split: string | null;
+        };
+        /** SnapshotDiffItemsResponse */
+        SnapshotDiffItemsResponse: {
+            /** Items */
+            items: components["schemas"]["SnapshotDiffItemDTO"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** SnapshotDiffSummaryResponse */
+        SnapshotDiffSummaryResponse: {
+            /** Base Snapshot Id */
+            base_snapshot_id: string;
+            /** Target Snapshot Id */
+            target_snapshot_id: string;
+            /** Added Asset Count */
+            added_asset_count: number;
+            /** Removed Asset Count */
+            removed_asset_count: number;
+            /** Modified Annotation Count */
+            modified_annotation_count: number;
+            /** Split Movement Count */
+            split_movement_count: number;
+            /** Class Distribution Deltas */
+            class_distribution_deltas: {
+                [key: string]: number;
+            };
+        };
+        /** SnapshotItemListResponse */
+        SnapshotItemListResponse: {
+            /** Items */
+            items: components["schemas"]["SnapshotItemResponse"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+            /** Total Count */
+            total_count: number;
+        };
+        /** SnapshotItemResponse */
+        SnapshotItemResponse: {
+            /** Id */
+            id: string;
+            /** Snapshot Id */
+            snapshot_id: string;
+            /** Asset Id */
+            asset_id: string;
+            /** Annotation Revision Id */
+            annotation_revision_id: string | null;
+            /** Split */
+            split: string;
+            /** Item Checksum */
+            item_checksum: string;
+            /** Sort Order */
+            sort_order: number;
+        };
+        /** SnapshotManifestResponse */
+        SnapshotManifestResponse: {
+            /** Snapshot Id */
+            snapshot_id: string;
+            /** Dataset Version Id */
+            dataset_version_id: string;
+            /** Ontology Version Id */
+            ontology_version_id: string;
+            /** Asset Count */
+            asset_count: number;
+            /** Annotation Count */
+            annotation_count: number;
+            /** Split Distribution */
+            split_distribution: {
+                [key: string]: unknown;
+            };
+            /** Class Distribution */
+            class_distribution: {
+                [key: string]: unknown;
+            };
+            /** Aggregate Checksum */
+            aggregate_checksum: string;
+            /** Storage Uri */
+            storage_uri: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** SnapshotResponse */
+        SnapshotResponse: {
+            /** Id */
+            id: string;
+            /** Project Id */
+            project_id: string;
+            /** Dataset Version Id */
+            dataset_version_id: string;
+            /** Ontology Version Id */
+            ontology_version_id: string;
+            /** Version Name */
+            version_name: string;
+            /** Status */
+            status: string;
+            /** Selection Policy */
+            selection_policy: string;
+            /** Include Unannotated */
+            include_unannotated: boolean;
+            /** Split Strategy */
+            split_strategy: string;
+            /** Split Ratios */
+            split_ratios: {
+                [key: string]: number;
+            };
+            /** Split Seed */
+            split_seed: number | null;
+            /** Tags */
+            tags: string[];
+            /** Error Code */
+            error_code: string | null;
+            /** Error Message */
+            error_message: string | null;
+            /** Created By */
+            created_by: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Finalized At */
+            finalized_at: string | null;
+            /** Archived At */
+            archived_at: string | null;
+        };
+        /**
+         * SnapshotStatus
+         * @enum {string}
+         */
+        SnapshotStatus: "CREATING" | "READY" | "ARCHIVED" | "FAILED";
+        /** SplitRatiosDTO */
+        SplitRatiosDTO: {
+            /**
+             * Train
+             * @default 0.7
+             */
+            train?: number;
+            /**
+             * Validation
+             * @default 0.15
+             */
+            validation?: number;
+            /**
+             * Test
+             * @default 0.15
+             */
+            test?: number;
+        };
+        /**
+         * SplitStrategy
+         * @enum {string}
+         */
+        SplitStrategy: "RANDOM" | "STRATIFIED";
         /** TemplateLabelDTO */
         TemplateLabelDTO: {
             /** Name */
@@ -2510,18 +2843,6 @@ export interface components {
             desc: string | null;
             /** Type */
             type: string;
-        };
-        /** TokenResponseDTO */
-        TokenResponseDTO: {
-            /** Access Token */
-            access_token: string;
-            /** Refresh Token */
-            refresh_token: string | null;
-            /**
-             * Token Type
-             * @default bearer
-             */
-            token_type: string;
         };
         /** TransitionWorkItemRequest */
         TransitionWorkItemRequest: {
@@ -2735,7 +3056,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TokenResponseDTO"];
+                    "application/json": components["schemas"]["AuthUserResponseDTO"];
                 };
             };
             /** @description Validation Error */
@@ -5371,41 +5692,6 @@ export interface operations {
             };
         };
     };
-    open_asset_in_label_studio_api_v1_assets__asset_id__open_in_label_studio_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                asset_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OpenInLabelStudioRequestDTO"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OpenInLabelStudioResponseDTO"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_batch_asset_status_api_v1_annotations_batch_status_post: {
         parameters: {
             query?: never;
@@ -5600,18 +5886,337 @@ export interface operations {
             };
         };
     };
-    sync_label_studio_webhook_api_v1_annotations_sync_post: {
+    list_snapshots_projects__project_id__snapshots_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["SnapshotStatus"] | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_snapshot_projects__project_id__snapshots_post: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                project_id: string;
+            };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": {
-                    [key: string]: unknown;
+                "application/json": components["schemas"]["SnapshotCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
                 };
+                content: {
+                    "application/json": components["schemas"]["SnapshotResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_snapshot_detail_projects__project_id__snapshots__snapshot_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_or_archive_snapshot_projects__project_id__snapshots__snapshot_id__delete: {
+        parameters: {
+            query?: {
+                /** @description Permanently delete snapshot (Owner only) */
+                purge?: boolean;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_snapshot_projects__project_id__snapshots__snapshot_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotCancelResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_snapshot_manifest_projects__project_id__snapshots__snapshot_id__manifest_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotManifestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_snapshot_items_projects__project_id__snapshots__snapshot_id__items_get: {
+        parameters: {
+            query?: {
+                /** @description ULID of last item for Keyset seek */
+                cursor?: string | null;
+                /** @description Items per page */
+                limit?: number;
+                /** @description Optional split filter: train, validation, test */
+                split?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotItemListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_snapshot_diff_summary_projects__project_id__snapshots_diff_get: {
+        parameters: {
+            query: {
+                /** @description ULID of base snapshot */
+                base_id: string;
+                /** @description ULID of target snapshot */
+                target_id: string;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotDiffSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_snapshot_diff_items_projects__project_id__snapshots_diff_items_get: {
+        parameters: {
+            query: {
+                /** @description ULID of base snapshot */
+                base_id: string;
+                /** @description ULID of target snapshot */
+                target_id: string;
+                /** @description Filter by delta type: added, removed, modified, split_changed */
+                change_type: string;
+                /** @description Last seen asset_id for pagination seek */
+                cursor?: string | null;
+                /** @description Items per page */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotDiffItemsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assign_release_tag_projects__project_id__snapshots__snapshot_id__tags_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseTagCreateRequest"];
             };
         };
         responses: {
@@ -5621,8 +6226,69 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AnnotationRevisionResponseDTO"] | null;
+                    "application/json": components["schemas"]["ReleaseTagResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_release_tags_projects__project_id__tags_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseTagResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_release_tag_projects__project_id__tags__name__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

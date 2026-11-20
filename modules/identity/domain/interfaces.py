@@ -7,10 +7,9 @@ from modules.identity.domain.entities import UserLoginMetadataEntity
 
 
 class IAuthClient(Protocol):
-    """Abstract protocol for external authentication client."""
+    """Abstract protocol for the DUT AI Manage auth server (local login only)."""
 
     async def login(self, email: str, password: str) -> Any: ...
-    async def get_me(self, token: str) -> Any: ...
 
 
 class IUserDirectory(Protocol):
@@ -32,6 +31,12 @@ class IUserLoginRepository(ABC):
         self, user_id: int, last_login_at: datetime
     ) -> UserLoginMetadataEntity:
         """Atomically insert or update the last login timestamp for a user."""
+
+    @abstractmethod
+    async def record_activity(
+        self, user_id: int, seen_at: datetime, not_before: datetime
+    ) -> None:
+        """Insert the row, or move last_login_at to seen_at only if it is older than not_before."""
 
     @abstractmethod
     async def get_by_user_id(self, user_id: int) -> UserLoginMetadataEntity | None:

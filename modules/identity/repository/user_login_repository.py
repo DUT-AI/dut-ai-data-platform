@@ -43,6 +43,24 @@ class SqlUserLoginRepository(IUserLoginRepository):
         model = result.scalar_one()
         return model.to_entity()
 
+    async def record_activity(
+        self, user_id: int, seen_at: datetime, not_before: datetime
+    ) -> None:
+        """Throttled upsert: one conditional statement, no read-modify-write race."""
+        stmt = insert(UserLoginMetadataModel).values(
+            user_id=user_id,
+            last_login_at=seen_at,
+            created_at=seen_at,
+            updated_at=seen_at,
+        )
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[UserLoginMetadataModel.user_id],
+            set_={"last_login_at": seen_at, "updated_at": seen_at},
+            where=UserLoginMetadataModel.last_login_at < not_before,
+        )
+        await self.session.execute(stmt)
+        await self.session.flush()
+
     async def get_by_user_id(self, user_id: int) -> UserLoginMetadataEntity | None:
         """Fetch last login record for a single user."""
         stmt = select(UserLoginMetadataModel).where(

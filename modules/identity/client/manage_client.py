@@ -5,6 +5,7 @@ import httpx
 from fastapi import HTTPException, status
 
 from core.config.manage_client import manage_settings
+from modules.identity.client.http import build_manage_http_client
 from modules.identity.dtos.manage_dtos import (
     ManageUserDTO,
     ManageUsersResponseDTO,
@@ -44,12 +45,7 @@ class ManageClient:
             )
             or (self._client_loop is not None and self._client_loop.is_closed())
         ):
-            limits = httpx.Limits(
-                max_keepalive_connections=20,
-                max_connections=100,
-                keepalive_expiry=30.0,
-            )
-            self._client = httpx.AsyncClient(limits=limits, timeout=self.timeout)
+            self._client = build_manage_http_client(self.timeout)
             self._client_loop = current_loop
         return self._client
 
@@ -87,10 +83,12 @@ class ManageClient:
             response = await self.client.get(
                 manage_settings.users_url, headers=headers, params=params
             )
-            if response.status_code == 401:
+            if response.status_code in (401, 403):
+                # Upstream credential problem (MANAGE_API_TOKEN), not the user's
+                # session: a 401 here would make the web app re-login in a loop.
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Phiên đăng nhập hết hạn hoặc không có quyền truy cập Manage API.",
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Manage API từ chối Data Platform. Kiểm tra MANAGE_API_TOKEN.",
                 )
             response.raise_for_status()
 

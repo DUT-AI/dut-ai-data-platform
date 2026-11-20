@@ -118,7 +118,9 @@ class SqlSnapshotItemRepository(SnapshotItemRepository):
         return result.scalar_one() or 0
 
     async def delete_by_snapshot(self, snapshot_id: str) -> int:
-        stmt = delete(SnapshotItemModel).where(SnapshotItemModel.snapshot_id == snapshot_id)
+        stmt = delete(SnapshotItemModel).where(
+            SnapshotItemModel.snapshot_id == snapshot_id
+        )
         result = await self._session.execute(stmt)
         await self._session.flush()
         return result.rowcount or 0

@@ -1,7 +1,7 @@
 import asyncio
 import json
 from collections import Counter
-from collections.abc import Callable, Sequence
+from datetime import UTC, datetime
 
 from core.utils.id_generator import generate_ulid
 from modules.snapshot.domain.entities import (
@@ -157,10 +157,12 @@ class SnapshotWorker:
                         )
                     )
                 else:
-                    split_assignments = self._stratification_service.assign_splits_random(
-                        asset_ids=target_asset_ids,
-                        split_ratios=snapshot.split_ratios,
-                        seed=snapshot.split_seed,
+                    split_assignments = (
+                        self._stratification_service.assign_splits_random(
+                            asset_ids=target_asset_ids,
+                            split_ratios=snapshot.split_ratios,
+                            seed=snapshot.split_seed,
+                        )
                     )
 
                 if is_snapshot_cancelled(snapshot_id):
@@ -232,7 +234,7 @@ class SnapshotWorker:
                 }
 
                 # 10. Generate Canonical Manifest JSON and Upload to S3
-                created_at_dt = snapshot.created_at or datetime.now(timezone.utc)
+                created_at_dt = snapshot.created_at or datetime.now(UTC)
                 manifest_payload = {
                     "snapshot_id": snapshot.id,
                     "dataset_version_id": snapshot.dataset_version_id,
@@ -308,5 +310,5 @@ class SnapshotWorker:
             await self._snapshot_item_repo.delete_by_snapshot(snapshot_id)
             if manifest_uri:
                 await self._storage_gateway.delete_object(manifest_uri)
-        except Exception:
+        except Exception:  # noqa: S110
             pass

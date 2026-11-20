@@ -118,7 +118,9 @@ class SqlSnapshotRepository(SnapshotRepository):
         stmt = select(SnapshotModel).where(SnapshotModel.project_id == project_id)
         if status is not None:
             stmt = stmt.where(SnapshotModel.status == status.value)
-        stmt = stmt.order_by(SnapshotModel.created_at.desc()).limit(limit).offset(offset)
+        stmt = (
+            stmt.order_by(SnapshotModel.created_at.desc()).limit(limit).offset(offset)
+        )
         result = await self._session.execute(stmt)
         models = result.scalars().all()
 

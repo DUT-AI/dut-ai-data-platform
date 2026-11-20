@@ -14,9 +14,8 @@ class MinIOStorageGateway(StorageGateway):
 
     async def upload_manifest(self, path: str, content: bytes) -> str:
         stream = io.BytesIO(content)
-        # S3 upload returns relative path or URI
         key = path.lstrip("/")
-        relative_uri = await self._storage.upload(
+        await self._storage.upload(
             bucket=self._bucket,
             key=key,
             data=stream,

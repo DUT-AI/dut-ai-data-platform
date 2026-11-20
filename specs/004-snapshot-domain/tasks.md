@@ -85,13 +85,13 @@ description: "Task list for Snapshot Domain & Immutable Dataset Publishing imple
 **Independent Test**: Partition a dataset specifying 70/15/15 ratio with fixed seed. Running split generation repeatedly yields identical allocations (SC-003) and class deviation ≤ 2% (SC-004).
 
 ### Tests for User Story 2
-- [ ] T027 [P] [US2] Unit test pure domain `StratificationService` for multilabel iterative stratification balance and unannotated asset uniform distribution in `tests/modules/snapshot/unit/test_stratification_service.py`
-- [ ] T028 [P] [US2] Unit test random split allocation reproducibility with seed in `tests/modules/snapshot/unit/test_random_splitter.py`
+- [x] T027 [P] [US2] Unit test pure domain `StratificationService` for multilabel iterative stratification balance and unannotated asset uniform distribution in `tests/modules/snapshot/unit/test_stratification_service.py`
+- [x] T028 [P] [US2] Unit test random split allocation reproducibility with seed in `tests/modules/snapshot/unit/test_random_splitter.py`
 
 ### Implementation for User Story 2
-- [ ] T029 [US2] Implement pure-Python `StratificationService` (Sechidis multilabel iterative stratification with seeded tie-breaking and uniform unannotated distribution) in `modules/snapshot/domain/services/stratification_service.py`
-- [ ] T030 [US2] Integrate `StratificationService` into `SnapshotWorker` split assignment step in `modules/snapshot/infrastructure/background/snapshot_worker.py`
-- [ ] T031 [US2] Add split validation error handling (`invalid_split_ratios` when sum != 1.0 or values < 0) in `modules/snapshot/application/dtos/snapshot_dtos.py`
+- [x] T029 [US2] Implement pure-Python `StratificationService` (Sechidis multilabel iterative stratification with seeded tie-breaking and uniform unannotated distribution) in `modules/snapshot/domain/services/stratification_service.py`
+- [x] T030 [US2] Integrate `StratificationService` into `SnapshotWorker` split assignment step in `modules/snapshot/infrastructure/background/snapshot_worker.py`
+- [x] T031 [US2] Add split validation error handling (`invalid_split_ratios` when sum != 1.0 or values < 0) in `modules/snapshot/application/dtos/snapshot_dtos.py`
 
 **Checkpoint**: Deterministic random and stratified dataset splitting operational and verified within 2% deviation threshold.
 
@@ -104,18 +104,18 @@ description: "Task list for Snapshot Domain & Immutable Dataset Publishing imple
 **Independent Test**: Fetch manifest of completed snapshot; verify item count, annotation count, per-split percentages, and aggregate checksum match actual snapshot items (SC-005). Stream items via keyset pagination in < 50ms p95.
 
 ### Tests for User Story 3
-- [ ] T032 [P] [US3] Unit test pure domain `ChecksumService` for deterministic canonical JSON SHA-256 hashing and sorted aggregate digest in `tests/modules/snapshot/unit/test_checksum_service.py`
-- [ ] T033 [P] [US3] Integration test for `StorageGateway` MinIO upload and pre-signed download URI in `tests/modules/snapshot/integration/test_storage_gateway.py`
-- [ ] T034 [P] [US3] Integration test for Keyset pagination (`id > cursor`, limit 1000) streaming 10,000 items in `tests/modules/snapshot/integration/test_keyset_pagination.py`
+- [x] T032 [P] [US3] Unit test pure domain `ChecksumService` for deterministic canonical JSON SHA-256 hashing and sorted aggregate digest in `tests/modules/snapshot/unit/test_checksum_service.py`
+- [x] T033 [P] [US3] Integration test for `StorageGateway` MinIO upload and pre-signed download URI in `tests/modules/snapshot/integration/test_storage_gateway.py`
+- [x] T034 [P] [US3] Integration test for Keyset pagination (`id > cursor`, limit 1000) streaming 10,000 items in `tests/modules/snapshot/integration/test_keyset_pagination.py`
 
 ### Implementation for User Story 3
-- [ ] T035 [P] [US3] Implement pure domain `ChecksumService` (item canonical JSON SHA-256 and lexicographically sorted aggregate digest) in `modules/snapshot/domain/services/checksum_service.py`
-- [ ] T036 [US3] Implement `StorageGateway` using platform S3/MinIO client for manifest persistence in `modules/snapshot/infrastructure/gateways/storage_gateway.py`
-- [ ] T037 [US3] Implement `SnapshotManifestRepository` in `modules/snapshot/infrastructure/repositories/snapshot_manifest_repository.py`
-- [ ] T038 [US3] Implement Keyset pagination query (`WHERE snapshot_id = :id AND id > :cursor ORDER BY id ASC LIMIT :limit`) and offset fallback in `SnapshotItemRepository` in `modules/snapshot/infrastructure/repositories/snapshot_item_repository.py`
-- [ ] T039 [US3] Implement `GetSnapshotManifestUseCase` in `modules/snapshot/application/use_cases/get_snapshot_manifest.py`
-- [ ] T040 [US3] Implement `ListSnapshotItemsUseCase` supporting keyset cursor and split filtering in `modules/snapshot/application/use_cases/list_snapshot_items.py`
-- [ ] T041 [US3] Implement FastAPI endpoints for manifest retrieval (`GET /snapshots/{id}/manifest`) and paginated item query (`GET /snapshots/{id}/items`) in `apps/api/routers/snapshot/items.py`
+- [x] T035 [P] [US3] Implement pure domain `ChecksumService` (item canonical JSON SHA-256 and lexicographically sorted aggregate digest) in `modules/snapshot/domain/services/checksum_service.py`
+- [x] T036 [US3] Implement `StorageGateway` using platform S3/MinIO client for manifest persistence in `modules/snapshot/infrastructure/gateways/storage_gateway.py`
+- [x] T037 [US3] Implement `SnapshotManifestRepository` in `modules/snapshot/infrastructure/repositories/snapshot_manifest_repository.py`
+- [x] T038 [US3] Implement Keyset pagination query (`WHERE snapshot_id = :id AND id > :cursor ORDER BY id ASC LIMIT :limit`) and offset fallback in `SnapshotItemRepository` in `modules/snapshot/infrastructure/repositories/snapshot_item_repository.py`
+- [x] T039 [US3] Implement `GetSnapshotManifestUseCase` in `modules/snapshot/application/use_cases/get_snapshot_manifest.py`
+- [x] T040 [US3] Implement `ListSnapshotItemsUseCase` supporting keyset cursor and split filtering in `modules/snapshot/application/use_cases/list_snapshot_items.py`
+- [x] T041 [US3] Implement FastAPI endpoints for manifest retrieval (`GET /snapshots/{id}/manifest`) and paginated item query (`GET /snapshots/{id}/items`) in `apps/api/routers/snapshot/items.py`
 
 **Checkpoint**: Canonical manifest JSON persisted to S3, aggregate checksum verified, and items queryable via high-throughput Keyset pagination.
 
@@ -128,14 +128,14 @@ description: "Task list for Snapshot Domain & Immutable Dataset Publishing imple
 **Independent Test**: Compare Snapshot v1 and v2 where 5 assets were added, 2 modified, and 1 moved split. Diff summary returns in < 3 seconds (SC-006) and item-level endpoint returns exact asset IDs.
 
 ### Tests for User Story 4
-- [ ] T042 [P] [US4] Unit test `SnapshotDiffService` calculation logic with mock snapshots in `tests/modules/snapshot/unit/test_diff_service.py`
-- [ ] T043 [P] [US4] Integration test for cross-project comparison rejection and two-tier diff queries in `tests/modules/snapshot/integration/test_diff_service.py`
+- [x] T042 [P] [US4] Unit test `SnapshotDiffService` calculation logic with mock snapshots in `tests/modules/snapshot/unit/test_diff_service.py`
+- [x] T043 [P] [US4] Integration test for cross-project comparison rejection and two-tier diff queries in `tests/modules/snapshot/integration/test_diff_service.py`
 
 ### Implementation for User Story 4
-- [ ] T044 [P] [US4] Implement Pydantic DTO schemas for diff summary and paginated item changes (`SnapshotDiffSummaryResponse`, `SnapshotDiffItemsResponse`) in `modules/snapshot/application/dtos/snapshot_dtos.py`
-- [ ] T045 [US4] Implement `SnapshotDiffService` executing optimized PostgreSQL set queries for additions, removals, modifications, and split shifts in `modules/snapshot/infrastructure/repositories/snapshot_diff_service.py`
-- [ ] T046 [US4] Implement `DiffSnapshotsUseCase` (validating same project, orchestrating summary and item queries) in `modules/snapshot/application/use_cases/diff_snapshots.py`
-- [ ] T047 [US4] Implement FastAPI routes for diff summary (`GET /snapshots/diff`) and granular item changes (`GET /snapshots/diff/items`) in `apps/api/routers/snapshot/diff.py`
+- [x] T044 [P] [US4] Implement Pydantic DTO schemas for diff summary and paginated item changes (`SnapshotDiffSummaryResponse`, `SnapshotDiffItemsResponse`) in `modules/snapshot/application/dtos/snapshot_dtos.py`
+- [x] T045 [US4] Implement `SnapshotDiffService` executing optimized PostgreSQL set queries for additions, removals, modifications, and split shifts in `modules/snapshot/infrastructure/repositories/snapshot_diff_service.py`
+- [x] T046 [US4] Implement `DiffSnapshotsUseCase` (validating same project, orchestrating summary and item queries) in `modules/snapshot/application/use_cases/diff_snapshots.py`
+- [x] T047 [US4] Implement FastAPI routes for diff summary (`GET /snapshots/diff`) and granular item changes (`GET /snapshots/diff/items`) in `apps/api/routers/snapshot/diff.py`
 
 **Checkpoint**: Two-tier Snapshot Diff comparison operational and returning deltas in under 3 seconds.
 
@@ -148,17 +148,17 @@ description: "Task list for Snapshot Domain & Immutable Dataset Publishing imple
 **Independent Test**: Assign and reassign release tag `production` across snapshots; attempt deletion of snapshot with active downstream dependency (blocked); soft-delete with no dependencies (becomes `ARCHIVED`); hard-purge as Project Owner (records and S3 files removed).
 
 ### Tests for User Story 5
-- [ ] T048 [P] [US5] Unit test `ManageReleaseTagsUseCase` tag assignment, reassignment, and deletion in `tests/modules/snapshot/unit/test_manage_release_tags.py`
-- [ ] T049 [P] [US5] Integration test for soft-delete (`ARCHIVED`), dependency conflict (`409`), and Owner-only purge permissions in `tests/modules/snapshot/integration/test_lifecycle_deletion.py`
+- [x] T048 [P] [US5] Unit test `ManageReleaseTagsUseCase` tag assignment, reassignment, and deletion in `tests/modules/snapshot/unit/test_manage_release_tags.py`
+- [x] T049 [P] [US5] Integration test for soft-delete (`ARCHIVED`), dependency conflict (`409`), and Owner-only purge permissions in `tests/modules/snapshot/integration/test_lifecycle_deletion.py`
 
 ### Implementation for User Story 5
-- [ ] T050 [P] [US5] Implement Pydantic DTO schemas for release tags (`ReleaseTagCreateRequest`, `ReleaseTagResponse`) in `modules/snapshot/application/dtos/snapshot_dtos.py`
-- [ ] T051 [US5] Implement `ReleaseTagRepository` (`upsert`, `get_by_project_and_name`, `list_by_project`, `delete`) in `modules/snapshot/infrastructure/repositories/release_tag_repository.py`
-- [ ] T052 [US5] Implement `ManageReleaseTagsUseCase` (assign, list, remove tags with `UNIQUE(project_id, name)` constraint) in `modules/snapshot/application/use_cases/manage_release_tags.py`
-- [ ] T053 [US5] Implement `ArchiveSnapshotUseCase` (verifying zero active downstream export/training jobs, transitioning status to `ARCHIVED`) in `modules/snapshot/application/use_cases/archive_snapshot.py`
-- [ ] T054 [US5] Implement `PurgeSnapshotUseCase` (restricting execution strictly to Project Owner, deleting DB records and purging S3 manifest) in `modules/snapshot/application/use_cases/purge_snapshot.py`
-- [ ] T055 [US5] Implement FastAPI routes for tagging (`POST /snapshots/{id}/tags`, `GET /tags`, `DELETE /tags/{name}`) in `apps/api/routers/snapshot/tags.py`
-- [ ] T056 [US5] Implement FastAPI routes for soft-delete (`DELETE /snapshots/{id}`) and hard purge (`DELETE /snapshots/{id}/purge`) in `apps/api/routers/snapshot/snapshots.py`
+- [x] T050 [P] [US5] Implement Pydantic DTO schemas for release tags (`ReleaseTagCreateRequest`, `ReleaseTagResponse`) in `modules/snapshot/application/dtos/snapshot_dtos.py`
+- [x] T051 [US5] Implement `ReleaseTagRepository` (`upsert`, `get_by_project_and_name`, `list_by_project`, `delete`) in `modules/snapshot/infrastructure/repositories/release_tag_repository.py`
+- [x] T052 [US5] Implement `ManageReleaseTagsUseCase` (assign, list, remove tags with `UNIQUE(project_id, name)` constraint) in `modules/snapshot/application/use_cases/manage_release_tags.py`
+- [x] T053 [US5] Implement `ArchiveSnapshotUseCase` (verifying zero active downstream export/training jobs, transitioning status to `ARCHIVED`) in `modules/snapshot/application/use_cases/archive_snapshot.py`
+- [x] T054 [US5] Implement `PurgeSnapshotUseCase` (restricting execution strictly to Project Owner, deleting DB records and purging S3 manifest) in `modules/snapshot/application/use_cases/purge_snapshot.py`
+- [x] T055 [US5] Implement FastAPI routes for tagging (`POST /snapshots/{id}/tags`, `GET /tags`, `DELETE /tags/{name}`) in `apps/api/routers/snapshot/tags.py`
+- [x] T056 [US5] Implement FastAPI routes for soft-delete (`DELETE /snapshots/{id}`) and hard purge (`DELETE /snapshots/{id}/purge`) in `apps/api/routers/snapshot/snapshots.py`
 
 **Checkpoint**: Release tags, soft-delete archiving, and Owner-only hard purge guardrails fully implemented.
 
@@ -168,11 +168,11 @@ description: "Task list for Snapshot Domain & Immutable Dataset Publishing imple
 
 **Purpose**: Upstream referential guard integration, router mounting, documentation, and end-to-end quickstart validation.
 
-- [ ] T057 Mount unified snapshot router in `apps/api/routers/snapshot/__init__.py` and register in `apps/api/main.py`
-- [ ] T058 Implement referential protection guard in `modules/dataset/` and `modules/annotation/` preventing hard deletion of assets or revisions pinned by READY/ARCHIVED snapshots
-- [ ] T059 [P] Execute full test suite `uv run pytest tests/modules/snapshot/ -v` and verify 0 failures
-- [ ] T060 Execute end-to-end scenarios in `specs/004-snapshot-domain/quickstart.md` confirming SC-001 through SC-006 pass
-- [ ] T061 [P] Run code formatting and linting via `ruff check` and `ruff format` on touched snapshot module files
+- [x] T057 Mount unified snapshot router in `apps/api/routers/snapshot/__init__.py` and register in `apps/api/main.py`
+- [x] T058 Implement referential protection guard in `modules/dataset/` and `modules/annotation/` preventing hard deletion of assets or revisions pinned by READY/ARCHIVED snapshots
+- [x] T059 [P] Execute full test suite `uv run pytest tests/modules/snapshot/ -v` and verify 0 failures
+- [x] T060 Execute end-to-end scenarios in `specs/004-snapshot-domain/quickstart.md` confirming SC-001 through SC-006 pass
+- [x] T061 [P] Run code formatting and linting via `ruff check` and `ruff format` on touched snapshot module files
 
 ---
 

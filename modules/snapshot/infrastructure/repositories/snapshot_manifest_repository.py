@@ -28,9 +28,7 @@ class SqlSnapshotManifestRepository(SnapshotManifestRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def create(
-        self, manifest: SnapshotManifestEntity
-    ) -> SnapshotManifestEntity:
+    async def create(self, manifest: SnapshotManifestEntity) -> SnapshotManifestEntity:
         model = SnapshotManifestModel(
             id=manifest.id,
             snapshot_id=manifest.snapshot_id,

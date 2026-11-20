@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from core.utils.id_generator import generate_ulid
@@ -29,7 +29,7 @@ class SnapshotEntity:
     split_seed: int | None = None
     error_code: str | None = None
     error_message: str | None = None
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     finalized_at: datetime | None = None
     archived_at: datetime | None = None
 
@@ -39,7 +39,7 @@ class SnapshotEntity:
                 f"Cannot finalize snapshot from status {self.status}"
             )
         self.status = SnapshotStatus.READY
-        self.finalized_at = finalized_at or datetime.now(timezone.utc)
+        self.finalized_at = finalized_at or datetime.now(UTC)
 
     def mark_failed(self, error_code: str, error_message: str) -> None:
         if self.status not in (SnapshotStatus.CREATING, SnapshotStatus.READY):
@@ -50,13 +50,13 @@ class SnapshotEntity:
         self.error_code = error_code
         self.error_message = error_message
 
-    def archive(self, archived_at: datetime) -> None:
-        if self.status != "READY":
+    def archive(self, archived_at: datetime | None = None) -> None:
+        if self.status != SnapshotStatus.READY:
             raise SnapshotImmutableError(
-                f"Only READY snapshots can be archived (current: {self.status})"
+                f"Only READY snapshots can be archived (current: {self.status.value})"
             )
-        self.status = "ARCHIVED"
-        self.archived_at = archived_at
+        self.status = SnapshotStatus.ARCHIVED
+        self.archived_at = archived_at or datetime.now(UTC)
 
     def assert_mutable(self) -> None:
         if self.status in ("READY", "ARCHIVED"):

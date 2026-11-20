@@ -51,7 +51,9 @@ class SqlAnnotationGateway(AnnotationGateway):
         result = await self._session.execute(stmt)
         rows = result.all()
 
-        resolved: dict[str, ResolvedAnnotationInfo | None] = {aid: None for aid in asset_ids}
+        resolved: dict[str, ResolvedAnnotationInfo | None] = {
+            aid: None for aid in asset_ids
+        }
 
         for row in rows:
             asset_id = row.asset_id
@@ -59,9 +61,12 @@ class SqlAnnotationGateway(AnnotationGateway):
                 continue
 
             # If LATEST_APPROVED, prefer human or validated revisions
-            if policy == SelectionPolicy.LATEST_APPROVED.value:
-                if row.source != "human" and len(row.results or []) == 0:
-                    continue
+            if (
+                policy == SelectionPolicy.LATEST_APPROVED.value
+                and row.source != "human"
+                and len(row.results or []) == 0
+            ):
+                continue
 
             results = row.results or []
             canonical_json = json.dumps(results, sort_keys=True, separators=(",", ":"))
@@ -76,7 +81,7 @@ class SqlAnnotationGateway(AnnotationGateway):
             resolved[asset_id] = ResolvedAnnotationInfo(
                 annotation_revision_id=row.id,
                 asset_id=asset_id,
-                labels=sorted(list(set(labels))),
+                labels=sorted(set(labels)),
                 revision_sha256=rev_sha,
             )
 

@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from modules.annotation.models.annotation import AnnotationRevisionModel
-from modules.ontology.models.ontology import CategoryModel, OntologyVersionModel
+from modules.ontology.models.ontology import OntologyVersionModel
 from modules.snapshot.domain.interfaces import OntologyGateway
 
 

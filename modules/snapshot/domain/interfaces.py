@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Protocol, Sequence
+from typing import Any, Protocol
 
 from modules.snapshot.domain.entities import (
     ReleaseTagEntity,
@@ -85,9 +86,7 @@ class SnapshotItemRepository(Protocol):
 
 
 class SnapshotManifestRepository(Protocol):
-    async def create(
-        self, manifest: SnapshotManifestEntity
-    ) -> SnapshotManifestEntity:
+    async def create(self, manifest: SnapshotManifestEntity) -> SnapshotManifestEntity:
         """Store relational manifest record."""
         ...
 

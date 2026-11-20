@@ -1,5 +1,3 @@
-import asyncio
-from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -7,9 +5,6 @@ import pytest
 from modules.snapshot.application.dtos.snapshot_dtos import (
     SnapshotCreateRequest,
     SplitRatiosDTO,
-)
-from modules.snapshot.application.use_cases.cancel_snapshot import (
-    CancelSnapshotUseCase,
 )
 from modules.snapshot.application.use_cases.create_snapshot import (
     CreateSnapshotUseCase,
@@ -25,7 +20,6 @@ from modules.snapshot.domain.services.stratification_service import (
 from modules.snapshot.domain.value_objects import (
     SelectionPolicy,
     SnapshotStatus,
-    SplitRatios,
     SplitStrategy,
 )
 from modules.snapshot.infrastructure.background.snapshot_worker import (
@@ -148,7 +142,9 @@ async def test_snapshot_lifecycle_end_to_end():
     # Await worker execution directly to verify completion
     completed = await worker.execute(snapshot.id)
 
-    assert completed.error_code is None, f"Failed: {completed.error_code} - {completed.error_message}"
+    assert completed.error_code is None, (
+        f"Failed: {completed.error_code} - {completed.error_message}"
+    )
     assert completed.status == SnapshotStatus.READY
     assert completed.finalized_at is not None
     assert len(items_db) == 10

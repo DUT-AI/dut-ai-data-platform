@@ -1,5 +1,5 @@
 import random
-from collections import Counter, defaultdict
+from collections import Counter
 from collections.abc import Sequence
 
 from modules.snapshot.domain.interfaces import StratificationService
@@ -20,10 +20,8 @@ class DefaultStratificationService(StratificationService):
         rng.shuffle(shuffled)
 
         n = len(shuffled)
-        n_train = int(round(n * split_ratios.train))
-        n_val = int(round(n * split_ratios.validation))
-        # Ensure total sums exactly to n
-        n_test = n - n_train - n_val
+        n_train = round(n * split_ratios.train)
+        n_val = round(n * split_ratios.validation)
 
         assignments: dict[str, str] = {}
         for aid in shuffled[:n_train]:
@@ -45,8 +43,6 @@ class DefaultStratificationService(StratificationService):
 
         Guarantees class distribution balance across splits and deterministic seeded tie-breaking.
         """
-        rng = random.Random(seed)
-
         # 1. Separate unannotated (empty labels) from annotated assets
         unannotated = [aid for aid, labels in asset_labels.items() if not labels]
         annotated = [aid for aid, labels in asset_labels.items() if labels]
@@ -124,16 +120,21 @@ class DefaultStratificationService(StratificationService):
                 max_deficit = -float("inf")
 
                 for s in splits:
-                    deficit = target_label_counts[s][label] - current_label_counts[s][label]
+                    deficit = (
+                        target_label_counts[s][label] - current_label_counts[s][label]
+                    )
                     # Tie-breaking: prioritize split with fewer items relative to target
                     if deficit > max_deficit:
                         max_deficit = deficit
                         best_split = s
                     elif abs(deficit - max_deficit) < 1e-6:
                         # Secondary tie-break: item count deficit
-                        item_deficit_curr = target_item_counts[s] - current_item_counts[s]
+                        item_deficit_curr = (
+                            target_item_counts[s] - current_item_counts[s]
+                        )
                         item_deficit_best = (
-                            target_item_counts[best_split] - current_item_counts[best_split]
+                            target_item_counts[best_split]
+                            - current_item_counts[best_split]
                             if best_split
                             else -float("inf")
                         )

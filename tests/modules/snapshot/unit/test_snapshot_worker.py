@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -33,7 +33,7 @@ def base_snapshot():
         split_strategy=SplitStrategy.STRATIFIED,
         split_ratios=SplitRatios(0.7, 0.15, 0.15),
         created_by=1001,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
 
 
@@ -107,7 +107,9 @@ async def test_worker_happy_path(base_snapshot, mock_dependencies):
     worker = SnapshotWorker(**deps)
     result = await worker.execute(base_snapshot.id)
 
-    assert result.error_code is None, f"Failed with {result.error_code}: {result.error_message}"
+    assert result.error_code is None, (
+        f"Failed with {result.error_code}: {result.error_message}"
+    )
     assert result.status == SnapshotStatus.READY
     assert result.finalized_at is not None
     assert result.error_code is None

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -107,7 +107,7 @@ async def test_cancel_snapshot_success(mock_snapshot_repo):
         split_strategy=SplitStrategy.STRATIFIED,
         split_ratios=SplitRatios(0.7, 0.15, 0.15),
         created_by=1001,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
     mock_snapshot_repo.get_by_id.return_value = existing
 
@@ -150,7 +150,7 @@ async def test_cancel_already_ready_snapshot(mock_snapshot_repo):
         split_strategy=SplitStrategy.STRATIFIED,
         split_ratios=SplitRatios(0.7, 0.15, 0.15),
         created_by=1001,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
     mock_snapshot_repo.get_by_id.return_value = existing
     use_case = CancelSnapshotUseCase(snapshot_repo=mock_snapshot_repo)

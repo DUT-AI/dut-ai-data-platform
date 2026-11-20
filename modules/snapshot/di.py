@@ -2,17 +2,35 @@ from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.storage.interface import IStorageProvider
+from modules.snapshot.application.use_cases.archive_snapshot import (
+    ArchiveSnapshotUseCase,
+)
 from modules.snapshot.application.use_cases.cancel_snapshot import (
     CancelSnapshotUseCase,
 )
 from modules.snapshot.application.use_cases.create_snapshot import (
     CreateSnapshotUseCase,
 )
+from modules.snapshot.application.use_cases.diff_snapshots import (
+    DiffSnapshotsUseCase,
+)
 from modules.snapshot.application.use_cases.get_snapshot_detail import (
     GetSnapshotDetailUseCase,
 )
+from modules.snapshot.application.use_cases.get_snapshot_manifest import (
+    GetSnapshotManifestUseCase,
+)
+from modules.snapshot.application.use_cases.list_snapshot_items import (
+    ListSnapshotItemsUseCase,
+)
 from modules.snapshot.application.use_cases.list_snapshots import (
     ListSnapshotsUseCase,
+)
+from modules.snapshot.application.use_cases.manage_release_tags import (
+    ManageReleaseTagsUseCase,
+)
+from modules.snapshot.application.use_cases.purge_snapshot import (
+    PurgeSnapshotUseCase,
 )
 from modules.snapshot.domain.interfaces import (
     AnnotationGateway,
@@ -20,6 +38,7 @@ from modules.snapshot.domain.interfaces import (
     DatasetGateway,
     OntologyGateway,
     ReleaseTagRepository,
+    SnapshotDiffService,
     SnapshotItemRepository,
     SnapshotManifestRepository,
     SnapshotRepository,
@@ -47,6 +66,9 @@ from modules.snapshot.infrastructure.gateways.ontology_gateway import (
 from modules.snapshot.infrastructure.gateways.storage_gateway import (
     MinIOStorageGateway,
 )
+from modules.snapshot.infrastructure.repositories.release_tag_repository import (
+    SqlReleaseTagRepository,
+)
 from modules.snapshot.infrastructure.repositories.snapshot_item_repository import (
     SqlSnapshotItemRepository,
 )
@@ -55,6 +77,9 @@ from modules.snapshot.infrastructure.repositories.snapshot_manifest_repository i
 )
 from modules.snapshot.infrastructure.repositories.snapshot_repository import (
     SqlSnapshotRepository,
+)
+from modules.snapshot.infrastructure.services.snapshot_diff_service import (
+    SqlSnapshotDiffService,
 )
 
 
@@ -78,6 +103,10 @@ class SnapshotProvider(Provider):
     ) -> SnapshotManifestRepository:
         return SqlSnapshotManifestRepository(session)
 
+    @provide
+    def get_tag_repo(self, session: AsyncSession) -> ReleaseTagRepository:
+        return SqlReleaseTagRepository(session)
+
     # Gateways
     @provide
     def get_dataset_gateway(self, session: AsyncSession) -> DatasetGateway:
@@ -92,9 +121,7 @@ class SnapshotProvider(Provider):
         return SqlOntologyGateway(session)
 
     @provide
-    def get_storage_gateway(
-        self, storage_provider: IStorageProvider
-    ) -> StorageGateway:
+    def get_storage_gateway(self, storage_provider: IStorageProvider) -> StorageGateway:
         return MinIOStorageGateway(storage_provider)
 
     # Services
@@ -105,6 +132,10 @@ class SnapshotProvider(Provider):
     @provide
     def get_stratification_service(self) -> StratificationService:
         return DefaultStratificationService()
+
+    @provide
+    def get_diff_service(self, session: AsyncSession) -> SnapshotDiffService:
+        return SqlSnapshotDiffService(session)
 
     # Background Worker
     @provide
@@ -137,3 +168,9 @@ class SnapshotProvider(Provider):
     cancel_snapshot_uc = provide(CancelSnapshotUseCase)
     get_snapshot_detail_uc = provide(GetSnapshotDetailUseCase)
     list_snapshots_uc = provide(ListSnapshotsUseCase)
+    get_snapshot_manifest_uc = provide(GetSnapshotManifestUseCase)
+    list_snapshot_items_uc = provide(ListSnapshotItemsUseCase)
+    diff_snapshots_uc = provide(DiffSnapshotsUseCase)
+    manage_release_tags_uc = provide(ManageReleaseTagsUseCase)
+    archive_snapshot_uc = provide(ArchiveSnapshotUseCase)
+    purge_snapshot_uc = provide(PurgeSnapshotUseCase)

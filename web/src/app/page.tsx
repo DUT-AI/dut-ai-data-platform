@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
+import { redirectToSsoLogin } from "@/lib/auth-urls";
 
 export default function HomePage() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export default function HomePage() {
       if (user) {
         router.replace("/dashboard");
       } else {
-        router.replace("/login");
+        redirectToSsoLogin();
       }
     }
   }, [user, isLoading, router]);

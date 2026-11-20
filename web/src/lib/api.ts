@@ -1,4 +1,5 @@
 import axios from "axios";
+import { redirectToSsoLogin } from "@/lib/auth-urls";
 
 export const api = axios.create({
   baseURL:
@@ -13,14 +14,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      if (typeof window !== "undefined") {
-        const isLoginRequest = error.config?.url?.includes("/auth/login");
-        const isLoginPage = window.location.pathname === "/login";
+      const isLoginRequest = error.config?.url?.includes("/auth/login");
 
-        // Prevent redirect loop and allow login page to display bad credentials error
-        if (!isLoginRequest && !isLoginPage) {
-          window.location.href = "/login";
-        }
+      // Let the local login form show bad-credential errors; everything else
+      // means there is no valid SSO session.
+      if (!isLoginRequest) {
+        redirectToSsoLogin();
       }
     }
     return Promise.reject(error);

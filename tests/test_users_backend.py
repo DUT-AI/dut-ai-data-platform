@@ -255,8 +255,9 @@ async def test_api_get_users_authenticated_success(monkeypatch):
 @pytest.mark.asyncio
 async def test_api_get_users_authenticated_via_cookie_success(monkeypatch):
     """Test 7: Authenticated request via HttpOnly cookie does NOT leak Platform token to ManageClient."""
+    from auth_tokens import mint_manage_token
+
     from core.config.auth import auth_settings
-    from core.security.jwt import create_access_token
 
     mock_user = AuthUser(
         id=101,
@@ -282,7 +283,7 @@ async def test_api_get_users_authenticated_via_cookie_success(monkeypatch):
     monkeypatch.setattr(ManageClient, "list_users", mock_list_users)
     app.dependency_overrides[get_current_user] = lambda: mock_user
 
-    platform_jwt = create_access_token({"sub": "101", "email": "operator@example.com"})
+    platform_jwt = mint_manage_token(101, email="operator@example.com")
 
     try:
         transport = httpx.ASGITransport(app=app)

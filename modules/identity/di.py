@@ -5,6 +5,7 @@ from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from modules.identity.client.auth_client import AuthClient
+from modules.identity.client.http import build_manage_http_client
 from modules.identity.client.manage_client import ManageClient
 from modules.identity.domain.interfaces import (
     IAuthClient,
@@ -23,12 +24,7 @@ class IdentityProvider(Provider):
 
     @provide(scope=Scope.APP)
     async def get_pooled_client(self) -> AsyncIterable[httpx.AsyncClient]:
-        limits = httpx.Limits(
-            max_keepalive_connections=20,
-            max_connections=100,
-            keepalive_expiry=30.0,
-        )
-        async with httpx.AsyncClient(limits=limits, timeout=10.0) as client:
+        async with build_manage_http_client() as client:
             yield client
 
     @provide(scope=Scope.APP)

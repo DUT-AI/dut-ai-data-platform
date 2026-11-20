@@ -1,18 +1,20 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock
 
 import pytest
+from auth_tokens import mint_manage_token
 from fastapi import HTTPException
 
+from core.exceptions import UnauthorizedException
 from modules.identity.client.auth_client import AuthClient
 from modules.identity.domain.entities import (
-    AuthUser,
     TokenResponse,
     UserLoginMetadataEntity,
 )
 from modules.identity.domain.interfaces import IUserLoginRepository
 from modules.identity.dtos.auth_dtos import LoginRequestDTO
 from modules.identity.models.user_login import UserLoginMetadataModel
+from modules.identity.use_cases.get_me import GetMeUseCase
 from modules.identity.use_cases.login import LoginUseCase
 
 
@@ -37,6 +39,14 @@ class InMemoryUserLoginRepository(IUserLoginRepository):
         self.records[user_id] = entity
         return entity
 
+    async def record_activity(
+        self, user_id: int, seen_at: datetime, not_before: datetime
+    ) -> None:
+        existing = self.records.get(user_id)
+        if existing and existing.last_login_at >= not_before:
+            return
+        await self.upsert_last_login(user_id, seen_at)
+
     async def get_by_user_id(self, user_id: int) -> UserLoginMetadataEntity | None:
         return self.records.get(user_id)
 
@@ -48,22 +58,20 @@ class InMemoryUserLoginRepository(IUserLoginRepository):
         }
 
 
+def _manage_tokens(user_id: int) -> TokenResponse:
+    return TokenResponse(
+        access_token=mint_manage_token(user_id, email="test@dutai.io.vn"),
+        refresh_token=mint_manage_token(
+            user_id, token_type="refresh", expires_in=timedelta(days=7)
+        ),
+    )
+
+
 @pytest.mark.asyncio
 async def test_first_login_creates_last_login_record():
     """Test 1: First login creates a new record in user_login_metadata."""
     auth_client = AsyncMock(spec=AuthClient)
-    auth_client.login.return_value = TokenResponse(
-        access_token="acc_tok_1",
-        refresh_token="ref_tok_1",
-        token_type="bearer",
-    )
-    auth_client.get_me.return_value = AuthUser(
-        id=101,
-        name="Test User",
-        email="test@dutai.io.vn",
-        status="ACTIVE",
-        role_names=["ADMIN"],
-    )
+    auth_client.login.return_value = _manage_tokens(101)
 
     repo = InMemoryUserLoginRepository()
     use_case = LoginUseCase(auth_client=auth_client, login_repo=repo)
@@ -72,19 +80,15 @@ async def test_first_login_creates_last_login_record():
         LoginRequestDTO(email="test@dutai.io.vn", password="pass")
     )
 
-    from core.security.jwt import decode_access_token
-
-    # Crucial: Platform issues its own JWT and discards Manage token "acc_tok_1"
-    assert res.access_token != "acc_tok_1"
-    payload = decode_access_token(res.access_token)
-    assert payload["sub"] == "101"
-    assert payload["email"] == "test@dutai.io.vn"
-    assert payload["iss"] == "dut-ai-data-platform"
+    assert res.user.id == 101
+    assert (
+        res.access_token == auth_client.login.return_value.access_token
+    )  # Manage token kept as-is
+    assert res.access_expires_at > 0 and res.refresh_expires_at > res.access_expires_at
 
     auth_client.login.assert_awaited_once_with(
         email="test@dutai.io.vn", password="pass"
     )
-    auth_client.get_me.assert_awaited_once_with("acc_tok_1")
 
     record = await repo.get_by_user_id(101)
     assert record is not None
@@ -97,18 +101,7 @@ async def test_first_login_creates_last_login_record():
 async def test_second_login_updates_existing_record():
     """Test 2: Second login updates last_login_at without creating duplicate rows."""
     auth_client = AsyncMock(spec=AuthClient)
-    auth_client.login.return_value = TokenResponse(
-        access_token="acc_tok_2",
-        refresh_token="ref_tok_2",
-        token_type="bearer",
-    )
-    auth_client.get_me.return_value = AuthUser(
-        id=101,
-        name="Test User",
-        email="test@dutai.io.vn",
-        status="ACTIVE",
-        role_names=["ADMIN"],
-    )
+    auth_client.login.return_value = _manage_tokens(101)
 
     repo = InMemoryUserLoginRepository()
     # Pre-seed existing record
@@ -142,49 +135,33 @@ async def test_failed_login_does_not_update_last_login():
 
     assert exc_info.value.status_code == 401
     assert len(repo.records) == 0
-    auth_client.get_me.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_failed_me_verification_does_not_issue_token():
-    """Test 4: If Manage /me fails after login, no Platform token is issued and last_login is not updated."""
+async def test_unverifiable_manage_token_does_not_record_login():
+    """Test 4: A Manage token that fails local verification records no login and issues no session."""
     auth_client = AsyncMock(spec=AuthClient)
     auth_client.login.return_value = TokenResponse(
-        access_token="acc_tok_ok",
-        refresh_token="ref_tok_ok",
-        token_type="bearer",
+        access_token=mint_manage_token(101, secret="another-secret"),
+        refresh_token=mint_manage_token(
+            101, token_type="refresh", secret="another-secret"
+        ),
     )
-    auth_client.get_me.side_effect = HTTPException(
-        status_code=401, detail="Manage session expired"
-    )
-
     repo = InMemoryUserLoginRepository()
     use_case = LoginUseCase(auth_client=auth_client, login_repo=repo)
 
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(UnauthorizedException):
         await use_case.execute(
             LoginRequestDTO(email="test@dutai.io.vn", password="pass")
         )
-
-    assert exc_info.value.status_code == 401
     assert len(repo.records) == 0
 
 
 @pytest.mark.asyncio
-async def test_db_failure_does_not_break_login():
-    """Test 5: Best-effort strategy ensures DB failure logs warning but login succeeds."""
+async def test_db_failure_propagates_from_login():
+    """Test 5: A DB failure during login is not swallowed; the login fails loudly."""
     auth_client = AsyncMock(spec=AuthClient)
-    auth_client.login.return_value = TokenResponse(
-        access_token="acc_tok_ok",
-        refresh_token="ref_tok_ok",
-        token_type="bearer",
-    )
-    auth_client.get_me.return_value = AuthUser(
-        id=202,
-        name="User DB Error",
-        email="dberr@dutai.io.vn",
-        status="ACTIVE",
-    )
+    auth_client.login.return_value = _manage_tokens(202)
 
     failing_repo = AsyncMock(spec=IUserLoginRepository)
     failing_repo.upsert_last_login.side_effect = RuntimeError(
@@ -192,16 +169,10 @@ async def test_db_failure_does_not_break_login():
     )
 
     use_case = LoginUseCase(auth_client=auth_client, login_repo=failing_repo)
-    res = await use_case.execute(
-        LoginRequestDTO(email="dberr@dutai.io.vn", password="pass")
-    )
-
-    # Login must still succeed with Platform JWT
-    from core.security.jwt import decode_access_token
-
-    payload = decode_access_token(res.access_token)
-    assert payload["sub"] == "202"
-    assert res.token_type == "bearer"
+    with pytest.raises(RuntimeError):
+        await use_case.execute(
+            LoginRequestDTO(email="test@dutai.io.vn", password="pass")
+        )
 
 
 @pytest.mark.asyncio
@@ -227,3 +198,42 @@ async def test_repository_model_conversion_and_batch_query():
 
     batch_res = await repo.get_by_user_ids([1, 2, 3])
     assert batch_res == {1: t1, 2: t2}
+
+
+@pytest.mark.asyncio
+async def test_get_me_records_activity_once_per_interval():
+    from modules.identity.dtos.auth_dtos import AuthUser as AuthUserDTO
+
+    repo = InMemoryUserLoginRepository()
+    use_case = GetMeUseCase(login_repo=repo)
+    user = AuthUserDTO(id=303, name="C", email="c@example.com")
+
+    await use_case.execute(user)
+    first = (await repo.get_by_user_id(303)).last_login_at
+    await use_case.execute(user)
+    second = (await repo.get_by_user_id(303)).last_login_at
+
+    assert first == second  # second call is inside the throttle window
+
+
+@pytest.mark.asyncio
+async def test_sql_record_activity_is_throttled(test_session_factory):
+    from modules.identity.repository.user_login_repository import SqlUserLoginRepository
+
+    t0 = datetime(2026, 11, 20, 8, 0, tzinfo=UTC)
+    window = timedelta(minutes=15)
+    async with test_session_factory() as session:
+        repo = SqlUserLoginRepository(session)
+        await repo.record_activity(9001, t0, t0 - window)
+        await repo.record_activity(
+            9001, t0 + timedelta(minutes=5), t0 + timedelta(minutes=5) - window
+        )
+        kept = (await repo.get_by_user_id(9001)).last_login_at
+        await repo.record_activity(
+            9001, t0 + timedelta(minutes=20), t0 + timedelta(minutes=20) - window
+        )
+        moved = (await repo.get_by_user_id(9001)).last_login_at
+        await session.rollback()
+
+    assert kept.replace(tzinfo=UTC) == t0
+    assert moved.replace(tzinfo=UTC) == t0 + timedelta(minutes=20)

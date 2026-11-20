@@ -8,11 +8,8 @@ class LoginRequestDTO(BaseModel):
 
 class TokenResponseDTO(BaseModel):
     access_token: str
-    refresh_token: str | None = None
+    refresh_token: str
     token_type: str = "bearer"
-
-
-LoginResponseDTO = TokenResponseDTO
 
 
 class AuthUserResponseDTO(BaseModel):
@@ -24,9 +21,20 @@ class AuthUserResponseDTO(BaseModel):
     role_names: list[str] = Field(default_factory=list)
 
 
+class SsoSessionDTO(BaseModel):
+    """Manage session for the local login. Tokens go to HttpOnly cookies, never to the body."""
+
+    user: AuthUserResponseDTO
+    access_token: str
+    refresh_token: str
+    access_expires_at: int
+    refresh_expires_at: int
+
+
 AuthUserDTO = AuthUserResponseDTO
 AuthUser = AuthUserResponseDTO
 TokenResponse = TokenResponseDTO
+LoginResponseDTO = AuthUserResponseDTO
 
 
 class LogoutResponseDTO(BaseModel):

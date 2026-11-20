@@ -400,3 +400,81 @@ Nếu dữ liệu thay đổi, hệ thống sẽ tạo Snapshot mới thay vì c
 - Tích hợp với MLflow hoặc Weights & Biases để liên kết Snapshot với Experiment.
 - Hỗ trợ Dataset Branching và Merge.
 - Bổ sung Retention Policy để tự động lưu trữ hoặc xóa các Snapshot cũ.
+
+---
+
+## Bổ sung trong spec.md
+
+### 1. Vòng đời & Trạng thái ngầm (`CREATING` → `READY` / `FAILED`)
+
+* **Vấn đề thực tế**: Một bộ dữ liệu thường có từ vài nghìn đến cả trăm nghìn bức ảnh kèm nhãn. Khi bạn bấm nút *"Tạo Snapshot"*, máy chủ phải gom ảnh, gom nhãn, tính toán và phân loại. Quá trình này mất từ 30 giây đến vài phút.
+  * Nếu làm bình thường (đồng bộ): Trình duyệt web của bạn sẽ bị đơ, xoay vòng tròn chờ đợi và rất dễ bị lỗi mất kết nối mạng giữa chừng.
+* **Cách giải quyết (Async)**:
+  * Khi bấm tạo, hệ thống trả về ngay trạng thái **`CREATING`** (Đang gom dữ liệu ngầm). Bạn có thể tắt tab, đi làm việc khác hoặc theo dõi thanh tiến trình.
+  * Khi máy chủ xử lý xong xuôi: Đổi sang **`READY`** (Đã đóng băng thành công, sẵn sàng tải về hoặc đưa vào train AI).
+  * Nếu có sự cố (ví dụ lỗi mạng, file nhãn bị hỏng): Đổi sang **`FAILED`** và ghi rõ lý do để bạn biết đường chỉnh sửa, không bị treo vô thời hạn.
+
+
+### 2. Chiến lược chọn nhãn (`LATEST_APPROVED` vs `LATEST_SUBMITTED`)
+
+* **Vấn đề thực tế**: Trong một dự án gán nhãn, một bức ảnh có thể được sửa nhiều lần (ví dụ: Bạn A gán nhãn lần 1 $\rightarrow$ Bạn B sửa lần 2 $\rightarrow$ Trưởng nhóm kiểm tra và bấm "Duyệt" lần 3). Như vậy một bức ảnh sẽ có nhiều phiên bản nhãn (Revisions).
+* **Vậy khi tạo Snapshot, hệ thống nên lấy nhãn nào?**
+  * **`LATEST_APPROVED`** (Chỉ lấy nhãn đã duyệt): Hệ thống chỉ lấy bản nhãn đã được Trưởng nhóm/Reviewer bấm Duyệt. Đây là lựa chọn chuẩn nhất để đảm bảo mô hình AI được học từ dữ liệu sạch, đã kiểm định chất lượng.
+  * **`LATEST_SUBMITTED`** (Lấy nhãn mới nhất): Bất kể đã được duyệt hay chưa, cứ bản nhãn mới nhất vừa lưu là lấy. Thường dùng khi các kỹ sư muốn test nhanh thử nghiệm xem những gì vừa gán nhãn có chạy được mô hình không.
+
+
+### 3. Xử lý ảnh chưa có nhãn (`include_unannotated`) & Mẫu âm (Negative Samples)
+
+* **Vấn đề thực tế**: Giả sử bạn làm bài toán *"Phát hiện Người đi bộ"*, bạn có 1.000 tấm ảnh:
+  * 800 tấm có người đi bộ (đã được vẽ khung nhận diện).
+  * 200 tấm chụp cảnh đường phố vắng tanh, **không có ai cả** (chưa có nhãn nào).
+* **Tại sao lại cần những tấm ảnh "trống trơn" này?**
+  * Trong huấn luyện AI, nếu mô hình chỉ toàn nhìn thấy những ảnh *luôn luôn có người*, nó sẽ có thói quen đoán bừa (nhìn cây cối, cột đèn cũng tưởng là người).
+  * 200 tấm ảnh không có người này trong AI gọi là **mẫu âm (negative/background samples)**, nhằm dạy cho AI biết: *"Khung cảnh này không có người nhé!"*.
+* **Ý nghĩa tính năng**:
+  * Nếu bạn bật `include_unannotated = true`: Giữ lại cả các ảnh trống để đưa vào tập dữ liệu.
+  * Nếu bạn tắt: Hệ thống sẽ lọc bỏ hết các ảnh chưa gán nhãn, chỉ lấy những ảnh có nhãn.
+
+
+### 4. Chia tập dữ liệu (Dataset Splitting: Random vs Stratified)
+
+Trong AI, dữ liệu luôn phải chia thành 3 phần:
+* **Train** (Học bài): Chiếm phần lớn (ví dụ 70-80%), đưa cho AI học.
+* **Validation** (Kiểm tra giữa kỳ): Để tinh chỉnh mô hình trong lúc học.
+* **Test** (Thi tốt nghiệp): Tập dữ liệu để đánh giá khách quan cuối cùng.
+
+Hai cơ chế chia:
+1. **Random có Seed (Ngẫu nhiên nhưng cố định)**:
+   * Nếu máy tính chia ngẫu nhiên thuần túy, mỗi lần bạn bấm *"Tạo Snapshot"* nó sẽ bốc ảnh vào Train/Val/Test một kiểu khác nhau.
+   * **Seed** là một con số cố định (như chiếc chìa khóa mã hóa). Nhờ có Seed, dù chia ngẫu nhiên nhưng hôm nay bạn chạy hay 1 tháng sau đồng nghiệp bạn chạy lại, bức ảnh số #123 vẫn luôn luôn rơi vào tập Train. Điều này giúp thí nghiệm khoa học có thể **tái lập 100%**.
+2. **Stratified Split (Chia đều theo tỉ lệ phân lớp)**:
+   * Ví dụ bạn có 1.000 bức ảnh: 900 ảnh là *Xe ô tô*, nhưng chỉ có 100 ảnh là *Xe cứu thương* (rất hiếm).
+   * Nếu chia ngẫu nhiên thông thường, có thể xảy ra rủi ro: toàn bộ ảnh Xe cứu thương rơi hết vào tập Train, còn tập Test không có cái nào $\rightarrow$ Bạn không thể biết mô hình của mình có nhận diện được xe cứu thương hay không!
+   * **Stratified** sẽ thông minh tự tính toán để chia đều: Cả tập Train, Val và Test đều giữ đúng tỉ lệ 90% Xe ô tô và 10% Xe cứu thương.
+
+
+### 5. Kiểm tra tương thích với Ontology (Ontology Contract)
+
+* **Ontology** chính là **"Luật quy định nhãn"** của dự án (ví dụ quy định: *Chỉ được vẽ hình chữ nhật (Bounding Box) cho 2 loại: Chó và Mèo*).
+* **Tại sao phải kiểm tra?**:
+  * Lỡ người gán nhãn vẽ hình đa giác (Polygon), hoặc tự ý gán nhãn "Con Voi" (không có trong danh mục).
+  * Nếu hệ thống cứ thế gom dữ liệu đem đi train AI, mô hình đọc dữ liệu sẽ bị lỗi hoặc học sai lệch.
+  * Vì vậy, lúc tạo Snapshot, hệ thống phải **rà soát lại toàn bộ**: Tất cả các nhãn phải đúng luật của Ontology thì Snapshot mới hợp lệ.
+
+
+### 6. Tính toàn vẹn (Checksum) & Manifest bất biến
+
+* **Manifest**: Giống như **"Biên bản bàn giao"** hoặc **"Tờ mục lục"** của gói dữ liệu:
+  * Ghi rõ: Snapshot này tổng cộng có bao nhiêu ảnh, bao nhiêu nhãn, Train có bao nhiêu cái, Test có bao nhiêu cái, ngày tạo là ngày nào. Bất kỳ ai muốn dùng dữ liệu chỉ cần đọc file Manifest này là hiểu toàn bộ bộ dữ liệu mà không cần tải hàng trăm gigabyte ảnh về xem thử.
+* **Checksum (Mã niêm phong)**:
+  * Giống như con dấu niêm phong niêm yết trên hồ sơ. Mỗi file ảnh và file nhãn sẽ được tính ra một chuỗi ký tự đại diện (mã băm Hash).
+  * Nếu sau này có ai đó vô tình hay cố ý vào ổ cứng sửa lại một bức ảnh hay sửa tọa độ một cái nhãn, con dấu này sẽ không còn khớp nữa $\rightarrow$ Hệ thống lập tức phát hiện dữ liệu đã bị can thiệp và cảnh báo. Nhờ đó đảm bảo tính **bất biến (Immutable)** của Snapshot.
+
+
+### 7. Snapshot Diff Service:
+* Hỗ trợ so sánh trực quan giữa 2 Snapshot: tài nguyên thêm mới, bị gỡ bỏ, thay đổi annotation revision, dịch chuyển split và độ lệch tần suất category.
+
+
+### 8. Bảo vệ tính bất biến & Chặn xoá phụ thuộc (Guardrails):
+* Cấm mọi hành vi sửa đổi trên snapshot đã READY.
+* Chặn xoá/archive snapshot nếu đang có tác vụ downstream (Export Job hoặc Training Run) tham chiếu.

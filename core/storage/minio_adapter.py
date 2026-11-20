@@ -31,6 +31,17 @@ class MinIOStorageAdapter(IStorageProvider):
             config=Config(signature_version="s3v4"),
             verify=secure,
         )
+        if self.public_endpoint_url != self.endpoint_url.rstrip("/"):
+            self.presigned_client = boto3.client(
+                "s3",
+                endpoint_url=self.public_endpoint_url,
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+                config=Config(signature_version="s3v4"),
+                verify=secure,
+            )
+        else:
+            self.presigned_client = self.client
 
     def build_public_url(self, uri_or_path: str, bucket: str | None = None) -> str:
         return build_storage_public_url(
@@ -63,7 +74,7 @@ class MinIOStorageAdapter(IStorageProvider):
         loop = asyncio.get_running_loop()
         url = await loop.run_in_executor(
             None,
-            lambda: self.client.generate_presigned_url(
+            lambda: self.presigned_client.generate_presigned_url(
                 ClientMethod="get_object",
                 Params={"Bucket": bucket, "Key": clean_key},
                 ExpiresIn=expires,
@@ -86,7 +97,7 @@ class MinIOStorageAdapter(IStorageProvider):
         loop = asyncio.get_running_loop()
         url = await loop.run_in_executor(
             None,
-            lambda: self.client.generate_presigned_url(
+            lambda: self.presigned_client.generate_presigned_url(
                 ClientMethod="put_object",
                 Params=params,
                 ExpiresIn=expires,

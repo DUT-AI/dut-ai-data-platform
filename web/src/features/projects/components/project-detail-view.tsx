@@ -10,12 +10,14 @@ import {
   FolderKanban,
   GitBranch,
   Layers3,
+  PackageCheck,
   Settings,
   Users,
 } from "lucide-react";
 import { Badge, Button, EmptyState } from "@/components/ui";
 import { DatasetListView } from "@/features/dataset";
 import { OntologyListView } from "@/features/ontology";
+import { SnapshotTabView } from "@/features/snapshot";
 import { WorkflowTabView } from "@/features/workflow";
 import { useProjectQuery } from "../hooks";
 import { ProjectMembersTab } from "./project-members-tab";
@@ -27,6 +29,7 @@ type TabType =
   | "datasets"
   | "ontology"
   | "workflow"
+  | "snapshots"
   | "members"
   | "settings";
 
@@ -39,6 +42,7 @@ const TABS: Array<{
   { key: "datasets", label: "Tập dữ liệu", icon: Database },
   { key: "ontology", label: "Ontology", icon: Layers3 },
   { key: "workflow", label: "Workflow", icon: GitBranch },
+  { key: "snapshots", label: "Đóng gói (Snapshots)", icon: PackageCheck },
   { key: "members", label: "Thành viên", icon: Users },
   { key: "settings", label: "Cài đặt", icon: Settings },
 ];
@@ -169,6 +173,7 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
         {activeTab === "datasets" && <DatasetListView projectId={projectId} />}
         {activeTab === "ontology" && <OntologyListView projectId={projectId} />}
         {activeTab === "workflow" && <WorkflowTabView projectId={projectId} />}
+        {activeTab === "snapshots" && <SnapshotTabView projectId={projectId} />}
         {activeTab === "members" && <ProjectMembersTab projectId={projectId} />}
         {activeTab === "settings" && <ProjectSettingsTab project={project} />}
       </div>

@@ -17,8 +17,8 @@ from collections.abc import Sequence
 
 from alembic import op
 
-revision: str = "015_user_ids_to_integer"
-down_revision: str | None = "014_create_snapshot_domain_tables"
+revision: str = "016_user_ids_to_integer"
+down_revision: str | None = "015_create_export_domain_tables"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

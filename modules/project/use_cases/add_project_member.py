@@ -33,8 +33,7 @@ class AddProjectMemberUseCase:
         saved = await self.repo.add_member(member)
         dto = ProjectMemberResponseDTO.model_validate(saved)
 
-        users_resp = await self.manage_client.list_users(page=1, page_size=100)
-        for u in users_resp.items:
+        for u in await self.manage_client.list_all_users():
             if str(u.id) == str(dto.user_id):
                 dto.user_name = u.name
                 dto.user_email = u.email

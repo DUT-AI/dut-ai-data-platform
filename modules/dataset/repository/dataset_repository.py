@@ -450,3 +450,12 @@ class SqlDatasetRepository(IDatasetRepository):
             select(AssetModel.uri).where(AssetModel.uri.in_(list(uris)))
         )
         return set(result.scalars().all())
+
+    async def get_assets_by_ids(self, asset_ids: Sequence[str]) -> list[AssetEntity]:
+        if not asset_ids:
+            return []
+        result = await self.session.execute(
+            select(AssetModel).where(AssetModel.id.in_(list(asset_ids)))
+        )
+        by_id = {m.id: _map_asset_to_entity(m) for m in result.scalars().all()}
+        return [by_id[i] for i in asset_ids if i in by_id]

@@ -148,6 +148,30 @@ services:
       minio:
         condition: service_healthy
 
+  # Asset import validation workers (arq). One job per process; scale with
+  # ASSET_IMPORT_WORKERS. No container_name: compose cannot scale named services.
+  validation-worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    command: ["python", "-m", "arq", "apps.validation_worker.main.WorkerSettings"]
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    deploy:
+      replicas: ${ASSET_IMPORT_WORKERS:-4}
+    networks:
+      - platform-net
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
   ai_worker:
     build:
       context: .

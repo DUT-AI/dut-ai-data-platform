@@ -2,14 +2,14 @@ import { api } from "@/lib/api";
 import {
   Asset,
   AssetDownloadUrlResponse,
-  BatchUploadResult,
+  AssetImportJob,
+  AssetImportJobAccepted,
   Dataset,
   DatasetCreatePayload,
   DatasetUpdatePayload,
   DatasetVersion,
   DatasetVersionCreatePayload,
   FinalizeAssetImportPayload,
-  FinalizeAssetImportResponse,
   InheritDatasetVersionResponse,
   PrepareUploadPayload,
   PrepareUploadResponse,
@@ -128,29 +128,21 @@ export const datasetApi = {
     });
   },
 
+  // Queues the uploaded files for validation (202). Poll getAssetImportJob.
   finalizeAssetImport: async (
     versionId: string,
     payload: FinalizeAssetImportPayload
-  ): Promise<FinalizeAssetImportResponse> => {
-    const response = await api.post<FinalizeAssetImportResponse>(
+  ): Promise<AssetImportJobAccepted> => {
+    const response = await api.post<AssetImportJobAccepted>(
       `/dataset-versions/${versionId}/finalize-import`,
       payload
     );
     return response.data;
   },
 
-  uploadVersionAssets: async (
-    versionId: string,
-    formData: FormData
-  ): Promise<BatchUploadResult> => {
-    const response = await api.post<BatchUploadResult>(
-      `/dataset-versions/${versionId}/assets`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
+  getAssetImportJob: async (jobId: string): Promise<AssetImportJob> => {
+    const response = await api.get<AssetImportJob>(
+      `/asset-import-jobs/${jobId}`
     );
     return response.data;
   },

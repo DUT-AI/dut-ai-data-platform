@@ -8,27 +8,23 @@ from modules.dataset.domain.entities import (
     DatasetEntity,
     DatasetVersionEntity,
 )
-from modules.dataset.domain.policies import AssetDeletionPolicy, DatasetVersionPolicy
+from modules.dataset.domain.policies import DatasetVersionPolicy
 from modules.dataset.dtos.dataset_dtos import (
     AssetResponseDTO,
     DatasetResponseDTO,
     DatasetVersionCreateDTO,
     DatasetVersionResponseDTO,
-    FinalizeAssetImportItemDTO,
-    FinalizeAssetImportRequestDTO,
     PrepareUploadItemDTO,
     PrepareUploadRequestDTO,
 )
 from modules.dataset.use_cases import (
     ArchiveDatasetUseCase,
     CreateDatasetVersionUseCase,
-    FinalizeAssetImportUseCase,
     ListVersionAssetsCursorUseCase,
     PrepareAssetUploadUseCase,
     PublishDatasetVersionUseCase,
     RetireAssetUseCase,
 )
-
 
 # ============================================================================
 # Phase 1: Domain Entities & DTOs Field Validation
@@ -160,51 +156,6 @@ async def test_prepare_asset_upload_published_version_fails():
         await use_case.execute("ver_789", payload)
 
     assert "Only draft versions allow asset uploads" in str(exc_info.value)
-
-
-@pytest.mark.asyncio
-async def test_finalize_asset_import_use_case_success():
-    repo = MagicMock()
-    storage = MagicMock()
-
-    mock_version = DatasetVersionEntity(
-        dataset_id="ds_123", version="v1.0.0", status="draft"
-    )
-    mock_dataset = DatasetEntity(project_id="proj_456", name="Test DS")
-
-    repo.get_version_by_id = AsyncMock(return_value=mock_version)
-    repo.get_dataset_by_id = AsyncMock(return_value=mock_dataset)
-    repo.find_asset_by_sha256 = AsyncMock(return_value=None)
-    repo.save_asset = AsyncMock(side_effect=lambda a: a)
-    repo.add_asset_to_version = AsyncMock()
-
-    use_case = FinalizeAssetImportUseCase(repo=repo, storage_provider=storage)
-    payload = FinalizeAssetImportRequestDTO(
-        items=[
-            FinalizeAssetImportItemDTO(
-                asset_id="ast_001",
-                filename="image_01.jpg",
-                storage_key="project-proj_456/assets/ast_001/image_01.jpg",
-                sha256="hash123",
-                file_size=1024,
-                mime_type="image/jpeg",
-                data_format="JPEG",
-            )
-        ]
-    )
-
-    res = await use_case.execute("ver_789", payload, created_by=101)
-
-    assert len(res.imported_assets) == 1
-    asset = res.imported_assets[0]
-    assert asset.id == "ast_001"
-    assert asset.filename == "image_01.jpg"
-    assert asset.sha256 == "hash123"
-    assert asset.status == "READY"
-    assert asset.data_format == "JPEG"
-
-    repo.save_asset.assert_called_once()
-    repo.add_asset_to_version.assert_called_once_with("ver_789", "ast_001")
 
 
 # ============================================================================
@@ -536,111 +487,6 @@ async def test_publish_version_emits_outbox_event():
 
 
 @pytest.mark.asyncio
-async def test_finalize_asset_import_emits_outbox_event():
-    from core.events.domain_event import AssetReadyEvent
-    from modules.dataset.dtos.dataset_dtos import (
-        FinalizeAssetImportItemDTO,
-        FinalizeAssetImportRequestDTO,
-    )
-    from modules.dataset.use_cases import FinalizeAssetImportUseCase
-
-    repo = AsyncMock()
-    storage_provider = AsyncMock()
-    outbox_repo = AsyncMock()
-
-    mock_ver = DatasetVersionEntity(
-        id="ver_111", dataset_id="ds_123", version="v1.0.0", status="draft"
-    )
-    mock_dataset = DatasetEntity(id="ds_123", project_id="proj_456", name="Test")
-
-    repo.get_version_by_id = AsyncMock(return_value=mock_ver)
-    repo.get_dataset_by_id = AsyncMock(return_value=mock_dataset)
-    repo.find_asset_by_sha256 = AsyncMock(return_value=None)
-    repo.save_asset = AsyncMock(side_effect=lambda a: a)
-    repo.add_asset_to_version = AsyncMock()
-
-    use_case = FinalizeAssetImportUseCase(
-        repo=repo, storage_provider=storage_provider, outbox_repo=outbox_repo
-    )
-
-    payload = FinalizeAssetImportRequestDTO(
-        items=[
-            FinalizeAssetImportItemDTO(
-                asset_id="ast_999",
-                filename="test.jpg",
-                storage_key="project-proj_456/assets/ast_999/test.jpg",
-                mime_type="image/jpeg",
-                file_size=1024,
-                sha256="a" * 64,
-            )
-        ]
-    )
-
-    res = await use_case.execute("ver_111", payload)
-    assert len(res.imported_assets) == 1
-    assert res.new_assets_count == 1
-    assert res.reused_assets_count == 0
-    outbox_repo.save_event.assert_called_once()
-    event_arg = outbox_repo.save_event.call_args[0][0]
-    assert isinstance(event_arg, AssetReadyEvent)
-    assert event_arg.payload["asset_id"] == "ast_999"
-
-
-@pytest.mark.asyncio
-async def test_finalize_asset_import_deduplicates_by_sha256():
-    from modules.dataset.domain.entities import AssetEntity
-    from modules.dataset.dtos.dataset_dtos import (
-        FinalizeAssetImportItemDTO,
-        FinalizeAssetImportRequestDTO,
-    )
-    from modules.dataset.use_cases import FinalizeAssetImportUseCase
-
-    repo = AsyncMock()
-    storage_provider = AsyncMock()
-
-    mock_ver = DatasetVersionEntity(
-        id="ver_111", dataset_id="ds_123", version="v1.0.0", status="draft"
-    )
-    mock_dataset = DatasetEntity(id="ds_123", project_id="proj_456", name="Test")
-    existing_asset = AssetEntity(
-        id="existing_001",
-        project_id="proj_456",
-        filename="original.jpg",
-        uri="/bucket/orig.jpg",
-        mime_type="image/jpeg",
-        file_size=1024,
-        sha256="a" * 64,
-    )
-
-    repo.get_version_by_id = AsyncMock(return_value=mock_ver)
-    repo.get_dataset_by_id = AsyncMock(return_value=mock_dataset)
-    repo.find_asset_by_sha256 = AsyncMock(return_value=existing_asset)
-    repo.add_asset_to_version = AsyncMock()
-
-    use_case = FinalizeAssetImportUseCase(repo=repo, storage_provider=storage_provider)
-
-    payload = FinalizeAssetImportRequestDTO(
-        items=[
-            FinalizeAssetImportItemDTO(
-                asset_id="new_id",
-                filename="renamed.jpg",
-                storage_key="project-proj_456/assets/new_id/renamed.jpg",
-                mime_type="image/jpeg",
-                file_size=1024,
-                sha256="a" * 64,
-            )
-        ]
-    )
-
-    res = await use_case.execute("ver_111", payload)
-    assert len(res.imported_assets) == 1
-    assert res.imported_assets[0].id == "existing_001"
-    assert res.reused_assets_count == 1
-    assert res.new_assets_count == 0
-    repo.add_asset_to_version.assert_called_once_with("ver_111", "existing_001")
-
-
-@pytest.mark.asyncio
 async def test_outbox_processor_dispatches_events():
     from core.events.models import OutboxEventModel
     from core.events.processor import OutboxProcessor
@@ -704,38 +550,6 @@ async def test_update_dataset_use_case_success():
     assert res.name == "New Name"
     assert res.description == "New Description"
     repo.save_dataset.assert_called_once()
-
-
-@pytest.mark.asyncio
-async def test_upload_version_assets_corrupted_image_fails():
-    from modules.dataset.use_cases import UploadVersionAssetsUseCase
-
-    repo = AsyncMock()
-    mock_version = MagicMock(status="draft", dataset_id="ds_100")
-    mock_dataset = MagicMock(project_id="proj_001")
-    repo.get_version_by_id = AsyncMock(return_value=mock_version)
-    repo.get_dataset_by_id = AsyncMock(return_value=mock_dataset)
-
-    from modules.dataset.services.asset_ingestion import (
-        AssetFilePreparer,
-        AssetObjectStore,
-    )
-
-    storage = AsyncMock()
-    use_case = UploadVersionAssetsUseCase(
-        repo=repo,
-        uow=AsyncMock(),
-        preparer=AssetFilePreparer(),
-        object_store=AssetObjectStore(storage, bucket="test-bucket"),
-    )
-
-    corrupted_files = [("corrupted.jpg", b"Invalid image content data", "image/jpeg")]
-
-    with pytest.raises(BadRequestException) as exc_info:
-        await use_case.execute("ver_100", corrupted_files)
-
-    assert "bị hỏng hoặc không đúng định dạng" in str(exc_info.value)
-    storage.upload.assert_not_called()
 
 
 @pytest.mark.asyncio

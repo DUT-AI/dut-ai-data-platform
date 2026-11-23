@@ -61,6 +61,17 @@ class ManageClient:
             or ([item["role"]] if "role" in item else []),
         )
 
+    async def list_all_users(self, page_size: int = 100) -> list[ManageUserDTO]:
+        """Every user, following Manage's pagination (for id -> profile lookups)."""
+        users: list[ManageUserDTO] = []
+        page = 1
+        while True:
+            resp = await self.list_users(page=page, page_size=page_size)
+            users.extend(resp.items)
+            if not resp.items or len(users) >= resp.total:
+                return users
+            page += 1
+
     async def list_users(
         self,
         page: int = 1,
@@ -76,8 +87,9 @@ class ManageClient:
             "page": page,
             "page_size": page_size,
         }
-        if search:
-            params["search"] = search
+        if search and search.strip():
+            # Manage filters with `keyword` (name or email); it ignores `search`.
+            params["keyword"] = search.strip()
 
         try:
             response = await self.client.get(
@@ -106,27 +118,29 @@ class ManageClient:
                 )
 
             data: list[dict[str, Any]] = payload.get("data", [])
-            items: list[ManageUserDTO] = []
-            total = 0
+            users = [self._parse_user(item) for item in data if isinstance(item, dict)]
 
-            all_items = [
-                self._parse_user(item) for item in data if isinstance(item, dict)
-            ]
+            pagination = payload.get("pagination")
+            if isinstance(pagination, dict) and "total" in pagination:
+                # Manage already filtered and paginated: `data` IS the requested
+                # page. Slicing it again emptied every page after the first and
+                # capped `total` at one page (only 20 users ever listed).
+                return ManageUsersResponseDTO(
+                    items=users,
+                    total=int(pagination["total"]),
+                    page=int(pagination.get("page", page)),
+                    page_size=int(pagination.get("page_size", page_size)),
+                )
 
-            # In-memory search fallback if Manage server didn't filter
+            # Legacy Manage without pagination metadata returns every user:
+            # filter and paginate here, once.
             if search and search.strip():
                 s = search.strip().lower()
-                all_items = [
-                    u for u in all_items if s in u.name.lower() or s in u.email.lower()
-                ]
-
-            total = len(all_items)
+                users = [u for u in users if s in u.name.lower() or s in u.email.lower()]
             start_idx = (page - 1) * page_size
-            items = all_items[start_idx : start_idx + page_size]
-
             return ManageUsersResponseDTO(
-                items=items,
-                total=total,
+                items=users[start_idx : start_idx + page_size],
+                total=len(users),
                 page=page,
                 page_size=page_size,
             )

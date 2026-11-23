@@ -71,11 +71,20 @@ async def run_orphan_asset_cleanup():
         await asyncio.sleep(interval)
 
 
+RABBITMQ_RETRY_MAX_SECONDS = 300
+
+
 async def run_rabbitmq_consumer():
-    logger.info(f"Connecting to RabbitMQ AMQP broker at {rabbitmq_settings.rabbitmq_url}...")
+    if not rabbitmq_settings.rabbitmq_enabled:
+        logger.info("RabbitMQ consumer disabled (RABBITMQ_ENABLED=false).")
+        return
+
+    logger.info(f"Connecting to RabbitMQ AMQP broker at {rabbitmq_settings.safe_url}...")
+    retry_delay = 5
     while True:
         try:
             connection = await aio_pika.connect_robust(rabbitmq_settings.rabbitmq_url)
+            retry_delay = 5
             async with connection:
                 channel = await connection.channel()
 
@@ -96,8 +105,13 @@ async def run_rabbitmq_consumer():
             logger.info("RabbitMQ Consumer stopping...")
             break
         except Exception as e:
-            logger.error(f"Worker AMQP exception: {e}. Retrying in 5 seconds...")
-            await asyncio.sleep(5)
+            # Back off so an absent broker does not flood the log every 5 seconds.
+            logger.warning(
+                f"RabbitMQ unavailable at {rabbitmq_settings.safe_url} ({e}). "
+                f"Retrying in {retry_delay}s; set RABBITMQ_ENABLED=false if no broker is used."
+            )
+            await asyncio.sleep(retry_delay)
+            retry_delay = min(retry_delay * 2, RABBITMQ_RETRY_MAX_SECONDS)
 
 
 async def worker_loop():

@@ -1,10 +1,11 @@
 FRONTEND_DIR=web
-.PHONY: help dev-api dev-web dev-worker dev-ai-worker docker-up docker-down migrate create-migration test install-hooks lint ruff check api-types
+.PHONY: help dev-api dev-web dev-worker dev-validation-workers dev-ai-worker docker-up docker-down migrate create-migration test install-hooks lint ruff check api-types
 
 help:
 	@echo "Available commands:"
 	@echo "  make dev-api        - Start local FastAPI server (uvicorn)"
 	@echo "  make dev-worker     - Start background task worker"
+	@echo "  make dev-validation-workers - Start ASSET_IMPORT_WORKERS (4) asset validation workers"
 	@echo "  make dev-ai-worker  - Start AI / GPU inference worker"
 	@echo "  make dev-web        - Start frontend dev server (Next.js)"
 	@echo "  make docker-up      - Start full stack in background with Docker Compose"
@@ -23,6 +24,9 @@ dev-api:
 
 dev-worker:
 	uv run python apps/worker/main.py
+
+dev-validation-workers:
+	uv run python -m apps.validation_worker.run_many
 
 dev-ai-worker:
 	uv run python apps/ai_worker/main.py

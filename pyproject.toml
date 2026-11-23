@@ -20,6 +20,7 @@ dependencies = [
     "greenlet>=3.0.0",
     "alembic>=1.13.0",
     "redis>=5.0.0",
+    "arq>=0.26.0",
     "aio-pika>=9.4.0",
     "boto3>=1.35.0",
     # Auth & Security
@@ -39,10 +40,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Background Worker Dependencies (Task queue processing)
-worker = [
-    "arq>=0.26.0",
-]
+# Background Worker Dependencies (arq is a core dependency: the API enqueues jobs)
+worker = []
 
 # AI & Machine Learning Worker Dependencies (CUDA, PyTorch, Model Inference)
 ai = [

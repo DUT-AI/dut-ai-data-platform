@@ -11,7 +11,7 @@ class LegacyProjectAccessChecker(IProjectAccessChecker):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def accessible_project_ids(self, user_id: str) -> set[str]:
+    async def accessible_project_ids(self, user_id: int) -> set[str]:
         rows = await self.session.execute(
             select(ProjectMemberModel.project_id).where(
                 ProjectMemberModel.user_id == user_id,

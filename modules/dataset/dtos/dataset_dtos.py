@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -91,12 +91,6 @@ class DatasetVersionCreateDTO(BaseModel):
     version: str = Field(..., min_length=1, max_length=50)
 
 
-class BatchUploadResultDTO(BaseModel):
-    uploaded_assets: list[AssetResponseDTO]
-    reused_assets_count: int
-    new_assets_count: int
-
-
 class AssetDownloadUrlResponseDTO(BaseModel):
     asset_id: str
     filename: str
@@ -141,12 +135,6 @@ class FinalizeAssetImportRequestDTO(BaseModel):
     items: list[FinalizeAssetImportItemDTO] = Field(..., min_length=1)
 
 
-class FinalizeAssetImportResponseDTO(BaseModel):
-    imported_assets: list[AssetResponseDTO]
-    reused_assets_count: int = 0
-    new_assets_count: int = 0
-
-
 class CursorPageAssetResponseDTO(BaseModel):
     items: list[AssetResponseDTO]
     next_cursor: str | None = None
@@ -162,3 +150,40 @@ class InheritDatasetVersionResponseDTO(BaseModel):
     added_assets_count: int
     reused_assets_count: int
     total_assets_count: int
+
+
+# --- Asynchronous asset import (validation workers) -------------------------
+
+AssetImportJobStatus = Literal["queued", "processing", "retrying", "succeeded", "failed"]
+
+
+class AssetImportJobAcceptedDTO(BaseModel):
+    """Returned with 202: the files are queued for validation, not imported yet."""
+
+    job_id: str
+    version_id: str
+    status: AssetImportJobStatus
+    total_items: int
+
+
+class AssetImportErrorDTO(BaseModel):
+    asset_id: str | None = None
+    filename: str | None = None
+    code: str
+    message: str
+
+
+class AssetImportJobDTO(BaseModel):
+    job_id: str
+    project_id: str
+    version_id: str
+    status: AssetImportJobStatus
+    source: Literal["presigned", "direct"]
+    attempt: int
+    total_items: int
+    new_assets_count: int
+    reused_assets_count: int
+    imported_assets: list[AssetResponseDTO]
+    errors: list[AssetImportErrorDTO]
+    created_at: datetime
+    finished_at: datetime | None = None

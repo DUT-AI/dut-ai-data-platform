@@ -54,9 +54,10 @@ async def list_projects(
     sort_by: str = Query("created_at", pattern="^(created_at|updated_at)$"),
     sort_order: str = Query("desc", pattern="^(asc|desc)$"),
 ):
-    user_id_str = str(current_user.id)
+    # Keep the id an int: member/creator columns are INTEGER and Postgres
+    # rejects comparing them with a text parameter (integer = char).
     return await use_case.execute(
-        user_id=user_id_str,
+        user_id=current_user.id,
         status=status_filter,
         page=page,
         page_size=page_size,

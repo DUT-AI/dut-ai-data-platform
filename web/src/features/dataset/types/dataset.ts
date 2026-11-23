@@ -29,7 +29,6 @@ export type DatasetCreatePayload = Schema<"DatasetCreateDTO">;
 export type DatasetUpdatePayload = Schema<"DatasetUpdateDTO">;
 export type DatasetVersionCreatePayload = Schema<"DatasetVersionCreateDTO">;
 
-export type BatchUploadResult = Schema<"BatchUploadResultDTO">;
 export type AssetDownloadUrlResponse = Schema<"AssetDownloadUrlResponseDTO">;
 export type CursorPageAssetResponse = Schema<"CursorPageAssetResponseDTO">;
 
@@ -46,5 +45,9 @@ export type PrepareUploadResponse = Schema<"PrepareUploadResponseDTO">;
 export type FinalizeAssetImportItem = Schema<"FinalizeAssetImportItemDTO">;
 export type FinalizeAssetImportPayload =
   Schema<"FinalizeAssetImportRequestDTO">;
-export type FinalizeAssetImportResponse =
-  Schema<"FinalizeAssetImportResponseDTO">;
+
+// Import is asynchronous: finalize/upload return 202 with a job to poll.
+export type AssetImportJobAccepted = Schema<"AssetImportJobAcceptedDTO">;
+export type AssetImportJob = Schema<"AssetImportJobDTO">;
+export type AssetImportJobStatus = AssetImportJob["status"];
+export type AssetImportError = Schema<"AssetImportErrorDTO">;

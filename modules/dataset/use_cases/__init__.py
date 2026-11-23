@@ -3,9 +3,9 @@ from modules.dataset.use_cases.create_dataset import CreateDatasetUseCase
 from modules.dataset.use_cases.create_dataset_version import CreateDatasetVersionUseCase
 from modules.dataset.use_cases.delete_dataset import DeleteDatasetUseCase
 from modules.dataset.use_cases.download_asset import DownloadAssetUseCase
-from modules.dataset.use_cases.finalize_asset_import import FinalizeAssetImportUseCase
 from modules.dataset.use_cases.get_asset_detail import GetAssetDetailUseCase
 from modules.dataset.use_cases.get_asset_download_url import GetAssetDownloadUrlUseCase
+from modules.dataset.use_cases.get_asset_import_job import GetAssetImportJobUseCase
 from modules.dataset.use_cases.get_dataset_detail import GetDatasetDetailUseCase
 from modules.dataset.use_cases.get_dataset_version_detail import (
     GetDatasetVersionDetailUseCase,
@@ -26,17 +26,21 @@ from modules.dataset.use_cases.list_version_assets import (
 from modules.dataset.use_cases.prepare_asset_upload import (
     PrepareAssetUploadUseCase,
 )
+from modules.dataset.use_cases.process_asset_import import (
+    ProcessAssetImportUseCase,
+)
 from modules.dataset.use_cases.publish_dataset_version import (
     PublishDatasetVersionUseCase,
 )
 from modules.dataset.use_cases.remove_version_asset import (
     RemoveVersionAssetUseCase,
 )
+from modules.dataset.use_cases.request_asset_import import (
+    RequestAssetImportUseCase,
+    StageDirectUploadUseCase,
+)
 from modules.dataset.use_cases.retire_asset import RetireAssetUseCase
 from modules.dataset.use_cases.update_dataset import UpdateDatasetUseCase
-from modules.dataset.use_cases.upload_version_assets import (
-    UploadVersionAssetsUseCase,
-)
 
 __all__ = [
     "ArchiveDatasetUseCase",
@@ -44,9 +48,9 @@ __all__ = [
     "CreateDatasetVersionUseCase",
     "DeleteDatasetUseCase",
     "DownloadAssetUseCase",
-    "FinalizeAssetImportUseCase",
     "GetAssetDetailUseCase",
     "GetAssetDownloadUrlUseCase",
+    "GetAssetImportJobUseCase",
     "GetDatasetDetailUseCase",
     "GetDatasetVersionDetailUseCase",
     "InheritDatasetVersionUseCase",
@@ -55,9 +59,11 @@ __all__ = [
     "ListVersionAssetsCursorUseCase",
     "ListVersionAssetsUseCase",
     "PrepareAssetUploadUseCase",
+    "ProcessAssetImportUseCase",
     "PublishDatasetVersionUseCase",
     "RemoveVersionAssetUseCase",
+    "RequestAssetImportUseCase",
     "RetireAssetUseCase",
+    "StageDirectUploadUseCase",
     "UpdateDatasetUseCase",
-    "UploadVersionAssetsUseCase",
 ]

@@ -501,6 +501,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aio-pika" },
     { name = "alembic" },
+    { name = "arq" },
     { name = "asyncpg" },
     { name = "bcrypt" },
     { name = "boto3" },
@@ -537,9 +538,6 @@ ai = [
     { name = "ultralytics", version = "8.4.123", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
     { name = "ultralytics", version = "8.4.129", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin'" },
 ]
-worker = [
-    { name = "arq" },
-]
 
 [package.dev-dependencies]
 dev = [
@@ -556,7 +554,7 @@ dev = [
 requires-dist = [
     { name = "aio-pika", specifier = ">=9.4.0" },
     { name = "alembic", specifier = ">=1.13.0" },
-    { name = "arq", marker = "extra == 'worker'", specifier = ">=0.26.0" },
+    { name = "arq", specifier = ">=0.26.0" },
     { name = "asyncpg", specifier = ">=0.29.0" },
     { name = "bcrypt", specifier = ">=4.2.0" },
     { name = "boto3", specifier = ">=1.35.0" },

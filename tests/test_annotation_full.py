@@ -25,7 +25,7 @@ def override_auth_dep():
 
 
 @pytest.mark.asyncio
-async def test_annotation_full_lifecycle():
+async def test_annotation_full_lifecycle(import_files):
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         # 1. Create a Project
@@ -147,12 +147,9 @@ async def test_annotation_full_lifecycle():
         files_data = [
             ("files", ("traffic_01.png", valid_png_content, "image/png")),
         ]
-        upload_res = await client.post(
-            f"/api/v1/dataset-versions/{draft_ver_id}/assets",
-            files=files_data,
-        )
-        assert upload_res.status_code == 201
-        asset_id = upload_res.json()["uploaded_assets"][0]["id"]
+        imported = await import_files(client, draft_ver_id, files_data)
+        assert imported["status"] == "succeeded", imported
+        asset_id = imported["imported_assets"][0]["id"]
 
         # 5a. Results that break the Ontology contract are rejected with every
         #     issue listed, and nothing is persisted.

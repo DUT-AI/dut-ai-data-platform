@@ -22,8 +22,7 @@ class ListProjectMembersUseCase:
             return []
 
         try:
-            users_resp = await self.manage_client.list_users(page=1, page_size=100)
-            users_map = {str(u.id): u for u in users_resp.items}
+            users_map = {str(u.id): u for u in await self.manage_client.list_all_users()}
             for dto in dtos:
                 user_info = users_map.get(str(dto.user_id))
                 if user_info:

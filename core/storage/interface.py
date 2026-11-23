@@ -51,6 +51,14 @@ class IStorageProvider(ABC):
         """Delete an object from bucket."""
 
     @abstractmethod
+    async def stat(self, bucket: str, key: str) -> StoredObjectInfo | None:
+        """Return object metadata, or ``None`` when the object does not exist."""
+
+    @abstractmethod
+    async def download(self, bucket: str, key: str, dest: BinaryIO) -> None:
+        """Stream the object into ``dest`` (a writable binary file object)."""
+
+    @abstractmethod
     def list_objects(
         self, bucket: str, *, prefix: str = ""
     ) -> AsyncIterator[StoredObjectInfo]:

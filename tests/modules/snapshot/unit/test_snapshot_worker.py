@@ -96,7 +96,23 @@ def mock_dependencies():
         "storage_gateway": storage_gateway,
         "checksum_service": checksum_service,
         "stratification_service": stratification_service,
+        "uow": FakeUnitOfWork(),
     }
+
+
+class FakeUnitOfWork:
+    def __init__(self, fail_first_commit: bool = False) -> None:
+        self.fail_first_commit = fail_first_commit
+        self.commits = 0
+        self.rollbacks = 0
+
+    async def commit(self) -> None:
+        self.commits += 1
+        if self.fail_first_commit and self.commits == 1:
+            raise RuntimeError("connection lost during commit")
+
+    async def rollback(self) -> None:
+        self.rollbacks += 1
 
 
 @pytest.mark.asyncio
@@ -179,3 +195,145 @@ async def test_worker_timeout(base_snapshot, mock_dependencies):
 
     assert result.status == SnapshotStatus.FAILED
     assert result.error_code == "creation_timeout"
+
+
+# ---------------------------------------------------------------------------
+# Unit of work: one commit on success; rollback + manifest cleanup on failure
+# ---------------------------------------------------------------------------
+
+MANIFEST_URI = "s3://ai-data-platform/manifest.json"
+
+
+@pytest.mark.asyncio
+async def test_success_commits_once_and_keeps_manifest(base_snapshot, mock_dependencies):
+    deps = mock_dependencies
+    deps["snapshot_repo"].get_by_id = AsyncMock(return_value=base_snapshot)
+
+    result = await SnapshotWorker(**deps).execute(base_snapshot.id)
+
+    assert result.status == SnapshotStatus.READY
+    assert (deps["uow"].commits, deps["uow"].rollbacks) == (1, 0)
+    deps["storage_gateway"].delete_object.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_db_error_after_manifest_upload_rolls_back_and_deletes_manifest(
+    base_snapshot, mock_dependencies
+):
+    deps = mock_dependencies
+    deps["snapshot_repo"].get_by_id = AsyncMock(return_value=base_snapshot)
+    deps["manifest_repo"].create = AsyncMock(side_effect=RuntimeError("db write failed"))
+
+    result = await SnapshotWorker(**deps).execute(base_snapshot.id)
+
+    assert result.status == SnapshotStatus.FAILED
+    assert result.error_code == "snapshot_creation_error"
+    assert deps["uow"].rollbacks == 1
+    deps["storage_gateway"].delete_object.assert_awaited_once_with(MANIFEST_URI)
+    # Only the FAILED status is committed, in a new transaction.
+    assert deps["uow"].commits == 1
+    # Items are discarded by the rollback, not by a manual DELETE.
+    deps["snapshot_item_repo"].delete_by_snapshot.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_commit_failure_rolls_back_and_deletes_manifest(
+    base_snapshot, mock_dependencies
+):
+    deps = mock_dependencies
+    deps["uow"] = FakeUnitOfWork(fail_first_commit=True)
+    deps["snapshot_repo"].get_by_id = AsyncMock(return_value=base_snapshot)
+
+    result = await SnapshotWorker(**deps).execute(base_snapshot.id)
+
+    assert result.status == SnapshotStatus.FAILED
+    assert "commit" in result.error_message
+    assert deps["uow"].rollbacks == 1
+    deps["storage_gateway"].delete_object.assert_awaited_once_with(MANIFEST_URI)
+
+
+@pytest.mark.asyncio
+async def test_failure_before_upload_has_nothing_to_delete(
+    base_snapshot, mock_dependencies
+):
+    deps = mock_dependencies
+    deps["snapshot_repo"].get_by_id = AsyncMock(return_value=base_snapshot)
+    deps["snapshot_item_repo"].bulk_create = AsyncMock(side_effect=RuntimeError("boom"))
+
+    result = await SnapshotWorker(**deps).execute(base_snapshot.id)
+
+    assert result.status == SnapshotStatus.FAILED
+    assert deps["uow"].rollbacks == 1
+    deps["storage_gateway"].upload_manifest.assert_not_called()
+    deps["storage_gateway"].delete_object.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_cancellation_after_upload_rolls_back_and_deletes_manifest(
+    base_snapshot, mock_dependencies
+):
+    deps = mock_dependencies
+    deps["snapshot_repo"].get_by_id = AsyncMock(return_value=base_snapshot)
+
+    async def cancel_while_saving_manifest(manifest):
+        request_snapshot_cancellation(base_snapshot.id)
+        return manifest
+
+    deps["manifest_repo"].create = AsyncMock(side_effect=cancel_while_saving_manifest)
+
+    result = await SnapshotWorker(**deps).execute(base_snapshot.id)
+
+    assert result.status == SnapshotStatus.FAILED
+    assert result.error_code == "cancelled_by_user"
+    assert deps["uow"].rollbacks == 1
+    deps["storage_gateway"].delete_object.assert_awaited_once_with(MANIFEST_URI)
+
+
+@pytest.mark.asyncio
+async def test_does_not_overwrite_status_set_by_cancel_use_case(
+    base_snapshot, mock_dependencies
+):
+    """CancelSnapshotUseCase already stored FAILED; the worker keeps that record."""
+    deps = mock_dependencies
+    already_failed = SnapshotEntity(
+        **{**base_snapshot.__dict__, "status": SnapshotStatus.FAILED,
+           "error_code": "cancelled_by_user", "error_message": "by user 7"}
+    )
+    deps["snapshot_repo"].get_by_id = AsyncMock(side_effect=[base_snapshot, already_failed])
+    deps["manifest_repo"].create = AsyncMock(side_effect=RuntimeError("late failure"))
+
+    result = await SnapshotWorker(**deps).execute(base_snapshot.id)
+
+    assert result.error_code == "cancelled_by_user"
+    assert result.error_message == "by user 7"
+    deps["snapshot_repo"].update.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_manifest_delete_failure_is_logged_not_raised(
+    base_snapshot, mock_dependencies
+):
+    deps = mock_dependencies
+    deps["snapshot_repo"].get_by_id = AsyncMock(return_value=base_snapshot)
+    deps["manifest_repo"].create = AsyncMock(side_effect=RuntimeError("db write failed"))
+    deps["storage_gateway"].delete_object = AsyncMock(side_effect=OSError("minio down"))
+
+    result = await SnapshotWorker(**deps).execute(base_snapshot.id)
+
+    assert result.status == SnapshotStatus.FAILED
+    assert result.error_code == "snapshot_creation_error"
+
+
+@pytest.mark.asyncio
+async def test_task_cancellation_cleans_up_and_propagates(
+    base_snapshot, mock_dependencies
+):
+    deps = mock_dependencies
+    deps["snapshot_repo"].get_by_id = AsyncMock(return_value=base_snapshot)
+    deps["manifest_repo"].create = AsyncMock(side_effect=asyncio.CancelledError())
+
+    with pytest.raises(asyncio.CancelledError):
+        await SnapshotWorker(**deps).execute(base_snapshot.id)
+
+    assert (deps["uow"].commits, deps["uow"].rollbacks) == (0, 1)
+    deps["storage_gateway"].delete_object.assert_awaited_once_with(MANIFEST_URI)

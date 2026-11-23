@@ -104,6 +104,10 @@ async def test_snapshot_lifecycle_end_to_end():
     )
     storage_gateway.delete_object = AsyncMock(return_value=True)
 
+    uow = MagicMock()
+    uow.commit = AsyncMock()
+    uow.rollback = AsyncMock()
+
     checksum_service = DefaultChecksumService()
     stratification_service = DefaultStratificationService()
 
@@ -117,11 +121,14 @@ async def test_snapshot_lifecycle_end_to_end():
         storage_gateway=storage_gateway,
         checksum_service=checksum_service,
         stratification_service=stratification_service,
+        uow=uow,
     )
 
+    launcher = MagicMock()
     create_uc = CreateSnapshotUseCase(
         snapshot_repo=snapshot_repo,
-        worker=worker,
+        uow=uow,
+        launcher=launcher,
     )
 
     req = SnapshotCreateRequest(
@@ -138,6 +145,7 @@ async def test_snapshot_lifecycle_end_to_end():
 
     assert snapshot.status == SnapshotStatus.CREATING
     assert snapshot.version_name == "v1.0.0"
+    launcher.launch.assert_called_once_with(snapshot.id)
 
     # Await worker execution directly to verify completion
     completed = await worker.execute(snapshot.id)

@@ -13,14 +13,19 @@ import {
 } from "lucide-react";
 import { datasetApi } from "@/features/dataset/api";
 import { DATASET_KEYS } from "@/features/dataset/hooks/use-datasets";
+import type { AssetImportError } from "@/features/dataset/types";
+import { waitForAssetImport } from "@/features/dataset/utils/wait-for-asset-import";
 
 export interface ActiveUploadJob {
   id: string;
   versionId: string;
   files: File[];
   fileProgresses: Record<number, number>;
-  status: "uploading" | "finalizing" | "completed" | "error";
+  // validating: files are in storage, workers are checking them (server-side).
+  status: "uploading" | "finalizing" | "validating" | "completed" | "error";
   errorMsg?: string;
+  importAttempt?: number;
+  importErrors?: AssetImportError[];
   completedCount: number;
   totalCount: number;
   reusedCount?: number;
@@ -166,9 +171,41 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
         )
       );
 
-      const finalizeRes = await datasetApi.finalizeAssetImport(versionId, {
+      const accepted = await datasetApi.finalizeAssetImport(versionId, {
         items: finalizeItems,
       });
+
+      setActiveJobs((prev) =>
+        prev.map((job) =>
+          job.id === jobId ? { ...job, status: "validating" } : job
+        )
+      );
+
+      // Step 4: Validation workers check every file; all are imported or none.
+      const importJob = await waitForAssetImport(accepted.job_id, (update) => {
+        setActiveJobs((prev) =>
+          prev.map((job) =>
+            job.id === jobId ? { ...job, importAttempt: update.attempt } : job
+          )
+        );
+      });
+
+      if (importJob.status === "failed") {
+        setActiveJobs((prev) =>
+          prev.map((job) =>
+            job.id === jobId
+              ? {
+                  ...job,
+                  status: "error",
+                  errorMsg:
+                    "Không tệp nào được thêm vào phiên bản. Sửa các tệp bị lỗi rồi tải lên lại.",
+                  importErrors: importJob.errors,
+                }
+              : job
+          )
+        );
+        return;
+      }
 
       setActiveJobs((prev) =>
         prev.map((job) =>
@@ -177,8 +214,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
                 ...job,
                 status: "completed",
                 completedCount: files.length,
-                reusedCount: finalizeRes.reused_assets_count,
-                newCount: finalizeRes.new_assets_count,
+                reusedCount: importJob.reused_assets_count,
+                newCount: importJob.new_assets_count,
               }
             : job
         )
@@ -244,7 +281,7 @@ function FloatingUploadManager() {
   if (activeJobs.length === 0) return null;
 
   return (
-    <div className="pointer-events-auto fixed bottom-4 right-4 z-50 flex w-full max-w-sm flex-col gap-3">
+    <div className="pointer-events-auto fixed bottom-4 left-4 right-4 z-50 flex max-w-sm flex-col gap-3 sm:left-auto sm:w-full">
       {activeJobs.map((job) => {
         const totalProgress =
           job.files.length > 0
@@ -264,7 +301,8 @@ function FloatingUploadManager() {
               <div className="flex items-center gap-2 overflow-hidden">
                 {job.status === "uploading" ? (
                   <UploadCloud className="h-4 w-4 text-blue-400" />
-                ) : job.status === "finalizing" ? (
+                ) : job.status === "finalizing" ||
+                  job.status === "validating" ? (
                   <LoaderCircle className="h-4 w-4 animate-spin text-sky-400" />
                 ) : job.status === "completed" ? (
                   <CheckCircle2 className="h-4 w-4 text-emerald-400" />
@@ -276,10 +314,14 @@ function FloatingUploadManager() {
                     {job.status === "uploading"
                       ? `Đang tải lên, không tắt trang web... (${job.completedCount}/${job.totalCount} tệp)`
                       : job.status === "finalizing"
-                        ? "Đang hoàn tất lưu trữ..."
-                        : job.status === "completed"
-                          ? "Tải lên hoàn tất!"
-                          : "Tải lên có lỗi"}
+                        ? "Đang gửi yêu cầu kiểm tra..."
+                        : job.status === "validating"
+                          ? (job.importAttempt ?? 1) > 1
+                            ? `Đang thử lại kiểm tra tệp (lần ${job.importAttempt})...`
+                            : "Đang kiểm tra tệp, có thể rời trang..."
+                          : job.status === "completed"
+                            ? "Tải lên hoàn tất!"
+                            : "Tải lên có lỗi"}
                   </span>
                   <span className="text-[10px] text-slate-400">
                     {totalProgress}% • {job.files.length} tập tin
@@ -327,8 +369,9 @@ function FloatingUploadManager() {
                   width: `${
                     job.status === "completed"
                       ? 100
-                      : job.status === "finalizing"
-                        ? 95
+                      : job.status === "finalizing" ||
+                          job.status === "validating"
+                        ? 97
                         : totalProgress
                   }%`,
                 }}
@@ -389,9 +432,37 @@ function FloatingUploadManager() {
                 {job.errorMsg}
               </p>
             )}
+
+            {job.importErrors && job.importErrors.length > 0 && (
+              <ImportErrorList errors={job.importErrors} />
+            )}
           </div>
         );
       })}
     </div>
+  );
+}
+
+const MAX_LISTED_IMPORT_ERRORS = 5;
+
+function ImportErrorList({ errors }: { errors: AssetImportError[] }) {
+  const listed = errors.slice(0, MAX_LISTED_IMPORT_ERRORS);
+  const hidden = errors.length - listed.length;
+
+  return (
+    <ul
+      aria-label="Tệp bị từ chối"
+      className="mt-2 max-h-32 space-y-1 overflow-y-auto rounded-lg border border-rose-500/20 bg-rose-500/10 p-2 text-[11px] text-rose-200"
+    >
+      {listed.map((error, index) => (
+        <li key={`${error.asset_id ?? "job"}-${error.code}-${index}`}>
+          <span className="font-mono font-medium">
+            {error.filename ?? "Toàn bộ lượt tải"}
+          </span>
+          : {error.message}
+        </li>
+      ))}
+      {hidden > 0 && <li>+{hidden} lỗi khác</li>}
+    </ul>
   );
 }

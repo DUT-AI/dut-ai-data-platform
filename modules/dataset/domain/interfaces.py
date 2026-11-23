@@ -7,6 +7,7 @@ from modules.dataset.domain.entities import (
     DatasetVersionAssetEntity,
     DatasetVersionEntity,
 )
+from modules.dataset.domain.import_job import ImportJob
 
 
 class IDatasetRepository(Protocol):
@@ -71,3 +72,15 @@ class IDatasetRepository(Protocol):
     async def find_existing_asset_uris(self, uris: Sequence[str]) -> set[str]:
         """Return the subset of ``uris`` referenced by an asset (retired included)."""
         ...
+
+    async def get_assets_by_ids(self, asset_ids: Sequence[str]) -> list[AssetEntity]:
+        """Return existing assets, in the order of ``asset_ids``."""
+        ...
+
+
+class IAssetImportJobStore(Protocol):
+    """Where asynchronous import jobs keep their status (expires after a TTL)."""
+
+    async def save(self, job: ImportJob) -> None: ...
+
+    async def get(self, job_id: str) -> ImportJob | None: ...

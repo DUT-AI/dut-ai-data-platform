@@ -1,5 +1,5 @@
 from dishka import Provider, Scope, provide
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from core.storage.interface import IStorageProvider
 from modules.snapshot.application.use_cases.archive_snapshot import (
@@ -40,6 +40,7 @@ from modules.snapshot.domain.interfaces import (
     ReleaseTagRepository,
     SnapshotDiffService,
     SnapshotItemRepository,
+    SnapshotJobLauncher,
     SnapshotManifestRepository,
     SnapshotRepository,
     StorageGateway,
@@ -51,8 +52,8 @@ from modules.snapshot.domain.services.checksum_service import (
 from modules.snapshot.domain.services.stratification_service import (
     DefaultStratificationService,
 )
-from modules.snapshot.infrastructure.background.snapshot_worker import (
-    SnapshotWorker,
+from modules.snapshot.infrastructure.background.snapshot_runner import (
+    SnapshotJobRunner,
 )
 from modules.snapshot.infrastructure.gateways.annotation_gateway import (
     SqlAnnotationGateway,
@@ -137,31 +138,14 @@ class SnapshotProvider(Provider):
     def get_diff_service(self, session: AsyncSession) -> SnapshotDiffService:
         return SqlSnapshotDiffService(session)
 
-    # Background Worker
-    @provide
-    def get_snapshot_worker(
+    # Background build: one session per run, independent of the request.
+    @provide(scope=Scope.APP)
+    def get_snapshot_launcher(
         self,
-        snapshot_repo: SnapshotRepository,
-        snapshot_item_repo: SnapshotItemRepository,
-        manifest_repo: SnapshotManifestRepository,
-        dataset_gateway: DatasetGateway,
-        annotation_gateway: AnnotationGateway,
-        ontology_gateway: OntologyGateway,
-        storage_gateway: StorageGateway,
-        checksum_service: ChecksumService,
-        stratification_service: StratificationService,
-    ) -> SnapshotWorker:
-        return SnapshotWorker(
-            snapshot_repo=snapshot_repo,
-            snapshot_item_repo=snapshot_item_repo,
-            manifest_repo=manifest_repo,
-            dataset_gateway=dataset_gateway,
-            annotation_gateway=annotation_gateway,
-            ontology_gateway=ontology_gateway,
-            storage_gateway=storage_gateway,
-            checksum_service=checksum_service,
-            stratification_service=stratification_service,
-        )
+        session_factory: async_sessionmaker[AsyncSession],
+        storage_provider: IStorageProvider,
+    ) -> SnapshotJobLauncher:
+        return SnapshotJobRunner(session_factory, storage_provider)
 
     # Use Cases
     create_snapshot_uc = provide(CreateSnapshotUseCase)

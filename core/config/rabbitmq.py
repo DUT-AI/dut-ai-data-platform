@@ -16,6 +16,15 @@ class RabbitMQSettings(BaseSettings):
     )
 
     rabbitmq_url: str = "amqp://guest:guest@localhost:5672/"
+    # The worker's AMQP consumer only logs messages for now; turn it off when
+    # no broker runs (e.g. local development) instead of retrying forever.
+    rabbitmq_enabled: bool = True
+
+    @property
+    def safe_url(self) -> str:
+        """URL without credentials, safe to log."""
+        scheme, _, rest = self.rabbitmq_url.partition("://")
+        return f"{scheme}://{rest.rpartition('@')[2]}"
 
     @property
     def url(self) -> str:

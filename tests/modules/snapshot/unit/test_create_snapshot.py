@@ -39,16 +39,22 @@ def mock_snapshot_repo():
 
 @pytest.fixture
 def mock_worker():
-    worker = MagicMock()
-    worker.execute = AsyncMock()
-    return worker
+    """Unit of work + launcher sharing one call log to check their order."""
+    calls: list[str] = []
+    uow = MagicMock()
+    uow.commit = AsyncMock(side_effect=lambda: calls.append("commit"))
+    uow.rollback = AsyncMock()
+    launcher = MagicMock()
+    launcher.launch = MagicMock(side_effect=lambda sid: calls.append(f"launch:{sid}"))
+    return {"uow": uow, "launcher": launcher, "calls": calls}
 
 
 @pytest.mark.asyncio
 async def test_create_snapshot_auto_version(mock_snapshot_repo, mock_worker):
     use_case = CreateSnapshotUseCase(
         snapshot_repo=mock_snapshot_repo,
-        worker=mock_worker,
+        uow=mock_worker["uow"],
+        launcher=mock_worker["launcher"],
     )
     request = SnapshotCreateRequest(
         dataset_version_id="01JABCDEF12345678901234567",
@@ -69,6 +75,8 @@ async def test_create_snapshot_auto_version(mock_snapshot_repo, mock_worker):
     assert snapshot.created_by == 1001
     assert snapshot.split_ratios.train == 0.8
     mock_snapshot_repo.create.assert_called_once()
+    # The build runs in its own session, so the row must be committed first.
+    assert mock_worker["calls"] == ["commit", f"launch:{snapshot.id}"]
 
 
 @pytest.mark.asyncio
@@ -76,7 +84,8 @@ async def test_create_snapshot_version_conflict(mock_snapshot_repo, mock_worker)
     mock_snapshot_repo.get_by_project_and_version.return_value = MagicMock()
     use_case = CreateSnapshotUseCase(
         snapshot_repo=mock_snapshot_repo,
-        worker=mock_worker,
+        uow=mock_worker["uow"],
+        launcher=mock_worker["launcher"],
     )
     request = SnapshotCreateRequest(
         dataset_version_id="01JABCDEF12345678901234567",
@@ -91,6 +100,7 @@ async def test_create_snapshot_version_conflict(mock_snapshot_repo, mock_worker)
             request=request,
             user_id=1001,
         )
+    assert mock_worker["calls"] == []
 
 
 @pytest.mark.asyncio

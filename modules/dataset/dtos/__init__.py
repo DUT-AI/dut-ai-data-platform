@@ -1,7 +1,6 @@
 from modules.dataset.dtos.dataset_dtos import (
     AssetDownloadUrlResponseDTO,
     AssetResponseDTO,
-    BatchUploadResultDTO,
     DatasetCreateDTO,
     DatasetResponseDTO,
     DatasetVersionCreateDTO,
@@ -11,7 +10,6 @@ from modules.dataset.dtos.dataset_dtos import (
 __all__ = [
     "AssetDownloadUrlResponseDTO",
     "AssetResponseDTO",
-    "BatchUploadResultDTO",
     "DatasetCreateDTO",
     "DatasetResponseDTO",
     "DatasetVersionCreateDTO",

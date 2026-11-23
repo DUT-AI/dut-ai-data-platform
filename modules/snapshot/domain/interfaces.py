@@ -178,6 +178,12 @@ class StorageGateway(Protocol):
         ...
 
 
+class SnapshotJobLauncher(Protocol):
+    def launch(self, snapshot_id: str) -> None:
+        """Start building a committed CREATING snapshot in the background."""
+        ...
+
+
 # --- Pure Domain Services Protocols ---
 
 

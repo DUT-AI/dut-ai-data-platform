@@ -22,7 +22,7 @@ def override_auth_dep():
 
 
 @pytest.mark.asyncio
-async def test_dataset_full_lifecycle():
+async def test_dataset_full_lifecycle(import_files):
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         # 1. Create a Project
@@ -54,6 +54,7 @@ async def test_dataset_full_lifecycle():
 
         # 3. Batch Upload Files to Version
         import io
+
         from PIL import Image
 
         buf = io.BytesIO()
@@ -66,32 +67,25 @@ async def test_dataset_full_lifecycle():
             ("files", ("doc_info.pdf", file2_content, "application/pdf")),
         ]
 
-        upload_res = await client.post(
-            f"/api/v1/dataset-versions/{draft_ver_id}/assets",
-            files=files_data,
-        )
-        assert upload_res.status_code == 201
-        upload_data = upload_res.json()
+        # Upload is accepted (202) and validated by a worker before import.
+        upload_data = await import_files(client, draft_ver_id, files_data)
+        assert upload_data["status"] == "succeeded", upload_data
         assert upload_data["new_assets_count"] == 2
         assert upload_data["reused_assets_count"] == 0
-        assert len(upload_data["uploaded_assets"]) == 2
+        assert len(upload_data["imported_assets"]) == 2
 
-        asset_1 = upload_data["uploaded_assets"][0]
-        asset_2 = upload_data["uploaded_assets"][1]
+        asset_1 = upload_data["imported_assets"][0]
+        asset_2 = upload_data["imported_assets"][1]
 
         # 4. Verify SHA256 Deduplication: Upload valid_png_content again
         dup_files_data = [
             ("files", ("duplicate_car.png", valid_png_content, "image/png")),
         ]
-        dup_upload_res = await client.post(
-            f"/api/v1/dataset-versions/{draft_ver_id}/assets",
-            files=dup_files_data,
-        )
-        assert dup_upload_res.status_code == 201
-        dup_data = dup_upload_res.json()
+        dup_data = await import_files(client, draft_ver_id, dup_files_data)
+        assert dup_data["status"] == "succeeded", dup_data
         assert dup_data["reused_assets_count"] == 1
         assert dup_data["new_assets_count"] == 0
-        assert dup_data["uploaded_assets"][0]["id"] == asset_1["id"]
+        assert dup_data["imported_assets"][0]["id"] == asset_1["id"]
 
         # 5. List Version Assets
         assets_res = await client.get(f"/api/v1/dataset-versions/{draft_ver_id}/assets")

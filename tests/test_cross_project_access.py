@@ -79,7 +79,9 @@ async def client():
 
 
 @pytest_asyncio.fixture
-async def project_a(client: httpx.AsyncClient, test_session_factory) -> ProjectAFixture:
+async def project_a(
+    client: httpx.AsyncClient, test_session_factory, import_files
+) -> ProjectAFixture:
     current.as_(OWNER_A)
     p = await client.post(
         "/api/v1/projects", json={"name": "BOLA A", "project_type": "detection"}
@@ -94,12 +96,13 @@ async def project_a(client: httpx.AsyncClient, test_session_factory) -> ProjectA
     dataset_id = d.json()["id"]
     version_id = d.json()["versions"][0]["id"]
 
-    u = await client.post(
-        f"/api/v1/dataset-versions/{version_id}/assets",
-        files=[("files", (f"{generate_ulid()}.png", _png("blue"), "image/png"))],
+    imported = await import_files(
+        client,
+        version_id,
+        [("files", (f"{generate_ulid()}.png", _png("blue"), "image/png"))],
     )
-    assert u.status_code == 201, u.text
-    asset_id = u.json()["uploaded_assets"][0]["id"]
+    assert imported["status"] == "succeeded", imported
+    asset_id = imported["imported_assets"][0]["id"]
 
     annotation_id, revision_id = generate_ulid(), generate_ulid()
     async with test_session_factory() as session, session.begin():
@@ -345,11 +348,14 @@ def test_every_project_scoped_route_declares_authorization():
         "/api/v1/assets",
         "/api/v1/annotations",
         "/api/v1/annotation-revisions",
+        "/api/v1/asset-import-jobs",
     )
-    # Checked inside the route body via ProjectAuthorizer (ids come from the body).
+    # Checked inside the route body via ProjectAuthorizer (ids come from the body,
+    # or the project is read from the import job stored in Redis).
     body_checked = {
         ("POST", "/api/v1/annotations"),
         ("POST", "/api/v1/annotations/batch-status"),
+        ("GET", "/api/v1/asset-import-jobs/{job_id}"),
     }
 
     def dependency_names(dependant) -> set[str]:
@@ -372,3 +378,28 @@ def test_every_project_scoped_route_declares_authorization():
                 unguarded.append(key)
 
     assert unguarded == []
+
+
+@pytest.mark.asyncio
+async def test_list_projects_passes_integer_user_id(client, monkeypatch):
+    """Postgres rejects `integer = text`; SQLite does not, so check the type here.
+
+    Regression: the route passed str(current_user.id), so GET /projects failed
+    with a 500 on Postgres ("API project không phản hồi" on the dashboard).
+    """
+    from modules.project.use_cases.list_user_projects import ListUserProjectsUseCase
+
+    received = {}
+
+    async def spy(self, user_id, **kwargs):
+        received["user_id"] = user_id
+        return []
+
+    monkeypatch.setattr(ListUserProjectsUseCase, "execute", spy)
+    current.as_(OWNER_A)
+
+    res = await client.get("/api/v1/projects", params={"page": 1, "page_size": 50})
+
+    assert res.status_code == 200, res.text
+    assert received["user_id"] == OWNER_A
+    assert isinstance(received["user_id"], int)

@@ -12,7 +12,7 @@ class ListUserProjectsUseCase:
 
     async def execute(
         self,
-        user_id: str,
+        user_id: int,
         page: int = 1,
         page_size: int = 20,
         status: str | None = None,

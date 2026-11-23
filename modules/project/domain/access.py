@@ -7,7 +7,7 @@ ProjectResourceKind = Literal["dataset", "version", "asset", "annotation", "revi
 class IProjectAccessChecker(Protocol):
     """Integration contract implemented by the Project Member module."""
 
-    async def accessible_project_ids(self, user_id: str) -> set[str]: ...
+    async def accessible_project_ids(self, user_id: int) -> set[str]: ...
 
 
 class IProjectScopeResolver(Protocol):

@@ -729,7 +729,7 @@ export interface paths {
         get: operations["list_version_assets_api_v1_dataset_versions__version_id__assets_get"];
         put?: never;
         /**
-         * Batch upload assets directly (Deprecated - Use prepare-upload & finalize-import)
+         * Upload files and queue them for validation (Deprecated - Use prepare-upload & finalize-import)
          * @deprecated
          */
         post: operations["upload_version_assets_api_v1_dataset_versions__version_id__assets_post"];
@@ -782,7 +782,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Finalize asset import after S3 presigned upload (Spec v1) */
+        /**
+         * Queue presigned-uploaded files for validation and import
+         * @description Returns 202 with a job id. Validation workers check every file; the assets are recorded only if all files are valid. Poll GET /asset-import-jobs/{job_id} for the outcome.
+         */
         post: operations["finalize_asset_import_api_v1_dataset_versions__version_id__finalize_import_post"];
         delete?: never;
         options?: never;
@@ -868,6 +871,23 @@ export interface paths {
         get?: never;
         /** Retire an asset (if no protected references exist) */
         put: operations["retire_asset_api_v1_assets__asset_id__retire_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/asset-import-jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status of an asynchronous asset import (poll until succeeded/failed) */
+        get: operations["get_asset_import_job_api_v1_asset_import_jobs__job_id__get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1486,6 +1506,72 @@ export interface components {
             /** Expires In Seconds */
             expires_in_seconds: number;
         };
+        /** AssetImportErrorDTO */
+        AssetImportErrorDTO: {
+            /** Asset Id */
+            asset_id: string | null;
+            /** Filename */
+            filename: string | null;
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+        };
+        /**
+         * AssetImportJobAcceptedDTO
+         * @description Returned with 202: the files are queued for validation, not imported yet.
+         */
+        AssetImportJobAcceptedDTO: {
+            /** Job Id */
+            job_id: string;
+            /** Version Id */
+            version_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "processing" | "retrying" | "succeeded" | "failed";
+            /** Total Items */
+            total_items: number;
+        };
+        /** AssetImportJobDTO */
+        AssetImportJobDTO: {
+            /** Job Id */
+            job_id: string;
+            /** Project Id */
+            project_id: string;
+            /** Version Id */
+            version_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "processing" | "retrying" | "succeeded" | "failed";
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "presigned" | "direct";
+            /** Attempt */
+            attempt: number;
+            /** Total Items */
+            total_items: number;
+            /** New Assets Count */
+            new_assets_count: number;
+            /** Reused Assets Count */
+            reused_assets_count: number;
+            /** Imported Assets */
+            imported_assets: components["schemas"]["AssetResponseDTO"][];
+            /** Errors */
+            errors: components["schemas"]["AssetImportErrorDTO"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Finished At */
+            finished_at: string | null;
+        };
         /** AssetResponseDTO */
         AssetResponseDTO: {
             /** Id */
@@ -1598,15 +1684,6 @@ export interface components {
              * @description List of asset IDs included in the batch
              */
             asset_ids: string[];
-        };
-        /** BatchUploadResultDTO */
-        BatchUploadResultDTO: {
-            /** Uploaded Assets */
-            uploaded_assets: components["schemas"]["AssetResponseDTO"][];
-            /** Reused Assets Count */
-            reused_assets_count: number;
-            /** New Assets Count */
-            new_assets_count: number;
         };
         /** Body_upload_version_assets_api_v1_dataset_versions__version_id__assets_post */
         Body_upload_version_assets_api_v1_dataset_versions__version_id__assets_post: {
@@ -1925,21 +2002,6 @@ export interface components {
         FinalizeAssetImportRequestDTO: {
             /** Items */
             items: components["schemas"]["FinalizeAssetImportItemDTO"][];
-        };
-        /** FinalizeAssetImportResponseDTO */
-        FinalizeAssetImportResponseDTO: {
-            /** Imported Assets */
-            imported_assets: components["schemas"]["AssetResponseDTO"][];
-            /**
-             * Reused Assets Count
-             * @default 0
-             */
-            reused_assets_count: number;
-            /**
-             * New Assets Count
-             * @default 0
-             */
-            new_assets_count: number;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -5378,12 +5440,12 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
-            201: {
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BatchUploadResultDTO"];
+                    "application/json": components["schemas"]["AssetImportJobAcceptedDTO"];
                 };
             };
             /** @description Validation Error */
@@ -5483,12 +5545,12 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
-            201: {
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FinalizeAssetImportResponseDTO"];
+                    "application/json": components["schemas"]["AssetImportJobAcceptedDTO"];
                 };
             };
             /** @description Validation Error */
@@ -5645,6 +5707,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AssetResponseDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_asset_import_job_api_v1_asset_import_jobs__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetImportJobDTO"];
                 };
             };
             /** @description Validation Error */

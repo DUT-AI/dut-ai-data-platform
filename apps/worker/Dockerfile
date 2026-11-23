@@ -38,5 +38,7 @@ COPY --from=builder /app/.venv /app/.venv
 COPY core ./core
 COPY modules ./modules
 COPY apps/worker ./apps/worker
+# Same image runs the asset validation workers (compose service validation-worker).
+COPY apps/validation_worker ./apps/validation_worker
 
 CMD ["python", "apps/worker/main.py"]

@@ -7,14 +7,14 @@ from apps.api.deps.roles import (
     PROJECT_WRITE_ROLES,
     require_resource_role,
 )
+from modules.dataset.domain.import_job import ImportItem, ImportJob
 from modules.dataset.dtos.dataset_dtos import (
+    AssetImportJobAcceptedDTO,
     AssetResponseDTO,
-    BatchUploadResultDTO,
     CursorPageAssetResponseDTO,
     DatasetVersionCreateDTO,
     DatasetVersionResponseDTO,
     FinalizeAssetImportRequestDTO,
-    FinalizeAssetImportResponseDTO,
     InheritDatasetVersionRequestDTO,
     InheritDatasetVersionResponseDTO,
     PrepareUploadRequestDTO,
@@ -22,7 +22,6 @@ from modules.dataset.dtos.dataset_dtos import (
 )
 from modules.dataset.use_cases import (
     CreateDatasetVersionUseCase,
-    FinalizeAssetImportUseCase,
     GetDatasetVersionDetailUseCase,
     InheritDatasetVersionUseCase,
     ListVersionAssetsCursorUseCase,
@@ -30,7 +29,8 @@ from modules.dataset.use_cases import (
     PrepareAssetUploadUseCase,
     PublishDatasetVersionUseCase,
     RemoveVersionAssetUseCase,
-    UploadVersionAssetsUseCase,
+    RequestAssetImportUseCase,
+    StageDirectUploadUseCase,
 )
 
 router = APIRouter(tags=["Dataset Versions"])
@@ -139,33 +139,43 @@ async def prepare_asset_upload(
 @router.post(
     "/dataset-versions/{version_id}/finalize-import",
     dependencies=[Depends(require_resource_role("version", *PROJECT_WRITE_ROLES))],
-    response_model=FinalizeAssetImportResponseDTO,
-    status_code=status.HTTP_201_CREATED,
-    summary="Finalize asset import after S3 presigned upload (Spec v1)",
+    response_model=AssetImportJobAcceptedDTO,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Queue presigned-uploaded files for validation and import",
+    description=(
+        "Returns 202 with a job id. Validation workers check every file; the "
+        "assets are recorded only if all files are valid. Poll "
+        "GET /asset-import-jobs/{job_id} for the outcome."
+    ),
 )
 @inject
 async def finalize_asset_import(
     version_id: str,
     payload: FinalizeAssetImportRequestDTO,
     current_user: CurrentUser,
-    use_case: FromDishka[FinalizeAssetImportUseCase],
+    use_case: FromDishka[RequestAssetImportUseCase],
 ):
-    return await use_case.execute(version_id, payload, created_by=current_user.id)
+    job = await use_case.execute(
+        version_id,
+        [ImportItem(**item.model_dump()) for item in payload.items],
+        created_by=current_user.id,
+    )
+    return _accepted(job)
 
 
 @router.post(
     "/dataset-versions/{version_id}/assets",
     dependencies=[Depends(require_resource_role("version", *PROJECT_WRITE_ROLES))],
-    response_model=BatchUploadResultDTO,
-    status_code=status.HTTP_201_CREATED,
-    summary="Batch upload assets directly (Deprecated - Use prepare-upload & finalize-import)",
+    response_model=AssetImportJobAcceptedDTO,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Upload files and queue them for validation (Deprecated - Use prepare-upload & finalize-import)",
     deprecated=True,
 )
 @inject
 async def upload_version_assets(
     version_id: str,
     current_user: CurrentUser,
-    use_case: FromDishka[UploadVersionAssetsUseCase],
+    use_case: FromDishka[StageDirectUploadUseCase],
     files: list[UploadFile] = File(...),
 ):
     file_tuples: list[tuple[str, bytes, str | None]] = []
@@ -174,7 +184,17 @@ async def upload_version_assets(
         filename = f.filename or "unnamed_file"
         file_tuples.append((filename, content, f.content_type))
 
-    return await use_case.execute(version_id, file_tuples, created_by=current_user.id)
+    job = await use_case.execute(version_id, file_tuples, created_by=current_user.id)
+    return _accepted(job)
+
+
+def _accepted(job: ImportJob) -> AssetImportJobAcceptedDTO:
+    return AssetImportJobAcceptedDTO(
+        job_id=job.id,
+        version_id=job.version_id,
+        status=job.status,
+        total_items=len(job.items),
+    )
 
 
 @router.delete(

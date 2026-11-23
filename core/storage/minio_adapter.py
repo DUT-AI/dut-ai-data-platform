@@ -94,6 +94,31 @@ class MinIOStorageAdapter(IStorageProvider):
         )
         return str(url)
 
+    async def stat(self, bucket: str, key: str) -> StoredObjectInfo | None:
+        clean_key = key.lstrip("/")
+        loop = asyncio.get_running_loop()
+        try:
+            head = await loop.run_in_executor(
+                None, lambda: self.client.head_object(Bucket=bucket, Key=clean_key)
+            )
+        except ClientError as exc:
+            code = str(exc.response.get("Error", {}).get("Code", ""))
+            if code in ("404", "NoSuchKey", "NotFound"):
+                return None
+            raise
+        return StoredObjectInfo(
+            key=clean_key,
+            size=int(head.get("ContentLength", 0)),
+            last_modified=head["LastModified"],
+        )
+
+    async def download(self, bucket: str, key: str, dest: BinaryIO) -> None:
+        clean_key = key.lstrip("/")
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(
+            None, lambda: self.client.download_fileobj(bucket, clean_key, dest)
+        )
+
     async def list_objects(
         self, bucket: str, *, prefix: str = ""
     ) -> AsyncIterator[StoredObjectInfo]:

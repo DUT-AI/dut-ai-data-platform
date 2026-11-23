@@ -142,7 +142,9 @@ async def test_rejects_window_shorter_than_presigned_url_lifetime():
 
 
 @pytest.mark.asyncio
-async def test_end_to_end_with_database_keeps_uploaded_asset(test_session_factory):
+async def test_end_to_end_with_database_keeps_uploaded_asset(
+    test_session_factory, import_files
+):
     """Real repository: an uploaded asset survives, a stray object is removed."""
     user = AuthUser(id=401, name="u", email="u@dut.ai", status="ACTIVE", role_names=[])
     app.dependency_overrides[get_current_user] = lambda: user
@@ -161,12 +163,11 @@ async def test_end_to_end_with_database_keeps_uploaded_asset(test_session_factor
             ).json()["versions"][0]["id"]
             buf = io.BytesIO()
             Image.new("RGB", (5, 5), "purple").save(buf, format="PNG")
-            upload = await client.post(
-                f"/api/v1/dataset-versions/{version_id}/assets",
-                files=[("files", ("kept.png", buf.getvalue(), "image/png"))],
+            imported = await import_files(
+                client, version_id, [("files", ("kept.png", buf.getvalue(), "image/png"))]
             )
-            assert upload.status_code == 201, upload.text
-            kept_asset_id = upload.json()["uploaded_assets"][0]["id"]
+            assert imported["status"] == "succeeded", imported
+            kept_asset_id = imported["imported_assets"][0]["id"]
     finally:
         app.dependency_overrides.clear()
 

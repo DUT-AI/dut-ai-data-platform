@@ -3,6 +3,7 @@ from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 
 from core.database.session import DatabaseProvider
+from core.queue.di import QueueProvider
 from core.storage.di import StorageProvider
 from modules.annotation.di import AnnotationProvider
 from modules.dataset.di import DatasetProvider
@@ -19,6 +20,7 @@ def create_container() -> AsyncContainer:
     return make_async_container(
         DatabaseProvider(),
         StorageProvider(),
+        QueueProvider(),
         IdentityProvider(),
         ProjectProvider(),
         DatasetProvider(),

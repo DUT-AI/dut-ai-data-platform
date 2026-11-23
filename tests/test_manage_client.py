@@ -158,3 +158,107 @@ async def test_manage_client_forbidden_maps_to_502(monkeypatch):
     with pytest.raises(HTTPException) as exc_info:
         await ManageClient().list_users()
     assert exc_info.value.status_code == 502
+
+
+@pytest.mark.asyncio
+async def test_manage_client_trusts_server_pagination(monkeypatch):
+    """Manage paginates itself and returns `pagination`; the page must not be sliced again.
+
+    Regression: page 2 came back empty and `total` was capped at 20, so the
+    Users screen only ever listed 20 of the 88 users.
+    """
+    sent = {}
+
+    class MockResponse:
+        status_code = 200
+
+        def json(self):
+            page, size = sent["params"]["page"], sent["params"]["page_size"]
+            first = (page - 1) * size + 1
+            return {
+                "is_success": True,
+                "data": [
+                    {"id": i, "name": f"User {i}", "email": f"u{i}@dutai.io.vn"}
+                    for i in range(first, min(first + size, 89))
+                ],
+                "pagination": {
+                    "page": page,
+                    "page_size": size,
+                    "total": 88,
+                    "total_pages": 5,
+                    "has_next": page < 5,
+                },
+            }
+
+        def raise_for_status(self):
+            pass
+
+    async def mock_get(self, url, headers=None, params=None, **kwargs):
+        sent["params"] = params
+        return MockResponse()
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", mock_get)
+    client = ManageClient()
+
+    page2 = await client.list_users(page=2, page_size=20)
+    assert page2.total == 88
+    assert [u.id for u in page2.items] == list(range(21, 41))
+
+    last = await client.list_users(page=5, page_size=20)
+    assert [u.id for u in last.items] == list(range(81, 89))
+
+
+@pytest.mark.asyncio
+async def test_manage_client_sends_search_as_keyword(monkeypatch):
+    """Manage filters with `keyword`; it silently ignores `search`."""
+    sent = {}
+
+    class MockResponse:
+        status_code = 200
+
+        def json(self):
+            return {
+                "is_success": True,
+                "data": [],
+                "pagination": {"page": 1, "page_size": 20, "total": 0},
+            }
+
+        def raise_for_status(self):
+            pass
+
+    async def mock_get(self, url, headers=None, params=None, **kwargs):
+        sent["params"] = params
+        return MockResponse()
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", mock_get)
+
+    await ManageClient().list_users(page=1, page_size=20, search="  alice ")
+
+    assert sent["params"]["keyword"] == "alice"
+    assert "search" not in sent["params"]
+
+
+@pytest.mark.asyncio
+async def test_list_all_users_follows_every_page(monkeypatch):
+    """Member profile lookups must see user #101+, not only the first page."""
+
+    async def fake_list_users(self, page=1, page_size=20, search=None):
+        from modules.identity.dtos.manage_dtos import (
+            ManageUserDTO,
+            ManageUsersResponseDTO,
+        )
+
+        first = (page - 1) * page_size + 1
+        ids = range(first, min(first + page_size, 251))
+        return ManageUsersResponseDTO(
+            items=[ManageUserDTO(id=i, name=f"U{i}", email=f"u{i}@x.io") for i in ids],
+            total=250,
+            page=page,
+            page_size=page_size,
+        )
+
+    monkeypatch.setattr(ManageClient, "list_users", fake_list_users)
+
+    users = await ManageClient().list_all_users(page_size=100)
+
+    assert [u.id for u in users] == list(range(1, 251))

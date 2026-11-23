@@ -6,7 +6,6 @@ from modules.dataset.use_cases import (
     CreateDatasetVersionUseCase,
     DeleteDatasetUseCase,
     DownloadAssetUseCase,
-    FinalizeAssetImportUseCase,
     GetAssetDetailUseCase,
     GetAssetDownloadUrlUseCase,
     GetDatasetDetailUseCase,
@@ -21,7 +20,6 @@ from modules.dataset.use_cases import (
     RemoveVersionAssetUseCase,
     RetireAssetUseCase,
     UpdateDatasetUseCase,
-    UploadVersionAssetsUseCase,
 )
 
 __all__ = [
@@ -30,7 +28,6 @@ __all__ = [
     "CreateDatasetVersionUseCase",
     "DeleteDatasetUseCase",
     "DownloadAssetUseCase",
-    "FinalizeAssetImportUseCase",
     "GetAssetDetailUseCase",
     "GetAssetDownloadUrlUseCase",
     "GetDatasetDetailUseCase",
@@ -45,5 +42,4 @@ __all__ = [
     "RemoveVersionAssetUseCase",
     "RetireAssetUseCase",
     "UpdateDatasetUseCase",
-    "UploadVersionAssetsUseCase",
 ]

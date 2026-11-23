@@ -1,25 +1,25 @@
-import asyncio
-
+from core.uow import IUnitOfWork
 from core.utils.id_generator import generate_ulid
 from modules.snapshot.application.dtos.snapshot_dtos import SnapshotCreateRequest
 from modules.snapshot.domain.entities import SnapshotEntity
 from modules.snapshot.domain.exceptions import SnapshotVersionConflictError
-from modules.snapshot.domain.interfaces import SnapshotRepository
+from modules.snapshot.domain.interfaces import SnapshotJobLauncher, SnapshotRepository
 from modules.snapshot.domain.value_objects import (
     SnapshotStatus,
     SplitRatios,
 )
-from modules.snapshot.infrastructure.background.snapshot_worker import SnapshotWorker
 
 
 class CreateSnapshotUseCase:
     def __init__(
         self,
         snapshot_repo: SnapshotRepository,
-        worker: SnapshotWorker,
+        uow: IUnitOfWork,
+        launcher: SnapshotJobLauncher,
     ) -> None:
         self._snapshot_repo = snapshot_repo
-        self._worker = worker
+        self._uow = uow
+        self._launcher = launcher
 
     async def execute(
         self,
@@ -66,7 +66,9 @@ class CreateSnapshotUseCase:
 
         persisted_snapshot = await self._snapshot_repo.create(snapshot)
 
-        # 4. Fire background execution worker
-        asyncio.create_task(self._worker.execute(persisted_snapshot.id))
+        # 4. Commit first: the background build runs in its own session and must
+        #    see the CREATING row; then start it.
+        await self._uow.commit()
+        self._launcher.launch(persisted_snapshot.id)
 
         return persisted_snapshot
